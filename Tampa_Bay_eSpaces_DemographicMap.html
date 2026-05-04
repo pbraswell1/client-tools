@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tampa Bay Market Entry Analysis | e|spaces</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* ── HEADER ── */
+    #header {
+      background: #111111;
+      color: white;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      border-left: 4px solid #C9A050;
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .brand-wordmark { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; color: white; }
+    .brand-wordmark .pipe { color: #C9A050; font-weight: 300; font-size: 22px; margin: 0 1px; }
+    .header-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.2); }
+    .header-subtitle { font-size: 13px; font-weight: 400; opacity: 0.85; color: white; }
+    .header-right { font-size: 11px; opacity: 0.75; text-align: right; line-height: 1.6; color: white; }
+
+    /* ── MAP AREA ── */
+    #map-container { position: relative; flex: 1; min-height: 0; }
+    #map { width: 100%; height: 100%; }
+
+    /* ── LAYER CONTROL PANEL ── */
+    #layer-panel {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.14);
+      z-index: 900;
+      width: 236px;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: #111111;
+      color: white;
+      padding: 10px 14px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      border-left: 3px solid #C9A050;
+    }
+    .panel-section { padding: 11px 14px; border-bottom: 1px solid #f0f0f0; }
+    .panel-section:last-child { border-bottom: none; }
+    .panel-section-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 9px;
+    }
+
+    /* demographic toggle buttons */
+    .demo-btns { display: flex; gap: 6px; }
+    .demo-btn {
+      flex: 1;
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 5px;
+      cursor: pointer;
+      background: white;
+      color: #555;
+      transition: all 0.15s;
+    }
+    .demo-btn.active { background: #C9A050; color: #111111; border-color: #C9A050; }
+    .demo-btn:hover:not(.active) { border-color: #bbb; background: #fafafa; }
+
+    /* brand toggle rows */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row:last-child { margin-bottom: 0; }
+    .toggle-label { display: flex; align-items: center; gap: 9px; font-size: 12px; color: #333; }
+    .brand-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* pill toggle */
+    .toggle-pill {
+      width: 34px; height: 18px;
+      background: #C9A050;
+      border-radius: 9px;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-pill.off { background: #d0d0d0; }
+    .toggle-pill::after {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      background: white;
+      border-radius: 50%;
+      top: 2px; left: 18px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-pill.off::after { left: 2px; }
+
+    .source-note { font-size: 10px; color: #aaa; line-height: 1.5; }
+
+    /* expansion opportunity callout */
+    .opportunity-callout {
+      background: #fffbf0;
+      border-left: 3px solid #C9A050;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #555;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    /* ── LEGEND ── */
+    #legend {
+      position: absolute;
+      bottom: 46px;
+      left: 14px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+      padding: 13px 16px;
+      z-index: 900;
+      min-width: 190px;
+    }
+    .legend-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; font-size: 11px; color: #444; }
+    .legend-swatch { width: 18px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .legend-divider { border: none; border-top: 1px solid #f0f0f0; margin: 9px 0; }
+    .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 0 1.5px currentColor; }
+
+    /* ── POPUP STYLES ── */
+    .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; }
+    .popup-inner { padding: 14px 16px; }
+    .popup-brand-bar { padding: 6px 16px; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+    .popup-name { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+    .popup-address { font-size: 11px; color: #666; line-height: 1.5; }
+    .popup-note { font-size: 10px; color: #aaa; margin-top: 4px; }
+    .popup-row { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-top: 1px solid #f0f0f0; margin-top: 5px; }
+    .popup-row span { color: #888; }
+    .popup-row strong { color: #1a1a1a; }
+    .popup-source { font-size: 9px; color: #ccc; margin-top: 6px; border-top: 1px solid #f5f5f5; padding-top: 6px; }
+
+    /* ── AVAILABLE PROPERTY MARKERS ── */
+    .prop-icon {
+      width: 18px; height: 18px;
+      background: #C9A050;
+      border: 2.5px solid #111111;
+      transform: rotate(45deg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border-radius: 2px;
+    }
+
+    /* ── PRINT BUTTON ── */
+    #print-btn {
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 900;
+      background: white;
+      border: none;
+      border-left: 3px solid #C9A050;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: box-shadow 0.15s;
+    }
+    #print-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+
+    /* ── FOOTER ── */
+    #footer {
+      background: #0a0a0a;
+      color: #555;
+      font-size: 10px;
+      padding: 0 20px;
+      height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      line-height: 1.4;
+      border-top: 1px solid #1e1e1e;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      #header, #footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #layer-panel, #print-btn { display: none; }
+      #map-container { height: 680px; }
+      body { overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-left">
+    <div class="brand-wordmark">e<span class="pipe">|</span>spaces</div>
+    <div class="header-divider"></div>
+    <div class="header-subtitle">Tampa Bay Market Intelligence — Expansion Opportunity Analysis</div>
+  </div>
+  <div class="header-right">
+    Prepared for: e|spaces Business Development<br>
+    Market Entry Analysis &middot; April 2025
+  </div>
+</div>
+
+<!-- MAP -->
+<div id="map-container">
+  <div id="map"></div>
+
+  <!-- Export button -->
+  <button id="print-btn" onclick="window.print()" title="Print or save as PDF">
+    🖨 Export / Print
+  </button>
+
+  <!-- Layer control panel -->
+  <div id="layer-panel">
+    <div class="panel-header">Map Layers &amp; Filters</div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Demographic View</div>
+      <div class="demo-btns">
+        <button class="demo-btn active" id="btn-income" onclick="setDemoView('income')">Income</button>
+        <button class="demo-btn" id="btn-density" onclick="setDemoView('density')">Density</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Existing Competitors</div>
+
+      <div class="toggle-row" onclick="toggleBrand('Regus')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#E31837;"></div>
+          Regus
+        </div>
+        <div class="toggle-pill" id="pill-Regus"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('WeWork')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#111;"></div>
+          WeWork
+        </div>
+        <div class="toggle-pill" id="pill-WeWork"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('Industrious')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#2D9CDB;"></div>
+          Industrious
+        </div>
+        <div class="toggle-pill" id="pill-Industrious"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('VentureX')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#F5C000;"></div>
+          Venture X
+        </div>
+        <div class="toggle-pill" id="pill-VentureX"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('Local')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#6C757D;"></div>
+          Local Operators
+        </div>
+        <div class="toggle-pill" id="pill-Local"></div>
+      </div>
+
+      <div class="opportunity-callout">
+        e|spaces has no current Tampa Bay locations. High-income ZIP corridors (dark blue) represent prime expansion targets.
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Available Properties</div>
+      <div class="toggle-row" onclick="toggleProperties()">
+        <div class="toggle-label">
+          <div style="width:12px; height:12px; background:#C9A050; border:2px solid #111; transform:rotate(45deg); flex-shrink:0; border-radius:1px;"></div>
+          Available Properties
+        </div>
+        <div class="toggle-pill" id="pill-Properties"></div>
+      </div>
+      <div style="font-size:10px; color:#888; line-height:1.5; margin-top:6px;">
+        13 properties under consideration for e|spaces expansion in Tampa Bay.
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Data Sources</div>
+      <div class="source-note">
+        Demographics: U.S. Census Bureau ACS 5-Year Estimates (2022).<br>
+        Coworking: IWG/Regus, WeWork, Industrious &amp; Venture X public directories.<br>
+        <em>Locations approximate. For planning use only.</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div class="legend-title" id="legend-title">Median Household Income</div>
+    <div id="income-legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#084594;"></div> Over $100,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#2171b5;"></div> $80,000 – $100,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#6baed6;"></div> $60,000 – $80,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#bdd7e7;"></div> $40,000 – $60,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#eff3ff; border:1px solid #d8d8d8;"></div> Under $40,000</div>
+    </div>
+    <div id="density-legend" style="display:none;">
+      <div class="legend-item"><div class="legend-swatch" style="background:#54278f;"></div> Very High (&gt;4,500/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#756bb1;"></div> High (3,000–4,500/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#9e9ac8;"></div> Moderate (2,000–3,000/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#cbc9e2;"></div> Low (1,000–2,000/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#f2f0f7; border:1px solid #d8d8d8;"></div> Sparse (&lt;1,000/mi²)</div>
+    </div>
+    <hr class="legend-divider">
+    <div class="legend-title">Available Properties</div>
+    <div class="legend-item">
+      <div style="width:12px; height:12px; background:#C9A050; border:2px solid #111; transform:rotate(45deg); flex-shrink:0; border-radius:1px;"></div>
+      e|spaces Candidate Sites (13)
+    </div>
+    <hr class="legend-divider">
+    <div class="legend-title">Existing Competitors</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E31837; color:#E31837;"></div> Regus (9 locations)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#111; color:#111;"></div> WeWork</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2D9CDB; color:#2D9CDB;"></div> Industrious</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F5C000; color:#F5C000;"></div> Venture X</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6C757D; color:#6C757D;"></div> Local Operators</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div id="footer">
+  <span>Sources: U.S. Census Bureau ACS 2022 &middot; IWG/Regus, WeWork, Industrious &amp; Venture X public directories &middot; OpenStreetMap / CARTO &middot; Prepared by Record Rep for e|spaces Business Development</span>
+  <span style="color:#333;">⚠ Location data is approximate and intended for strategic planning purposes only.</span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+// ═══════════════════════════════════════════════════════
+//  ZIP CODE DATA
+//  [zip, neighborhood, lat, lng, medianIncome, popDensity, radiusM]
+//  Source: U.S. Census ACS 5-Year Estimates (2022), approx.
+// ═══════════════════════════════════════════════════════
+const zipData = [
+  // ── Tampa / Hillsborough County ──────────────────────
+  ["33602","Downtown Tampa",           27.9472,-82.4591,  67000, 5200, 1600],
+  ["33603","Seminole Heights",          27.9790,-82.4612,  58000, 3800, 1900],
+  ["33604","N. Seminole Heights",       28.0001,-82.4540,  47000, 3400, 2100],
+  ["33605","Ybor City",                 27.9578,-82.4391,  38000, 4800, 1700],
+  ["33606","Hyde Park / Davis Islands", 27.9290,-82.4698,  98000, 4200, 1900],
+  ["33607","Westshore / Airport Area",  27.9636,-82.5054,  55000, 3500, 2400],
+  ["33609","S. Tampa / Westshore Blvd", 27.9445,-82.5095,  92000, 3900, 2100],
+  ["33610","East Tampa",                27.9742,-82.3930,  38000, 3200, 2800],
+  ["33611","South Tampa",               27.9068,-82.4896,  84000, 3600, 2400],
+  ["33612","University Area",           28.0365,-82.4376,  38000, 2800, 2900],
+  ["33613","USF / Bearss Ave",          28.0680,-82.4368,  42000, 2500, 2800],
+  ["33614","NW Tampa / Egypt Lake",     28.0055,-82.4900,  52000, 3200, 2700],
+  ["33615","Town N Country",            27.9843,-82.5440,  57000, 3100, 2900],
+  ["33616","S. Tampa / MacDill Area",   27.8844,-82.5054,  68000, 2900, 2700],
+  ["33617","Temple Terrace",            28.0196,-82.3846,  49000, 2700, 2400],
+  ["33618","Carrollwood",               28.0513,-82.5065,  74000, 2900, 2900],
+  ["33619","SE Tampa",                  27.9440,-82.3774,  39000, 3000, 3300],
+  ["33624","Carrollwood Village",       28.0700,-82.5196,  70000, 2600, 2900],
+  ["33625","Westchase",                 28.0498,-82.5699,  84000, 2700, 3100],
+  ["33626","Westchase / Citrus Park",   28.0488,-82.6053,  98000, 2400, 3400],
+  ["33629","S. Tampa / Palma Ceia",     27.9124,-82.5088, 128000, 4000, 2100],
+  ["33634","Town N Country West",       27.9985,-82.5657,  54000, 2800, 2700],
+  ["33635","NW Hillsborough",           28.0157,-82.6130,  80000, 2200, 3100],
+  ["33637","Temple Terrace East",       28.0285,-82.3508,  48000, 2400, 2900],
+  ["33647","New Tampa",                 28.1280,-82.3696,  91000, 2100, 3800],
+  // ── St. Petersburg / Pinellas County ─────────────────
+  ["33701","Downtown St. Petersburg",   27.7699,-82.6375,  58000, 4800, 1900],
+  ["33702","NE St. Petersburg",         27.8050,-82.6210,  50000, 3600, 2400],
+  ["33703","Shore Acres / NE St. Pete", 27.8180,-82.6020,  64000, 3400, 2700],
+  ["33704","Old NE / Snell Isle",       27.7974,-82.6319,  75000, 3800, 2100],
+  ["33705","Midtown / Kenwood",         27.7433,-82.6466,  38000, 4200, 2100],
+  ["33706","St. Pete Beach",            27.7238,-82.7358,  72000, 2800, 2700],
+  ["33707","Gulfport / S. St. Pete",    27.7358,-82.7070,  47000, 3500, 2400],
+  ["33708","Madeira Beach",             27.7897,-82.7934,  65000, 2400, 1900],
+  ["33709","Pinellas Park",             27.8260,-82.7253,  44000, 3200, 2900],
+  ["33710","Central St. Petersburg",    27.7789,-82.7130,  54000, 3600, 2700],
+  ["33711","South St. Petersburg",      27.7150,-82.6784,  36000, 3800, 2400],
+  ["33712","S. St. Pete / Lealman",     27.7300,-82.6640,  40000, 3600, 2400],
+  ["33713","Central St. Pete NW",       27.7824,-82.6769,  47000, 3900, 2400],
+  ["33715","Tierra Verde",              27.6748,-82.7213,  98000, 1200, 1900],
+  ["33716","Feather Sound",             27.8547,-82.6818,  74000, 2800, 2100],
+  // ── Clearwater / Mid-Pinellas ─────────────────────────
+  ["33755","Downtown Clearwater",       27.9586,-82.8010,  40000, 3600, 2100],
+  ["33756","Clearwater South",          27.9290,-82.7962,  47000, 3200, 2400],
+  ["33759","Clearwater / Safety Harbor",27.9820,-82.7436,  58000, 2800, 2700],
+  ["33760","Clearwater / Largo N.",     27.9048,-82.7611,  54000, 3000, 2700],
+  ["33761","Countryside",               28.0100,-82.7310,  70000, 2700, 2900],
+  ["33762","Clearwater / Feather Sound",27.8831,-82.7143,  60000, 2600, 2700],
+  ["33763","Dunedin East",              28.0167,-82.7726,  54000, 2500, 2700],
+  ["33765","Clearwater NW",             27.9767,-82.7831,  50000, 3100, 2400],
+  ["33767","Clearwater Beach",          27.9774,-82.8287,  88000, 2000, 1700],
+  ["33770","Largo NW",                  27.9082,-82.7850,  46000, 3100, 2700],
+  ["33771","Largo",                     27.9095,-82.7468,  44000, 3300, 2400],
+  ["33772","Seminole",                  27.8474,-82.7926,  57000, 3000, 2700],
+  ["33776","Seminole / Pinellas Coast", 27.8282,-82.8124,  74000, 2600, 2700],
+  ["33782","Pinellas Park East",        27.8521,-82.7218,  50000, 3100, 2800],
+  // ── North Pinellas / Pasco County ────────────────────
+  ["34677","Oldsmar",                   28.0342,-82.6636,  78000, 2400, 2900],
+  ["34683","Palm Harbor",               28.0810,-82.7607,  72000, 2800, 3100],
+  ["34685","Palm Harbor East",          28.0810,-82.7030,  88000, 2200, 3100],
+  ["34638","Land O' Lakes",             28.2025,-82.4758,  75000, 1800, 4300],
+  ["34639","Land O' Lakes East",        28.1780,-82.4291,  70000, 2000, 3800],
+  ["34655","Trinity / New Port Richey", 28.1601,-82.6416,  78000, 2100, 3800],
+];
+
+// ═══════════════════════════════════════════════════════
+//  COWORKING LOCATIONS  (existing competitors in Tampa Bay)
+//  Addresses verified from public brand directories (2024–2025)
+// ═══════════════════════════════════════════════════════
+const coworkingData = [
+  // ── REGUS (IWG) ──────────────────────────────────────
+  { brand:"Regus", name:"Regus Downtown Tampa",        lat:27.9478, lng:-82.4584, address:"100 S Ashley Dr, Tampa, FL 33602",              note:"Wells Fargo Center" },
+  { brand:"Regus", name:"Regus Westshore / Kennedy",   lat:27.9507, lng:-82.5178, address:"4830 W Kennedy Blvd, Tampa, FL 33609",           note:"One Urban Centre" },
+  { brand:"Regus", name:"Regus Westshore Intl Plaza",  lat:27.9738, lng:-82.5238, address:"2202 N West Shore Blvd, Tampa, FL 33607",        note:"Westshore International Plaza" },
+  { brand:"Regus", name:"Regus Rocky Point",           lat:27.9644, lng:-82.5516, address:"3001 N Rocky Point Dr E, Tampa, FL 33607",       note:"Rocky Point" },
+  { brand:"Regus", name:"Regus Fletcher Avenue",       lat:28.0516, lng:-82.3618, address:"7320 E Fletcher Ave, Tampa, FL 33637",           note:"Northeast Tampa" },
+  { brand:"Regus", name:"Regus Tampa Palms",           lat:28.1483, lng:-82.3817, address:"15310 Amberly Dr, Tampa, FL 33647",              note:"New Tampa / Tampa Palms" },
+  { brand:"Regus", name:"Regus First Central Tower",   lat:27.7698, lng:-82.6427, address:"360 Central Ave, St. Petersburg, FL 33701",      note:"Downtown St. Petersburg" },
+  { brand:"Regus", name:"Regus Echelon Pointe",        lat:27.8571, lng:-82.6826, address:"970 Lake Carillon Dr, St. Petersburg, FL 33716", note:"Gateway / Feather Sound" },
+  { brand:"Regus", name:"Regus Countryside",           lat:28.0069, lng:-82.7268, address:"2536 Countryside Blvd, Clearwater, FL 33763",    note:"Clearwater / Countryside" },
+  // ── WeWork ───────────────────────────────────────────
+  { brand:"WeWork", name:"WeWork Place",               lat:27.9481, lng:-82.4466, address:"501 E Kennedy Blvd, Tampa, FL 33602",            note:"Downtown Tampa" },
+  // ── Industrious ──────────────────────────────────────
+  { brand:"Industrious", name:"Industrious Downtown Tampa", lat:27.9493, lng:-82.4521, address:"401 E Jackson St, Ste 3300, Tampa, FL 33602", note:"Downtown Tampa" },
+  { brand:"Industrious", name:"Industrious Centro Ybor",    lat:27.9623, lng:-82.4344, address:"1600 E 8th Ave A200, Tampa, FL 33605",         note:"Centro Ybor" },
+  { brand:"Industrious", name:"Industrious Channelside",    lat:27.9428, lng:-82.4476, address:"615 Channelside Dr, Ste 207, Tampa, FL 33602",  note:"Water Street Tampa" },
+  { brand:"Industrious", name:"Industrious St. Petersburg", lat:27.7699, lng:-82.6407, address:"200 Central Ave, St. Petersburg, FL 33701",     note:"Downtown St. Petersburg" },
+  // ── Venture X ────────────────────────────────────────
+  { brand:"VentureX", name:"Venture X Harborview Plaza",    lat:27.9644, lng:-82.5530, address:"3031 N Rocky Point Dr W, Ste 600, Tampa, FL 33607", note:"Opening early 2026 · 30,262 sq ft" },
+  // ── Local Operators ──────────────────────────────────
+  { brand:"Local", name:"Embarc Collective",           lat:27.9447, lng:-82.4507, address:"802 E Whiting St, Tampa, FL 33602",              note:"Startup ecosystem / entrepreneur hub" },
+];
+
+// ═══════════════════════════════════════════════════════
+//  AVAILABLE PROPERTIES
+//  Candidate sites for e|spaces expansion into Tampa Bay
+// ═══════════════════════════════════════════════════════
+const availableProperties = [
+  // ── Originally added ─────────────────────────────────
+  {
+    name:    "Roosevelt Technology Center",
+    address: "11399 16th Court N, St. Petersburg, FL 33716",
+    note:    "Class A · 108,339 SF · 3-story · Feather Sound / Gateway · Direct I-275 access",
+    lat:     27.8558, lng: -82.6843,
+  },
+  {
+    name:    "311 Park Place",
+    address: "311 Park Place Blvd, Clearwater, FL 33759",
+    note:    "Class A · 118,447 SF · 6-story · SR-60 & US-19 corridor, across from Clearwater Mall",
+    lat:     27.9828, lng: -82.7388,
+  },
+  {
+    name:    "Bank of America Plaza",
+    address: "101 East Kennedy Blvd, Tampa, FL 33602",
+    note:    "Class A · 791,000 SF · 42-story · Downtown Tampa CBD at Kennedy & Tampa St",
+    lat:     27.9480, lng: -82.4578,
+  },
+  // ── New properties ────────────────────────────────────
+  {
+    name:    "Bayport Plaza",
+    address: "3000 Bayport Dr, Tampa, FL 33607",
+    note:    "Class A · 264,644 SF · 11-story · Old Tampa Bay waterfront · Adjacent to Grand Hyatt Tampa Bay",
+    lat:     27.9730, lng: -82.5615,
+  },
+  {
+    name:    "Bayside Concourse",
+    address: "15500 Lightwave Dr, Clearwater, FL 33760",
+    note:    "Class A · Gateway / Mid-Pinellas · Adjacent to St. Pete-Clearwater Airport",
+    lat:     27.9020, lng: -82.7010,
+  },
+  {
+    name:    "Bridgeport Center",
+    address: "5201 W Kennedy Blvd, Tampa, FL 33609",
+    note:    "Class A · 180,000 SF · 9-story · Westshore submarket · Adjacent to WestShore Plaza",
+    lat:     27.9507, lng: -82.5317,
+  },
+  {
+    name:    "Grow Financial Place at Gasworx",
+    address: "1301 E 4th Ave, Tampa, FL 33605",
+    note:    "Class A · 500,000 SF mixed-use · Ybor City · Delivering 2026 · 5,000+ residential units on-site",
+    lat:     27.9585, lng: -82.4365,
+  },
+  {
+    name:    "Island Center",
+    address: "2701 N Rocky Point Dr, Tampa, FL 33607",
+    note:    "Class A · 249,797 SF · 12-story · Rocky Point · Tampa Bay water views · 5 min to TIA",
+    lat:     27.9725, lng: -82.5475,
+  },
+  {
+    name:    "One Metro Center",
+    address: "4010 W Boy Scout Blvd, Tampa, FL 33607",
+    note:    "Class A · MetWest International · 11-story · Westshore Business District",
+    lat:     27.9724, lng: -82.5198,
+  },
+  {
+    name:    "MetWest Three",
+    address: "4050 W Boy Scout Blvd, Tampa, FL 33607",
+    note:    "Class A · 267,038 SF · MetWest International · Westshore Business District · Built 2019",
+    lat:     27.9728, lng: -82.5210,
+  },
+  {
+    name:    "North Florida Office Complex",
+    address: "10050 N Florida Ave, Tampa, FL 33612",
+    note:    "Class B · 75,000 SF · 3-story · North Tampa · Off I-275, between Busch & Fowler",
+    lat:     28.0481, lng: -82.4587,
+  },
+  {
+    name:    "Waterford Plaza",
+    address: "7650 W Courtney Campbell Causeway, Tampa, FL 33607",
+    note:    "Class A · Rocky Point · Tampa Bay water views · 5 min to TIA · Between Hillsborough & Pinellas",
+    lat:     27.9748, lng: -82.5650,
+  },
+  {
+    name:    "Bayview Pavilion",
+    address: "15550 Lightwave Dr, Clearwater, FL 33760",
+    note:    "Class A · 93,946 SF · 3-story · Adjacent to St. Pete-Clearwater Airport · Bayside Bridge access",
+    lat:     27.9018, lng: -82.7008,
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//  COLOR SCALES
+// ═══════════════════════════════════════════════════════
+function incomeColor(v) {
+  if (v >= 100000) return '#084594';
+  if (v >= 80000)  return '#2171b5';
+  if (v >= 60000)  return '#6baed6';
+  if (v >= 40000)  return '#bdd7e7';
+  return '#eff3ff';
+}
+function densityColor(v) {
+  if (v >= 4500) return '#54278f';
+  if (v >= 3000) return '#756bb1';
+  if (v >= 2000) return '#9e9ac8';
+  if (v >= 1000) return '#cbc9e2';
+  return '#f2f0f7';
+}
+const brandColors = {
+  Regus:       '#E31837',
+  WeWork:      '#111111',
+  Industrious: '#2D9CDB',
+  VentureX:    '#F5C000',
+  Local:       '#6C757D',
+};
+
+// ═══════════════════════════════════════════════════════
+//  MAP INIT
+// ═══════════════════════════════════════════════════════
+const map = L.map('map', {
+  center: [27.96, -82.57],
+  zoom: 11,
+  zoomControl: false,
+});
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors © <a href="https://carto.com">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// ═══════════════════════════════════════════════════════
+//  ZIP CHOROPLETH CIRCLES
+// ═══════════════════════════════════════════════════════
+let zipCircles = [];
+let currentView = 'income';
+
+function renderZipLayer(view) {
+  zipCircles.forEach(c => map.removeLayer(c));
+  zipCircles = [];
+  zipData.forEach(([zip, name, lat, lng, income, density, radius]) => {
+    const color = view === 'income' ? incomeColor(income) : densityColor(density);
+    const circle = L.circle([lat, lng], {
+      radius,
+      fillColor: color,
+      fillOpacity: 0.58,
+      color: color,
+      weight: 0.8,
+      opacity: 0.35,
+    });
+    const incomeStr  = '$' + income.toLocaleString();
+    const densityStr = density.toLocaleString() + '/mi²';
+    circle.bindPopup(`
+      <div class="popup-brand-bar" style="background:#111111; color:#C9A050;">ZIP ${zip}</div>
+      <div class="popup-inner">
+        <div class="popup-name">${name}</div>
+        <div class="popup-row"><span>Median Household Income</span><strong>${incomeStr}</strong></div>
+        <div class="popup-row"><span>Population Density</span><strong>${densityStr}</strong></div>
+        <div class="popup-source">U.S. Census Bureau ACS 5-Year Estimates (2022) · Values are approximate</div>
+      </div>
+    `, { maxWidth: 260 });
+    circle.addTo(map);
+    zipCircles.push(circle);
+  });
+}
+renderZipLayer('income');
+
+// ═══════════════════════════════════════════════════════
+//  COWORKING MARKERS
+// ═══════════════════════════════════════════════════════
+const brandMarkers = { Regus: [], WeWork: [], Industrious: [], VentureX: [], Local: [] };
+const brandOn      = { Regus: true, WeWork: true, Industrious: true, VentureX: true, Local: true };
+
+coworkingData.forEach(loc => {
+  const color      = brandColors[loc.brand];
+  const isVentureX = loc.brand === 'VentureX';
+  const barBg      = isVentureX ? '#111111' : color;
+  const barColor   = isVentureX ? '#F5C000' : 'white';
+  const label      = isVentureX ? 'VENTURE X' : loc.brand.toUpperCase();
+  const marker = L.circleMarker([loc.lat, loc.lng], {
+    radius:      isVentureX ? 10 : 7,
+    fillColor:   color,
+    fillOpacity: 0.93,
+    color:       isVentureX ? '#111111' : 'white',
+    weight:      isVentureX ? 2.5 : 1.8,
+  });
+  marker.bindPopup(`
+    <div class="popup-brand-bar" style="background:${barBg}; color:${barColor};">${label}</div>
+    <div class="popup-inner">
+      <div class="popup-name">${loc.name}</div>
+      <div class="popup-address">📍 ${loc.address}</div>
+      ${loc.note ? `<div class="popup-note">${loc.note}</div>` : ''}
+    </div>
+  `, { maxWidth: 260 });
+  marker.addTo(map);
+  brandMarkers[loc.brand].push(marker);
+});
+
+// ═══════════════════════════════════════════════════════
+//  AVAILABLE PROPERTY MARKERS  (gold diamond pins)
+// ═══════════════════════════════════════════════════════
+const propIcon = L.divIcon({
+  html: '<div class="prop-icon"></div>',
+  className: '',
+  iconSize:   [18, 18],
+  iconAnchor: [9, 9],
+  popupAnchor:[0, -13],
+});
+
+let propertyMarkers = [];
+let propertiesOn = true;
+
+availableProperties.forEach(p => {
+  const marker = L.marker([p.lat, p.lng], { icon: propIcon });
+  marker.bindPopup(`
+    <div class="popup-brand-bar" style="background:#111111; color:#C9A050;">AVAILABLE PROPERTY</div>
+    <div class="popup-inner">
+      <div class="popup-name">${p.name}</div>
+      <div class="popup-address">📍 ${p.address}</div>
+      <div class="popup-note">${p.note}</div>
+    </div>
+  `, { maxWidth: 280 });
+  marker.addTo(map);
+  propertyMarkers.push(marker);
+});
+
+function toggleProperties() {
+  const pill = document.getElementById('pill-Properties');
+  if (propertiesOn) {
+    propertyMarkers.forEach(m => map.removeLayer(m));
+    pill.classList.add('off');
+  } else {
+    propertyMarkers.forEach(m => m.addTo(map));
+    pill.classList.remove('off');
+  }
+  propertiesOn = !propertiesOn;
+}
+
+// ═══════════════════════════════════════════════════════
+//  LAYER CONTROL FUNCTIONS
+// ═══════════════════════════════════════════════════════
+function setDemoView(view) {
+  currentView = view;
+  renderZipLayer(view);
+  document.getElementById('btn-income').classList.toggle('active', view === 'income');
+  document.getElementById('btn-density').classList.toggle('active', view === 'density');
+  document.getElementById('income-legend').style.display  = view === 'income'  ? '' : 'none';
+  document.getElementById('density-legend').style.display = view === 'density' ? '' : 'none';
+  document.getElementById('legend-title').textContent =
+    view === 'income' ? 'Median Household Income' : 'Population Density';
+}
+
+function toggleBrand(brand) {
+  const pill = document.getElementById('pill-' + brand);
+  if (brandOn[brand]) {
+    brandMarkers[brand].forEach(m => map.removeLayer(m));
+    pill.classList.add('off');
+  } else {
+    brandMarkers[brand].forEach(m => m.addTo(map));
+    pill.classList.remove('off');
+  }
+  brandOn[brand] = !brandOn[brand];
+}
+
+</script>
+</body>
+</html>
