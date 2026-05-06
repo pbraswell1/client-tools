@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building Rating System – Record Real Estate Partners</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme:light; --navy:#1a2744; --navy2:#243260; --gold:#c8a84b; --gold2:#e8c96e; --bg:#f4f6fa; --card:#fff; --border:#e2e6ef; --text:#1a1a2e; --muted:#6b7280; --radius:10px; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--navy);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:12px;}
+.hdr-title{font-size:16px;font-weight:700;letter-spacing:-.3px;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:1px;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px;}
+.hdr-client{text-align:right;font-size:12px;color:var(--gold2);}
+.hdr-client b{font-weight:700;}
+.hdr-vinyl{width:46px;height:46px;flex-shrink:0;opacity:.92;}
+
+/* TABS */
+.tabs{background:var(--navy2);display:flex;padding:0 22px;gap:2px;}
+.tb{padding:11px 18px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.5);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:color .15s,border-color .15s;}
+.tb:hover{color:rgba(255,255,255,.85);}
+.tb.on{color:var(--gold2);border-bottom-color:var(--gold);}
+.tbadge{background:var(--gold);color:var(--navy);font-size:10px;font-weight:800;padding:1px 6px;border-radius:20px;}
+
+/* LAYOUT */
+.main{padding:20px 22px;max-width:1120px;margin:0 auto;}
+.tab{display:none;}.tab.on{display:block;}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+.ctitle{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+.cdesc{font-size:12px;color:var(--muted);margin-bottom:14px;}
+
+/* FORM */
+.frow{display:flex;gap:14px;flex-wrap:wrap;}
+.fg{flex:1;min-width:160px;}
+.flabel{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.finput{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:#fff;}
+.finput:focus{outline:none;border-color:var(--navy);}
+
+/* CATEGORY WEIGHT GRID */
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;}
+.catcard{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.cathdr{background:var(--navy);color:#fff;padding:11px 15px;display:flex;align-items:center;justify-content:space-between;}
+.catname{font-size:13px;font-weight:700;}
+.catbadge{background:var(--gold);color:var(--navy);font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;}
+.catbody{padding:14px 15px;}
+.seclabel{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.srow{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.slabel{font-size:12px;color:var(--text);min-width:135px;flex-shrink:0;}
+.swrap{flex:1;}
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:#e2e6ef;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.catslider::-webkit-slider-thumb{background:var(--navy);}
+.attrslider::-webkit-slider-thumb{background:var(--gold);}
+.sval{min-width:24px;text-align:center;font-size:12px;font-weight:700;color:var(--navy);}
+.sdivider{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.slabels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:1px;}
+
+/* DATABASE TAB */
+.db-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.db-info{font-size:13px;color:var(--muted);}
+.db-info b{color:var(--navy);}
+.blist{display:flex;flex-direction:column;gap:8px;}
+.brow{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;transition:border-color .15s;}
+.brow:hover{border-color:var(--navy);}
+.brow-num{font-size:11px;font-weight:800;color:var(--muted);min-width:26px;text-align:right;}
+.brow-info{flex:1;min-width:0;}
+.brow-name{font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.brow-addr{font-size:11px;color:var(--muted);}
+.brow-class{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;flex-shrink:0;}
+.cls-A{background:var(--gold);color:var(--navy);}
+.cls-B{background:var(--navy2);color:#fff;}
+.cls-C{background:#e2e6ef;color:var(--text);}
+.brow-score{font-size:13px;font-weight:800;color:var(--navy);min-width:52px;text-align:right;white-space:nowrap;}
+.brow-score small{font-size:10px;font-weight:400;color:var(--muted);}
+.brow-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+.btn-navy{background:var(--navy);color:#fff;}.btn-navy:hover{background:var(--navy2);}
+.btn-gold{background:var(--gold);color:var(--navy);}.btn-gold:hover{background:var(--gold2);}
+.btn-sm{padding:7px 13px;font-size:12px;}
+.btn-xs{padding:5px 10px;font-size:11px;font-weight:700;border-radius:6px;}
+.btn-outline{background:#fff;border:1.5px solid var(--border);color:var(--navy);}.btn-outline:hover{border-color:var(--navy);}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;cursor:pointer;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;transition:all .2s;}.btn-danger:hover{background:#fecaca;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto;padding:24px 16px;}
+.modal-overlay.open{display:flex;align-items:flex-start;justify-content:center;}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:700px;box-shadow:0 24px 64px rgba(0,0,0,.28);overflow:hidden;margin:auto;}
+.modal-hdr{background:var(--navy);color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;opacity:.55;line-height:1;padding:0;transition:opacity .15s;}.modal-close:hover{opacity:1;}
+.modal-body{padding:20px 22px;max-height:72vh;overflow-y:auto;}
+.modal-frow{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.modal-fg{flex:1;min-width:140px;}
+.modal-cats{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+@media(max-width:580px){.modal-cats{grid-template-columns:1fr;}}
+.modal-cat{margin-bottom:16px;}
+.modal-cathdr{font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:9px;padding-bottom:5px;border-bottom:2px solid var(--border);}
+.modal-arow{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.modal-alabel{font-size:11px;color:var(--text);flex:1;min-width:0;}
+.modal-bar{width:48px;height:5px;background:#e2e6ef;border-radius:3px;overflow:hidden;flex-shrink:0;}
+.modal-barfill{height:100%;background:var(--gold);border-radius:3px;transition:width .2s;}
+.modal-sinp{width:46px;padding:4px 5px;border:1.5px solid var(--border);border-radius:5px;font-size:12px;font-weight:700;text-align:center;color:var(--navy);flex-shrink:0;}
+.modal-sinp:focus{outline:none;border-color:var(--navy);}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#fafbfc;}
+
+/* TOP MATCHES */
+.matches-header{background:var(--navy);color:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;}
+.matches-htitle{font-size:17px;font-weight:800;margin-bottom:3px;}
+.matches-hsub{font-size:12px;opacity:.55;}
+.matches-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.matches-label{font-size:13px;color:var(--muted);}
+.show-select{padding:7px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;color:var(--navy);font-weight:600;background:#fff;cursor:pointer;}
+.match-cards{display:flex;flex-direction:column;gap:14px;}
+.mcard{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;transition:box-shadow .2s;}
+.mcard.top{border-color:var(--gold);box-shadow:0 4px 18px rgba(200,168,75,.22);}
+.mcard-rank{width:58px;flex-shrink:0;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 0;color:#fff;}
+.mcard.top .mcard-rank{background:var(--gold);}
+.mcard-star{font-size:14px;margin-bottom:4px;}
+.mcard-ranknum{font-size:24px;font-weight:900;line-height:1;}
+.mcard.top .mcard-ranknum{color:var(--navy);}
+.mcard-ranklabel{font-size:9px;opacity:.55;margin-top:3px;letter-spacing:.05em;}
+.mcard.top .mcard-ranklabel{color:var(--navy);}
+.mcard-body{flex:1;padding:14px 18px;min-width:0;}
+.mcard-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:11px;}
+.mcard-info{flex:1;min-width:0;}
+.mcard-name{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:3px;}
+.mcard-addr{font-size:12px;color:var(--muted);margin-bottom:5px;}
+.mcard-meta{display:flex;gap:7px;align-items:center;}
+.mcard-score{text-align:center;flex-shrink:0;}
+.score-circ{width:64px;height:64px;border-radius:50%;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.mcard.top .score-circ{background:var(--gold);}
+.score-num{font-size:21px;font-weight:900;color:#fff;line-height:1;}
+.mcard.top .score-num{color:var(--navy);}
+.score-den{font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;}
+.mcard.top .score-den{color:rgba(26,39,68,.5);}
+.mcard-cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+.mcat-pill{display:flex;align-items:center;gap:5px;background:#f4f6fa;border-radius:6px;padding:4px 8px;}
+.mcat-icon{font-size:11px;}
+.mcat-bar{width:40px;height:4px;background:#e2e6ef;border-radius:2px;overflow:hidden;}
+.mcat-fill{height:100%;background:var(--navy);border-radius:2px;transition:width .4s;}
+.mcard.top .mcat-fill{background:var(--gold);}
+.mcat-pct{font-size:10px;font-weight:700;color:var(--navy);min-width:26px;}
+.mcard-strengths{font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:9px;}
+.mcard-strengths b{color:var(--navy);font-size:11px;}
+.str-item{display:inline-flex;align-items:center;gap:4px;margin-right:10px;margin-top:4px;}
+.str-score{font-size:9px;font-weight:800;padding:1px 5px;border-radius:10px;background:var(--navy);color:#fff;}
+.mcard.top .str-score{background:var(--gold);color:var(--navy);}
+
+/* EMPTY */
+.empty{text-align:center;padding:52px 20px;color:var(--muted);}
+.empty h3{font-size:17px;margin-bottom:10px;color:var(--navy);}
+.empty p{font-size:13px;line-height:1.65;margin-bottom:18px;max-width:400px;margin-left:auto;margin-right:auto;}
+
+/* MISC */
+.actrow{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+@media print{.hdr,.tabs,.actrow,.db-toolbar,.matches-toolbar{display:none!important;}.main{padding:0;}.tab{display:block!important;}.mcard{break-inside:avoid;margin-bottom:12px;}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <div class="hdr-title">Building Rating System</div>
+    <div class="hdr-sub">Record Real Estate Partners</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-client" id="hdrClient" style="display:none">Client: <b id="hdrName"></b></div>
+    <div class="hdr-vinyl">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="49" fill="#333333"/>
+        <path d="M 31,13 Q 4,50 31,87" stroke="#1a1a1a" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M 36,17 Q 12,50 36,83" stroke="#1a1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M 23,22 Q 2,50 23,78" stroke="#1a1a1a" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M 28,19 Q 7,50 28,81" stroke="#1a1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M 17,31 Q 1,50 17,69" stroke="#1a1a1a" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M 21,27 Q 4,50 21,73" stroke="#1a1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M 69,13 Q 96,50 69,87" stroke="#1a1a1a" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M 64,17 Q 88,50 64,83" stroke="#1a1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M 77,22 Q 98,50 77,78" stroke="#1a1a1a" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M 72,19 Q 93,50 72,81" stroke="#1a1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M 83,31 Q 99,50 83,69" stroke="#1a1a1a" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <path d="M 79,27 Q 96,50 79,73" stroke="#1a1a1a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <circle cx="50" cy="50" r="20" fill="#111111"/>
+        <circle cx="50" cy="50" r="4.5" fill="#5a5a5a"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tb on" data-tab="setup">⚙ Client Setup</button>
+  <button class="tb" data-tab="database">🏢 Building Database <span class="tbadge" id="dbBadge">0</span></button>
+  <button class="tb" data-tab="matches">⭐ Top Matches</button>
+</div>
+
+<div class="main">
+
+  <!-- ── SETUP TAB ──────────────────────────────────────────────────── -->
+  <div class="tab on" id="tab-setup">
+    <div class="card">
+      <div class="ctitle">👤 Client Information</div>
+      <div class="cdesc">Enter client details — the system will instantly rank all buildings in the database to find their best fits.</div>
+      <div class="frow">
+        <div class="fg"><label class="flabel">Client / Company Name</label>
+          <input class="finput" id="clientName" type="text" placeholder="e.g. Acme Corp" oninput="syncClient()"></div>
+        <div class="fg"><label class="flabel">Prepared By</label>
+          <input class="finput" id="preparedBy" type="text" placeholder="Your name"></div>
+        <div class="fg"><label class="flabel">Date</label>
+          <input class="finput" id="evalDate" type="date"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">⚖️ Client Attribute Preferences</div>
+      <div class="cdesc">Dial in how important each category and attribute is to this client. The system re-ranks all buildings in real time based on these weights.</div>
+      <div class="catgrid" id="catgrid"></div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn btn-gold" onclick="goTab('matches')">See Top Matches ⭐</button>
+    </div>
+  </div>
+
+  <!-- ── DATABASE TAB ───────────────────────────────────────────────── -->
+  <div class="tab" id="tab-database">
+    <div class="card" style="margin-bottom:16px;padding:14px 18px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div>
+          <div class="ctitle" style="margin-bottom:1px;">🏢 Submarket Building Database</div>
+          <div style="font-size:12px;color:var(--muted);">Rate each building once — scores are saved automatically and used to rank results for every client.</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span class="db-info"><b id="dbCountLabel">0</b> buildings</span>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+            ⬆ Import
+            <input type="file" accept=".json" style="display:none" onchange="importDB(event)">
+          </label>
+          <button class="btn btn-outline btn-sm" onclick="exportDB()">⬇ Export</button>
+          <button class="btn btn-navy btn-sm" onclick="openModal(null)">+ Add Building</button>
+        </div>
+      </div>
+    </div>
+    <div id="blist" class="blist"></div>
+  </div>
+
+  <!-- ── TOP MATCHES TAB ───────────────────────────────────────────── -->
+  <div class="tab" id="tab-matches">
+    <div id="matchesContent"></div>
+  </div>
+
+</div><!-- /.main -->
+
+<!-- ── BUILDING RATING MODAL ─────────────────────────────────────── -->
+<div id="modal" class="modal-overlay" onclick="modalBgClick(event)">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modalTitle">Add Building</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-frow">
+        <div class="modal-fg" style="flex:2">
+          <label class="flabel">Building Name *</label>
+          <input class="finput" id="mName" placeholder="e.g. 100 Pearl Street">
+        </div>
+        <div class="modal-fg">
+          <label class="flabel">Class</label>
+          <select class="finput" id="mClass">
+            <option value="">—</option>
+            <option value="A">Class A</option>
+            <option value="B">Class B</option>
+            <option value="C">Class C</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-frow">
+        <div class="modal-fg" style="flex:2">
+          <label class="flabel">Address</label>
+          <input class="finput" id="mAddr" placeholder="Full address">
+        </div>
+        <div class="modal-fg">
+          <label class="flabel">Notes</label>
+          <input class="finput" id="mNotes" placeholder="Brief notes">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="seclabel">Score each attribute 1 (poor) – 10 (excellent)</div>
+      </div>
+      <div class="modal-cats" id="modalCats"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="mDeleteBtn" onclick="deleteCurrentBuilding()" style="display:none;">Delete Building</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-navy btn-sm" onclick="saveBuilding()">Save Building</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+const CATS = [
+  { id:'loc',   name:'Location & Access',      icon:'📍', weight:8,
+    attrs:[
+      {id:'transit', name:'Transit Access',          weight:8},
+      {id:'walk',    name:'Walkability',              weight:7},
+      {id:'parking', name:'Parking Availability',    weight:7},
+      {id:'prox',    name:'Proximity to Clients',    weight:6},
+      {id:'retail',  name:'Nearby Dining & Retail',  weight:5},
+    ]},
+  { id:'qual',  name:'Building Quality',        icon:'🏛️', weight:8,
+    attrs:[
+      {id:'class', name:'Building Class',            weight:8},
+      {id:'lobby', name:'Lobby & Common Areas',      weight:7},
+      {id:'hvac',  name:'HVAC & Mechanical',         weight:7},
+      {id:'reno',  name:'Age & Renovation Quality',  weight:6},
+      {id:'leed',  name:'Sustainability / LEED',     weight:4},
+    ]},
+  { id:'suite', name:'Suite & Space',           icon:'📐', weight:8,
+    attrs:[
+      {id:'floor',   name:'Floor Level & Views',     weight:6},
+      {id:'light',   name:'Natural Light',           weight:8},
+      {id:'layout',  name:'Layout Efficiency',       weight:8},
+      {id:'ceiling', name:'Ceiling Height & Columns',weight:6},
+      {id:'cond',    name:'Condition & Fit-Out',     weight:7},
+    ]},
+  { id:'fin',   name:'Financial Terms',         icon:'💰', weight:8,
+    attrs:[
+      {id:'rent',     name:'Base Rent (per SF)',      weight:9},
+      {id:'freerent', name:'Free Rent / Concessions', weight:7},
+      {id:'ti',       name:'TI Allowance',            weight:8},
+      {id:'flex',     name:'Lease Flexibility',       weight:6},
+      {id:'opex',     name:'Operating Expenses',      weight:7},
+    ]},
+  { id:'amen',  name:'Building Amenities',      icon:'🎯', weight:6,
+    attrs:[
+      {id:'gym',      name:'Fitness Center',          weight:6},
+      {id:'conf',     name:'Conference Facilities',   weight:7},
+      {id:'food',     name:'On-Site Food & Beverage', weight:6},
+      {id:'outdoor',  name:'Outdoor / Terrace Space', weight:5},
+      {id:'security', name:'Building Security',       weight:7},
+    ]},
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let buildingDB = [];
+let nextId = 1;
+let editingId = null;
+let showTopN = 10;
+
+const catW = {};   // category weights (client preference)
+const attrW = {};  // attribute weights (client preference)
+
+// Init default weights from CATS
+CATS.forEach(c => {
+  catW[c.id] = c.weight;
+  c.attrs.forEach(a => { attrW[c.id + '_' + a.id] = a.weight; });
+});
+
+// ─── DB PERSISTENCE ───────────────────────────────────────────────────────────
+const BRENTWOOD_DB = {"buildings":[{"id":1,"name":"WestPark Exchange","address":"111 Westwood Pl, Brentwood, TN 37027","class":"B","notes":"Built 1982 · 98,656 SF · 53.6% leased · CoStar 4★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":8,"qual_lobby":8,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":6,"suite_light":8,"suite_layout":7,"suite_ceiling":5,"suite_cond":5,"fin_rent":6,"fin_freerent":8,"fin_ti":8,"fin_flex":8,"fin_opex":7,"amen_gym":8,"amen_conf":8,"amen_food":5,"amen_outdoor":6,"amen_security":8}},{"id":2,"name":"Quorum I","address":"105 Continental Pl, Brentwood, TN 37027","class":"B","notes":"Built 1994 · 84,052 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":5,"qual_reno":4,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":5,"suite_cond":4,"fin_rent":6,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":5,"amen_outdoor":4,"amen_security":7}},{"id":3,"name":"The Ramparts of Brentwood","address":"155 Franklin Rd, Brentwood, TN 37027","class":"B","notes":"Built 1986 · 131,620 SF · 87.8% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":5,"suite_cond":4,"fin_rent":4,"fin_freerent":5,"fin_ti":5,"fin_flex":5,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":4,"name":"Hill Center Brentwood","address":"211 Franklin Rd, Brentwood, TN 37027","class":"A","notes":"Built 2018 · 80,676 SF · 87.0% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":8,"loc_parking":8,"loc_prox":7,"loc_retail":9,"qual_class":6,"qual_lobby":7,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":6,"suite_light":7,"suite_layout":7,"suite_ceiling":9,"suite_cond":9,"fin_rent":4,"fin_freerent":5,"fin_ti":5,"fin_flex":5,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":9,"amen_outdoor":6,"amen_security":7}},{"id":5,"name":"Building H","address":"5005 Maryland Way, Brentwood, TN 37027","class":"A","notes":"Built 2019 · 83,000 SF · 96.7% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":9,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":6,"suite_light":9,"suite_layout":7,"suite_ceiling":9,"suite_cond":10,"fin_rent":4,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":8,"amen_conf":8,"amen_food":7,"amen_outdoor":7,"amen_security":8}},{"id":6,"name":"Center Court","address":"5110 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1986 · 59,700 SF · 88.9% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":5,"fin_opex":7,"amen_gym":5,"amen_conf":5,"amen_food":7,"amen_outdoor":4,"amen_security":6}},{"id":7,"name":"5111 Maryland Way","address":"5111 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1985 · 54,489 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":5,"suite_cond":4,"fin_rent":8,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":5,"amen_gym":5,"amen_conf":5,"amen_food":7,"amen_outdoor":4,"amen_security":6}},{"id":8,"name":"Maryland Farms Office Park","address":"5310 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1995 · 76,626 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":4,"amen_security":7}},{"id":9,"name":"Gateway Plaza I","address":"5409 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1996 · 86,845 SF · 83.3% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":6,"suite_cond":5,"fin_rent":6,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":4,"amen_security":7}},{"id":10,"name":"Eastpark III","address":"3 Maryland Farms, Brentwood, TN 37027","class":"B","notes":"Built 1978, Renovated 2018 · 83,008 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":7,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":6,"suite_light":7,"suite_layout":7,"suite_ceiling":9,"suite_cond":9,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":6,"amen_security":7}},{"id":11,"name":"Brentwood Commons I","address":"750 Old Hickory Blvd, Brentwood, TN 37027","class":"B","notes":"Built 1983, Renovated 2003 · 93,000 SF · 66.1% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":6,"qual_lobby":6,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":6,"suite_cond":6,"fin_rent":7,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":12,"name":"Brentwood Highlands","address":"783 Old Hickory Blvd, Brentwood, TN 37027","class":"B","notes":"Built 1975, Renovated 1996 · 70,850 SF · 93.2% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":4,"qual_lobby":4,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":6,"suite_light":5,"suite_layout":7,"suite_ceiling":6,"suite_cond":5,"fin_rent":6,"fin_freerent":5,"fin_ti":5,"fin_flex":4,"fin_opex":7,"amen_gym":3,"amen_conf":3,"amen_food":6,"amen_outdoor":4,"amen_security":5}},{"id":13,"name":"Horizon Center","address":"9020 Overlook Blvd, Brentwood, TN 37027","class":"B","notes":"Built 1999 · 110,600 SF · 72.0% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":9,"loc_prox":7,"loc_retail":6,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":6,"suite_cond":5,"fin_rent":7,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":14,"name":"Bob Dey Building","address":"7113 Peach Ct, Brentwood, TN 37027","class":"B","notes":"Built 1974 · 10,924 SF · 100.0% leased · CoStar 2★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":5,"suite_cond":4,"fin_rent":9,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":5,"amen_gym":3,"amen_conf":3,"amen_food":6,"amen_outdoor":4,"amen_security":5}},{"id":15,"name":"Seven Springs West","address":"340 Seven Springs Way, Brentwood, TN 37027","class":"A","notes":"Built 2016 · 203,000 SF · 49.2% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":9,"qual_hvac":9,"qual_reno":8,"qual_leed":6,"suite_floor":8,"suite_light":9,"suite_layout":8,"suite_ceiling":9,"suite_cond":9,"fin_rent":3,"fin_freerent":8,"fin_ti":8,"fin_flex":8,"fin_opex":7,"amen_gym":8,"amen_conf":8,"amen_food":7,"amen_outdoor":7,"amen_security":8}},{"id":16,"name":"Harpeth One","address":"101 Westpark Dr, Brentwood, TN 37027","class":"B","notes":"Built 1984 · 59,469 SF · 90.4% leased · CoStar 2★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":5,"suite_light":5,"suite_layout":6,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":4,"fin_opex":7,"amen_gym":3,"amen_conf":3,"amen_food":5,"amen_outdoor":4,"amen_security":5}},{"id":17,"name":"Harpeth Five","address":"105 Westwood Pl, Brentwood, TN 37027","class":"B","notes":"Built 1998 · 66,340 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":5,"amen_outdoor":4,"amen_security":7}},{"id":18,"name":"Westwood Building","address":"112 Westwood Pl, Brentwood, TN 37027","class":"B","notes":"Built 2006 · 43,791 SF · 83.2% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":7,"qual_reno":7,"qual_leed":5,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":8,"suite_cond":7,"fin_rent":4,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":7,"amen_gym":5,"amen_conf":5,"amen_food":5,"amen_outdoor":4,"amen_security":6}},{"id":19,"name":"116 Wilson Pike Circle","address":"116 Wilson Pike Cir, Brentwood, TN 37027","class":"B","notes":"Built 1974, Renovated 2010 · 30,966 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":8,"qual_reno":7,"qual_leed":5,"suite_floor":5,"suite_light":7,"suite_layout":6,"suite_ceiling":8,"suite_cond":8,"fin_rent":8,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":5,"amen_conf":5,"amen_food":6,"amen_outdoor":4,"amen_security":6}},{"id":20,"name":"233 Wilson Pike Cir","address":"233 Wilson Pike Cir, Brentwood, TN 37027","class":"B","notes":"Built 1981 · 7,700 SF · 84.4% leased · CoStar 2★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":5,"suite_cond":4,"fin_rent":8,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":6,"amen_gym":3,"amen_conf":3,"amen_food":6,"amen_outdoor":4,"amen_security":5}},{"id":21,"name":"Seven CityPark","address":"216 Centerview Dr, Brentwood, TN 37027","class":"B","notes":"Built 1998, Renovated 2007 · 67,732 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":8,"qual_reno":7,"qual_leed":5,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":8,"suite_cond":7,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":22,"name":"Quorum II","address":"103 Continental Pl, Brentwood, TN 37027","class":"B","notes":"Built 1995 · 40,049 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":5,"amen_conf":5,"amen_food":5,"amen_outdoor":4,"amen_security":6}},{"id":23,"name":"1001 Health Park Dr","address":"1001 Health Park Dr, Brentwood, TN 37027","class":"A","notes":"Built 2020 · 119,000 SF · 81.2% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":9,"loc_prox":7,"loc_retail":6,"qual_class":8,"qual_lobby":9,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":7,"suite_light":9,"suite_layout":8,"suite_ceiling":9,"suite_cond":10,"fin_rent":5,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":7,"amen_outdoor":7,"amen_security":8}},{"id":24,"name":"Chapple Building","address":"5115 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1983, Renovated 2018 · 32,000 SF · 96.8% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":7,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":5,"suite_light":7,"suite_layout":6,"suite_ceiling":9,"suite_cond":9,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":5,"amen_conf":5,"amen_food":7,"amen_outdoor":6,"amen_security":6}},{"id":25,"name":"5121 Maryland Way","address":"5121 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1985 · 30,123 SF · 100.0% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":5,"suite_light":5,"suite_layout":6,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":3,"amen_conf":3,"amen_food":7,"amen_outdoor":4,"amen_security":5}},{"id":26,"name":"Parklane Building","address":"5200 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1981 · 117,552 SF · 55.2% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":8,"fin_ti":8,"fin_flex":8,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":4,"amen_security":7}},{"id":27,"name":"Brewer Building","address":"5203 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1989 · 23,965 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":5,"qual_reno":4,"qual_leed":3,"suite_floor":4,"suite_light":6,"suite_layout":5,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":5,"amen_conf":5,"amen_food":7,"amen_outdoor":4,"amen_security":6}},{"id":28,"name":"Highwoods Plaza I","address":"5410 Maryland Way, Brentwood, TN 37027","class":"A","notes":"Built 1996 · 103,937 SF · 100.0% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":7,"suite_light":8,"suite_layout":8,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":8,"amen_outdoor":6,"amen_security":8}},{"id":29,"name":"Harpeth Medical Center","address":"1195 Old Hickory Blvd, Brentwood, TN 37027","class":"B","notes":"Built 2001 · 26,000 SF · 100.0% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":4,"qual_lobby":4,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":3,"amen_conf":3,"amen_food":6,"amen_outdoor":4,"amen_security":5}},{"id":30,"name":"9005 Overlook Blvd","address":"9005 Overlook Blvd, Brentwood, TN 37027","class":"B","notes":"Built 1999 · 18,970 SF · 100.0% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":4,"qual_lobby":4,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":3,"amen_conf":3,"amen_food":6,"amen_outdoor":4,"amen_security":5}},{"id":31,"name":"Chesapeake Maryland Farms","address":"205 Powell Pl, Brentwood, TN 37027","class":"B","notes":"Built 1998 · 20,000 SF · 95.5% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":4,"suite_light":6,"suite_layout":5,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":5,"amen_conf":5,"amen_food":7,"amen_outdoor":4,"amen_security":6}},{"id":32,"name":"Seven Springs II","address":"310 Seven Springs Way, Brentwood, TN 37027","class":"A","notes":"Built 2017 · 116,694 SF · 100.0% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":9,"qual_hvac":9,"qual_reno":8,"qual_leed":6,"suite_floor":7,"suite_light":9,"suite_layout":8,"suite_ceiling":9,"suite_cond":9,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":7,"amen_outdoor":7,"amen_security":8}},{"id":33,"name":"Seven Springs Medical Building","address":"317 Seven Springs Way, Brentwood, TN 37027","class":"B","notes":"Built 2006 · 24,000 SF · 80.1% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":6,"qual_lobby":6,"qual_hvac":7,"qual_reno":7,"qual_leed":5,"suite_floor":4,"suite_light":6,"suite_layout":5,"suite_ceiling":8,"suite_cond":7,"fin_rent":5,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":6,"amen_gym":5,"amen_conf":5,"amen_food":6,"amen_outdoor":4,"amen_security":6}},{"id":34,"name":"Seven Springs I","address":"320 Seven Springs Way, Brentwood, TN 37027","class":"A","notes":"Built 2001 · 129,319 SF · 67.6% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":7,"suite_light":8,"suite_layout":8,"suite_ceiling":6,"suite_cond":7,"fin_rent":5,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":7,"amen_outdoor":6,"amen_security":8}},{"id":35,"name":"The Summit Building","address":"201 Summit View Dr, Brentwood, TN 37027","class":"B","notes":"Built 1983 · 86,380 SF · 100.0% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":6,"qual_lobby":6,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":36,"name":"Harpeth Three","address":"105 Westpark Dr, Brentwood, TN 37027","class":"B","notes":"Built 1987, Renovated 2000 · 80,638 SF · 74.7% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":5,"amen_outdoor":4,"amen_security":7}},{"id":37,"name":"Harpeth Two","address":"109 Westpark Dr, Brentwood, TN 37027","class":"B","notes":"Built 1984 · 79,333 SF · 93.0% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":4,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":5,"amen_outdoor":4,"amen_security":7}},{"id":38,"name":"Harpeth Four","address":"100 Westwood Pl, Brentwood, TN 37027","class":"A","notes":"Built 1989 · 81,817 SF · 96.5% leased · CoStar 4★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":8,"qual_lobby":8,"qual_hvac":5,"qual_reno":4,"qual_leed":3,"suite_floor":6,"suite_light":8,"suite_layout":7,"suite_ceiling":5,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":5,"amen_outdoor":6,"amen_security":8}},{"id":39,"name":"Six CityPark","address":"214 Centerview Dr, Brentwood, TN 37027","class":"B","notes":"Built 1996, Renovated 2018 · 67,610 SF · 84.0% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":7,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":6,"suite_light":7,"suite_layout":7,"suite_ceiling":9,"suite_cond":9,"fin_rent":5,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":6,"amen_security":7}},{"id":40,"name":"One CityPark","address":"7003 Chadwick Dr, Brentwood, TN 37027","class":"B","notes":"Built 1983, Renovated 2007 · 51,480 SF · 85.1% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":8,"qual_reno":7,"qual_leed":5,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":8,"suite_cond":7,"fin_rent":6,"fin_freerent":5,"fin_ti":5,"fin_flex":5,"fin_opex":7,"amen_gym":5,"amen_conf":5,"amen_food":6,"amen_outdoor":4,"amen_security":6}},{"id":41,"name":"Bldg 200","address":"104 East Park Dr, Brentwood, TN 37027","class":"B","notes":"Built 1985 · 7,008 SF · 72.2% leased · CoStar 2★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":5,"suite_cond":4,"fin_rent":6,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":6,"amen_gym":3,"amen_conf":3,"amen_food":5,"amen_outdoor":4,"amen_security":5}},{"id":42,"name":"Two CityPark","address":"7000 Executive Center Dr, Brentwood, TN 37027","class":"B","notes":"Built 1983, Renovated 2007 · 40,605 SF · 92.7% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":8,"qual_reno":7,"qual_leed":5,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":8,"suite_cond":7,"fin_rent":6,"fin_freerent":5,"fin_ti":5,"fin_flex":4,"fin_opex":7,"amen_gym":5,"amen_conf":5,"amen_food":6,"amen_outdoor":4,"amen_security":6}},{"id":43,"name":"Eight CityPark – Mooreland House","address":"7100 Executive Center Dr, Brentwood, TN 37027","class":"B","notes":"Built 1838, Renovated 1988 · 12,921 SF · 100.0% leased · CoStar 2★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":4,"qual_lobby":4,"qual_hvac":5,"qual_reno":4,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":5,"suite_cond":4,"fin_rent":6,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":3,"amen_conf":3,"amen_food":6,"amen_outdoor":4,"amen_security":5}},{"id":44,"name":"Four CityPark","address":"278 Franklin Rd, Brentwood, TN 37027","class":"B","notes":"Built 1986, Renovated 2007 · 71,697 SF · 97.6% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":8,"qual_reno":7,"qual_leed":5,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":8,"suite_cond":7,"fin_rent":4,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":45,"name":"Premier Building","address":"5217 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1999 · 44,402 SF · 72.7% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":7,"amen_gym":5,"amen_conf":5,"amen_food":7,"amen_outdoor":4,"amen_security":6}},{"id":46,"name":"5300 Maryland Way","address":"5300 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1985 · 45,561 SF · 100.0% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":5,"suite_light":5,"suite_layout":6,"suite_ceiling":5,"suite_cond":4,"fin_rent":6,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":3,"amen_conf":3,"amen_food":7,"amen_outdoor":4,"amen_security":5}},{"id":47,"name":"Gateway II Office Complex","address":"5500 Maryland Way, Brentwood, TN 37027","class":"A","notes":"Built 2007 · 117,000 SF · 78.1% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":8,"qual_reno":7,"qual_leed":5,"suite_floor":7,"suite_light":8,"suite_layout":8,"suite_ceiling":8,"suite_cond":8,"fin_rent":5,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":7,"amen_gym":8,"amen_conf":8,"amen_food":8,"amen_outdoor":6,"amen_security":8}},{"id":48,"name":"Eastpark II","address":"2 Maryland Farms, Brentwood, TN 37027","class":"B","notes":"Built 1976, Renovated 2018 · 88,148 SF · 96.6% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":7,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":6,"suite_light":7,"suite_layout":7,"suite_ceiling":9,"suite_cond":9,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":6,"amen_security":7}},{"id":49,"name":"761 Old Hickory Blvd","address":"761 Old Hickory Blvd, Brentwood, TN 37027","class":"B","notes":"Built 1983 · 43,829 SF · 69.7% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":5,"suite_light":5,"suite_layout":6,"suite_ceiling":5,"suite_cond":4,"fin_rent":6,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":7,"amen_gym":3,"amen_conf":3,"amen_food":6,"amen_outdoor":4,"amen_security":5}},{"id":50,"name":"Overlook I","address":"214 Overlook Cir, Brentwood, TN 37027","class":"B","notes":"Built 1988 · 101,599 SF · 86.8% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":9,"loc_prox":7,"loc_retail":6,"qual_class":6,"qual_lobby":6,"qual_hvac":5,"qual_reno":4,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":5,"suite_cond":4,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":5,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":51,"name":"5038 Thoroughbred Ln","address":"5038 Thoroughbred Ln, Brentwood, TN 37027","class":"B","notes":"Built 1984 · 5,846 SF · 100.0% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":5,"suite_cond":4,"fin_rent":6,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":5,"amen_gym":3,"amen_conf":3,"amen_food":7,"amen_outdoor":4,"amen_security":5}},{"id":52,"name":"5046 Thoroughbred Ln","address":"5046 Thoroughbred Ln, Brentwood, TN 37027","class":"B","notes":"Built 1984 · 7,772 SF · 58.8% leased · CoStar 2★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":4,"qual_lobby":4,"qual_hvac":4,"qual_reno":3,"qual_leed":3,"suite_floor":4,"suite_light":5,"suite_layout":5,"suite_ceiling":5,"suite_cond":4,"fin_rent":6,"fin_freerent":8,"fin_ti":8,"fin_flex":8,"fin_opex":7,"amen_gym":3,"amen_conf":3,"amen_food":7,"amen_outdoor":4,"amen_security":5}},{"id":53,"name":"7105 Town Center Way","address":"7105 Town Center Way, Brentwood, TN 37027","class":"B","notes":"Built 2019 · 13,500 SF · 60.3% leased · CoStar 3★","scores":{"loc_transit":6,"loc_walk":7,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":7,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":4,"suite_light":7,"suite_layout":5,"suite_ceiling":9,"suite_cond":9,"fin_rent":6,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":7,"amen_gym":5,"amen_conf":5,"amen_food":6,"amen_outdoor":6,"amen_security":6}},{"id":54,"name":"Virginia Way Plaza","address":"5141 Virginia Way, Brentwood, TN 37027","class":"A","notes":"Built 2001 · 81,532 SF · 93.9% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":6,"suite_light":8,"suite_layout":7,"suite_ceiling":6,"suite_cond":7,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":4,"fin_opex":7,"amen_gym":8,"amen_conf":8,"amen_food":7,"amen_outdoor":6,"amen_security":8}},{"id":55,"name":"Park Center II","address":"5250 Virginia Way, Brentwood, TN 37027","class":"B","notes":"Built 2001 · 100,291 SF · 38.3% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":8,"fin_ti":8,"fin_flex":8,"fin_opex":7,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":4,"amen_security":7}},{"id":56,"name":"Virginia Springs Phase II","address":"5511 Virginia Way, Brentwood, TN 37027","class":"A","notes":"Built 2020 · 111,000 SF · 100.0% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":9,"qual_hvac":9,"qual_reno":9,"qual_leed":8,"suite_floor":7,"suite_light":9,"suite_layout":8,"suite_ceiling":9,"suite_cond":10,"fin_rent":3,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":7,"amen_gym":8,"amen_conf":8,"amen_food":8,"amen_outdoor":7,"amen_security":8}},{"id":57,"name":"6 Cadillac Dr","address":"6 Cadillac Dr, Brentwood, TN 37027","class":"B","notes":"Built 1998 · 119,458 SF · 97.8% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":4,"amen_security":7}},{"id":58,"name":"8 Cadillac Dr","address":"8 Cadillac Dr, Brentwood, TN 37027","class":"A","notes":"Built 2006 · 128,976 SF · 92.8% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":7,"qual_reno":7,"qual_leed":5,"suite_floor":7,"suite_light":8,"suite_layout":8,"suite_ceiling":8,"suite_cond":8,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":4,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":8,"amen_outdoor":6,"amen_security":8}},{"id":59,"name":"10 Cadillac Dr","address":"10 Cadillac Dr, Brentwood, TN 37027","class":"A","notes":"Built 1998 · 117,000 SF · 96.0% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":7,"suite_light":8,"suite_layout":8,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":8,"amen_outdoor":6,"amen_security":8}},{"id":60,"name":"Creekside","address":"12 Cadillac Dr, Brentwood, TN 37027","class":"A","notes":"Built 2007 · 125,923 SF · 80.5% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":8,"qual_reno":7,"qual_leed":5,"suite_floor":7,"suite_light":8,"suite_layout":8,"suite_ceiling":8,"suite_cond":8,"fin_rent":5,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":8,"amen_outdoor":6,"amen_security":8}},{"id":61,"name":"Hickory Trace","address":"104 Continental Pl, Brentwood, TN 37027","class":"B","notes":"Built 2001 · 55,004 SF · 32.2% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":8,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":5,"suite_light":6,"suite_layout":6,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":8,"fin_ti":8,"fin_flex":8,"fin_opex":6,"amen_gym":5,"amen_conf":5,"amen_food":5,"amen_outdoor":4,"amen_security":6}},{"id":62,"name":"Brentwood Commons III","address":"1000 Health Park Dr, Brentwood, TN 37027","class":"A","notes":"Built 2017 · 130,262 SF · 89.7% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":9,"loc_prox":7,"loc_retail":6,"qual_class":8,"qual_lobby":9,"qual_hvac":9,"qual_reno":8,"qual_leed":6,"suite_floor":7,"suite_light":9,"suite_layout":8,"suite_ceiling":9,"suite_cond":9,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":5,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":7,"amen_outdoor":7,"amen_security":8}},{"id":63,"name":"Bridge Crossing South","address":"5301 Maryland Way, Brentwood, TN 37027","class":"B","notes":"Built 1989, Renovated 2017 · 200,779 SF · 69.2% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":7,"qual_hvac":9,"qual_reno":8,"qual_leed":6,"suite_floor":8,"suite_light":7,"suite_layout":8,"suite_ceiling":9,"suite_cond":8,"fin_rent":5,"fin_freerent":7,"fin_ti":7,"fin_flex":7,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":6,"amen_security":7}},{"id":64,"name":"Brentwood Commons II","address":"750 Old Hickory Blvd, Brentwood, TN 37027","class":"B","notes":"Built 1984, Renovated 2003 · 99,550 SF · 91.6% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":5,"loc_parking":8,"loc_prox":7,"loc_retail":6,"qual_class":6,"qual_lobby":6,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":6,"suite_light":6,"suite_layout":7,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":5,"fin_ti":5,"fin_flex":4,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":6,"amen_outdoor":4,"amen_security":7}},{"id":65,"name":"Highwoods Plaza II","address":"103 Powell Ct, Brentwood, TN 37027","class":"A","notes":"Built 1997 · 103,709 SF · 81.4% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":7,"suite_light":8,"suite_layout":8,"suite_ceiling":6,"suite_cond":6,"fin_rent":5,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":6,"amen_gym":8,"amen_conf":8,"amen_food":8,"amen_outdoor":6,"amen_security":8}},{"id":66,"name":"SouthPointe","address":"5301 Virginia Way, Brentwood, TN 37027","class":"B","notes":"Built 1998 · 103,578 SF · 96.0% leased · CoStar 3★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":9,"loc_prox":7,"loc_retail":7,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":4,"fin_ti":4,"fin_flex":4,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":7,"amen_outdoor":4,"amen_security":7}},{"id":67,"name":"Westwood South","address":"210 Westwood Pl, Brentwood, TN 37027","class":"B","notes":"Built 1999 · 127,432 SF · 31.5% leased · CoStar 3★","scores":{"loc_transit":4,"loc_walk":4,"loc_parking":9,"loc_prox":7,"loc_retail":5,"qual_class":6,"qual_lobby":6,"qual_hvac":6,"qual_reno":5,"qual_leed":3,"suite_floor":7,"suite_light":6,"suite_layout":8,"suite_ceiling":6,"suite_cond":5,"fin_rent":5,"fin_freerent":8,"fin_ti":8,"fin_flex":8,"fin_opex":6,"amen_gym":6,"amen_conf":6,"amen_food":5,"amen_outdoor":4,"amen_security":7}},{"id":68,"name":"Maryland Farms Office Park (Winners Cir)","address":"100 Winners Cir, Brentwood, TN 37027","class":"A","notes":"Built 1987, Renovated 2003 · 73,668 SF · 82.4% leased · CoStar 4★","scores":{"loc_transit":5,"loc_walk":6,"loc_parking":8,"loc_prox":7,"loc_retail":7,"qual_class":8,"qual_lobby":8,"qual_hvac":7,"qual_reno":6,"qual_leed":3,"suite_floor":6,"suite_light":8,"suite_layout":7,"suite_ceiling":6,"suite_cond":7,"fin_rent":5,"fin_freerent":6,"fin_ti":6,"fin_flex":5,"fin_opex":6,"amen_gym":6,"amen_conf":7,"amen_food":7,"amen_outdoor":6,"amen_security":8}}],"nextId":69};
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem('rrp_building_db_v2');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (Array.isArray(saved.buildings) && saved.buildings.length > 0) {
+        buildingDB = saved.buildings;
+        nextId = saved.nextId || (Math.max(0, ...buildingDB.map(b => b.id)) + 1);
+        return;
+      }
+    }
+  } catch(e) {}
+  // First run — seed with Brentwood submarket data from CoStar
+  buildingDB = JSON.parse(JSON.stringify(BRENTWOOD_DB.buildings));
+  nextId = BRENTWOOD_DB.nextId;
+  saveDB(); // persist so edits are preserved
+}
+
+function saveDB() {
+  try {
+    localStorage.setItem('rrp_building_db_v2', JSON.stringify({ buildings: buildingDB, nextId }));
+  } catch(e) {}
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function avgScore(b) {
+  const vals = Object.values(b.scores || {});
+  if (!vals.length) return '—';
+  return (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(1);
+}
+
+function computeMatch(b) {
+  const totalCW = CATS.reduce((s, c) => s + catW[c.id], 0);
+  let total = 0;
+  const cats = {};
+  const contribs = [];
+
+  CATS.forEach(c => {
+    const cw = catW[c.id];
+    const cn = cw / totalCW;
+    const totalAW = c.attrs.reduce((s, a) => s + attrW[c.id + '_' + a.id], 0);
+    let cs = 0;
+    c.attrs.forEach(a => {
+      const aw = attrW[c.id + '_' + a.id];
+      const an = aw / totalAW;
+      const sc = (b.scores && b.scores[c.id + '_' + a.id]) || 5;
+      cs += an * (sc / 10);
+      // Track for strengths: sort by client weight × building score
+      contribs.push({ label: a.name, score: sc, combined: cn * an * sc });
+    });
+    cats[c.id] = Math.round(cs * 100);
+    total += cn * cs;
+  });
+
+  // Top 3 attributes where building excels at what client values most
+  const strengths = [...contribs].sort((a, b) => b.combined - a.combined).slice(0, 3);
+  return { b, total: Math.round(total * 100), cats, strengths };
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadDB();
+  document.getElementById('evalDate').value = new Date().toISOString().split('T')[0];
+  renderCatGrid();
+  renderBuildingList();
+  document.querySelectorAll('.tb').forEach(btn => {
+    btn.addEventListener('click', () => goTab(btn.dataset.tab));
+  });
+});
+
+function goTab(t) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(el => el.classList.remove('on'));
+  document.getElementById('tab-' + t).classList.add('on');
+  document.querySelector(`.tb[data-tab="${t}"]`).classList.add('on');
+  if (t === 'matches') renderMatches();
+}
+
+function syncClient() {
+  const n = document.getElementById('clientName').value.trim();
+  document.getElementById('hdrClient').style.display = n ? '' : 'none';
+  document.getElementById('hdrName').textContent = n;
+}
+
+// ─── CLIENT SETUP: CATEGORY WEIGHTS ──────────────────────────────────────────
+function renderCatGrid() {
+  document.getElementById('catgrid').innerHTML = CATS.map(c => `
+    <div class="catcard">
+      <div class="cathdr">
+        <span class="catname">${c.icon} ${c.name}</span>
+        <span class="catbadge" id="cb_${c.id}">${catW[c.id]}/10</span>
+      </div>
+      <div class="catbody">
+        <div class="seclabel">Category Importance</div>
+        <div class="srow">
+          <div class="swrap">
+            <input type="range" class="catslider" min="1" max="10" value="${catW[c.id]}"
+              oninput="setCatW('${c.id}', +this.value)">
+            <div class="slabels"><span>Low</span><span>High</span></div>
+          </div>
+          <div class="sval" id="cv_${c.id}">${catW[c.id]}</div>
+        </div>
+        <hr class="sdivider">
+        <div class="seclabel">Attribute Weights</div>
+        ${c.attrs.map(a => `
+          <div class="srow">
+            <div class="slabel">${a.name}</div>
+            <div class="swrap">
+              <input type="range" class="attrslider" min="1" max="10" value="${attrW[c.id + '_' + a.id]}"
+                oninput="setAttrW('${c.id}', '${a.id}', +this.value)">
+            </div>
+            <div class="sval" id="av_${c.id}_${a.id}">${attrW[c.id + '_' + a.id]}</div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function setCatW(cid, v) {
+  catW[cid] = v;
+  document.getElementById('cb_' + cid).textContent = v + '/10';
+  document.getElementById('cv_' + cid).textContent = v;
+}
+function setAttrW(cid, aid, v) {
+  attrW[cid + '_' + aid] = v;
+  document.getElementById(`av_${cid}_${aid}`).textContent = v;
+}
+
+// ─── BUILDING DATABASE LIST ───────────────────────────────────────────────────
+function renderBuildingList() {
+  const count = buildingDB.length;
+  document.getElementById('dbBadge').textContent = count;
+  document.getElementById('dbCountLabel').textContent = count;
+  const el = document.getElementById('blist');
+
+  if (!count) {
+    el.innerHTML = `
+      <div class="empty">
+        <h3>No buildings yet</h3>
+        <p>Add buildings to your submarket database. Once rated, any client's preferences will instantly reveal their best matches — no re-scoring needed.</p>
+        <button class="btn btn-navy" onclick="openModal(null)">+ Add Your First Building</button>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = buildingDB.map((b, i) => {
+    const avg = avgScore(b);
+    return `
+      <div class="brow">
+        <div class="brow-num">${i + 1}</div>
+        <div class="brow-info">
+          <div class="brow-name">${esc(b.name)}</div>
+          <div class="brow-addr">${esc(b.address || '—')}</div>
+        </div>
+        ${b.class ? `<span class="brow-class cls-${b.class}">Class ${b.class}</span>` : ''}
+        <div class="brow-score">${avg}<small> /10 avg</small></div>
+        <div class="brow-actions">
+          <button class="btn btn-outline btn-xs" onclick="openModal(${b.id})">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteBuilding(${b.id})">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── BUILDING MODAL ───────────────────────────────────────────────────────────
+function openModal(id) {
+  editingId = id;
+  const b = id ? buildingDB.find(x => x.id === id) : null;
+
+  document.getElementById('modalTitle').textContent = b ? 'Edit Building' : 'Add Building';
+  document.getElementById('mName').value  = b ? b.name : '';
+  document.getElementById('mAddr').value  = b ? (b.address || '') : '';
+  document.getElementById('mClass').value = b ? (b.class || '') : '';
+  document.getElementById('mNotes').value = b ? (b.notes || '') : '';
+  document.getElementById('mDeleteBtn').style.display = b ? '' : 'none';
+
+  const scores = b ? (b.scores || {}) : {};
+
+  document.getElementById('modalCats').innerHTML = CATS.map(c => `
+    <div class="modal-cat">
+      <div class="modal-cathdr">${c.icon} ${c.name}</div>
+      ${c.attrs.map(a => {
+        const key = c.id + '_' + a.id;
+        const sc = scores[key] !== undefined ? scores[key] : 5;
+        return `
+          <div class="modal-arow">
+            <div class="modal-alabel">${a.name}</div>
+            <div class="modal-bar">
+              <div class="modal-barfill" id="mb_${key}" style="width:${sc * 10}%"></div>
+            </div>
+            <input type="number" class="modal-sinp" id="ms_${key}"
+              min="1" max="10" value="${sc}"
+              oninput="onModalScore('${key}', this.value)"
+              onblur="clampModal(this, '${key}')">
+          </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+  editingId = null;
+}
+
+function modalBgClick(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function onModalScore(key, raw) {
+  let n = Math.min(10, Math.max(1, parseInt(raw) || 5));
+  const fill = document.getElementById('mb_' + key);
+  if (fill) fill.style.width = (n * 10) + '%';
+}
+
+function clampModal(inp, key) {
+  let v = Math.min(10, Math.max(1, parseInt(inp.value) || 5));
+  inp.value = v;
+  onModalScore(key, v);
+}
+
+function saveBuilding() {
+  const name = document.getElementById('mName').value.trim();
+  if (!name) { alert('Please enter a building name.'); document.getElementById('mName').focus(); return; }
+
+  const scores = {};
+  CATS.forEach(c => c.attrs.forEach(a => {
+    const key = c.id + '_' + a.id;
+    const inp = document.getElementById('ms_' + key);
+    scores[key] = Math.min(10, Math.max(1, parseInt(inp?.value) || 5));
+  }));
+
+  if (editingId) {
+    const b = buildingDB.find(x => x.id === editingId);
+    if (b) { b.name = name; b.address = document.getElementById('mAddr').value.trim(); b.class = document.getElementById('mClass').value; b.notes = document.getElementById('mNotes').value.trim(); b.scores = scores; }
+  } else {
+    buildingDB.push({ id: nextId++, name, address: document.getElementById('mAddr').value.trim(), class: document.getElementById('mClass').value, notes: document.getElementById('mNotes').value.trim(), scores });
+  }
+
+  saveDB();
+  closeModal();
+  renderBuildingList();
+}
+
+function deleteCurrentBuilding() {
+  if (!editingId) return;
+  const b = buildingDB.find(x => x.id === editingId);
+  if (!b || !confirm(`Delete "${b.name}"? This cannot be undone.`)) return;
+  buildingDB = buildingDB.filter(x => x.id !== editingId);
+  saveDB();
+  closeModal();
+  renderBuildingList();
+}
+
+function deleteBuilding(id) {
+  const b = buildingDB.find(x => x.id === id);
+  if (!b || !confirm(`Delete "${b.name}"?`)) return;
+  buildingDB = buildingDB.filter(x => x.id !== id);
+  saveDB();
+  renderBuildingList();
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+function exportDB() {
+  if (!buildingDB.length) { alert('No buildings to export yet.'); return; }
+  const blob = new Blob([JSON.stringify({ buildings: buildingDB, nextId }, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'record-building-database.json' });
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function importDB(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data.buildings)) throw new Error();
+      if (buildingDB.length && !confirm(`Replace your ${buildingDB.length} existing buildings with ${data.buildings.length} from this file?`)) return;
+      buildingDB = data.buildings;
+      nextId = data.nextId || (Math.max(0, ...buildingDB.map(b => b.id)) + 1);
+      saveDB();
+      renderBuildingList();
+    } catch(err) { alert('Invalid file. Use a previously exported building database JSON.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ─── TOP MATCHES ──────────────────────────────────────────────────────────────
+function renderMatches() {
+  // Persist showTopN across re-renders
+  const sel = document.getElementById('showTopN');
+  if (sel) showTopN = parseInt(sel.value) || 10;
+
+  const el = document.getElementById('matchesContent');
+
+  if (!buildingDB.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <h3>No buildings in database</h3>
+        <p>Head to the Building Database tab to add and rate your submarket buildings. Once they're scored, this tab will instantly rank them for any client.</p>
+        <button class="btn btn-navy" onclick="goTab('database')">Go to Building Database →</button>
+      </div>`;
+    return;
+  }
+
+  const ranked = buildingDB.map(computeMatch).sort((a, b) => b.total - a.total);
+  const shown  = showTopN === 0 ? ranked : ranked.slice(0, showTopN);
+
+  const client  = document.getElementById('clientName').value.trim() || 'Client';
+  const date    = document.getElementById('evalDate').value;
+  const dateFmt = date ? new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) : '';
+
+  el.innerHTML = `
+    <div class="matches-header">
+      <div class="matches-htitle">⭐ Top Building Matches</div>
+      <div class="matches-hsub">${esc(client)}${dateFmt ? ' · ' + dateFmt : ''} · Record Real Estate Partners</div>
+    </div>
+    <div class="matches-toolbar">
+      <div class="matches-label">Showing top</div>
+      <select class="show-select" id="showTopN" onchange="renderMatches()">
+        ${[5, 10, 15].map(n => `<option value="${n}" ${n === showTopN ? 'selected' : ''}>${n}</option>`).join('')}
+        <option value="0" ${showTopN === 0 ? 'selected' : ''}>All ${ranked.length}</option>
+      </select>
+      <div class="matches-label">of ${ranked.length} buildings</div>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="goTab('setup')">← Adjust Weights</button>
+        <button class="btn btn-navy btn-sm" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </div>
+    <div class="match-cards">
+      ${shown.map((m, i) => `
+        <div class="mcard ${i === 0 ? 'top' : ''}">
+          <div class="mcard-rank">
+            ${i === 0 ? '<div class="mcard-star">⭐</div>' : ''}
+            <div class="mcard-ranknum">#${i + 1}</div>
+            <div class="mcard-ranklabel">RANK</div>
+          </div>
+          <div class="mcard-body">
+            <div class="mcard-top">
+              <div class="mcard-info">
+                <div class="mcard-name">${esc(m.b.name)}</div>
+                <div class="mcard-addr">${esc(m.b.address || '—')}</div>
+                <div class="mcard-meta">
+                  ${m.b.class ? `<span class="brow-class cls-${m.b.class}">Class ${m.b.class}</span>` : ''}
+                  ${m.b.notes ? `<span style="font-size:11px;color:var(--muted)">${esc(m.b.notes)}</span>` : ''}
+                </div>
+              </div>
+              <div class="mcard-score">
+                <div class="score-circ">
+                  <div class="score-num">${m.total}</div>
+                  <div class="score-den">/100</div>
+                </div>
+              </div>
+            </div>
+            <div class="mcard-cats">
+              ${CATS.map(c => `
+                <div class="mcat-pill" title="${c.name}: ${m.cats[c.id]}/100">
+                  <span class="mcat-icon">${c.icon}</span>
+                  <div class="mcat-bar"><div class="mcat-fill" style="width:${m.cats[c.id]}%"></div></div>
+                  <span class="mcat-pct">${m.cats[c.id]}</span>
+                </div>`).join('')}
+            </div>
+            <div class="mcard-strengths">
+              <b>Why it fits this client: </b>
+              ${m.strengths.map(s => `
+                <span class="str-item">
+                  ${esc(s.label)}&nbsp;<span class="str-score">${s.score}/10</span>
+                </span>`).join('')}
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="actrow" style="margin-top:20px;">
+      <button class="btn btn-outline btn-sm" onclick="goTab('setup')">← Back to Client Setup</button>
+    </div>`;
+}
+</script>
+</body>
+</html>
