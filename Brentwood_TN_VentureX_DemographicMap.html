@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brentwood TN Market Intelligence | Venture X</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* ── HEADER ── */
+    #header {
+      background: #111111;
+      color: white;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      flex-shrink: 0;
+      z-index: 1000;
+      border-bottom: 2px solid #F5C000;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .venturex-wordmark {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #F5C000;
+    }
+    .header-divider { width: 1px; height: 28px; background: rgba(245,192,0,0.4); }
+    .header-subtitle { font-size: 13px; font-weight: 400; opacity: 0.9; color: white; }
+    .header-right { font-size: 11px; opacity: 0.8; text-align: right; line-height: 1.5; color: white; }
+
+    /* ── MAP AREA ── */
+    #map-container { position: relative; flex: 1; min-height: 0; }
+    #map { width: 100%; height: 100%; }
+
+    /* ── LAYER CONTROL PANEL ── */
+    #layer-panel {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.14);
+      z-index: 900;
+      width: 236px;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: #111111;
+      color: white;
+      padding: 10px 14px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      border-bottom: 2px solid #F5C000;
+    }
+    .panel-section {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .panel-section:last-child { border-bottom: none; }
+    .panel-section-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 9px;
+    }
+
+    /* demographic toggle buttons */
+    .demo-btns { display: flex; gap: 6px; }
+    .demo-btn {
+      flex: 1;
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 5px;
+      cursor: pointer;
+      background: white;
+      color: #555;
+      transition: all 0.15s;
+    }
+    .demo-btn.active { background: #F5C000; color: #111111; border-color: #F5C000; }
+    .demo-btn:hover:not(.active) { border-color: #bbb; background: #fafafa; }
+
+    /* brand toggle rows */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row:last-child { margin-bottom: 0; }
+    .toggle-label { display: flex; align-items: center; gap: 9px; font-size: 12px; color: #333; }
+    .brand-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* pill toggle */
+    .toggle-pill {
+      width: 34px; height: 18px;
+      background: #F5C000;
+      border-radius: 9px;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-pill.off { background: #d0d0d0; }
+    .toggle-pill::after {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      background: white;
+      border-radius: 50%;
+      top: 2px; left: 18px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-pill.off::after { left: 2px; }
+
+    .source-note { font-size: 10px; color: #aaa; line-height: 1.5; }
+
+    /* ── LEGEND ── */
+    #legend {
+      position: absolute;
+      bottom: 46px;
+      left: 14px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+      padding: 13px 16px;
+      z-index: 900;
+      min-width: 205px;
+    }
+    .legend-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; font-size: 11px; color: #444; }
+    .legend-swatch { width: 18px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .legend-divider { border: none; border-top: 1px solid #f0f0f0; margin: 9px 0; }
+    .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 0 1.5px currentColor; }
+
+    /* ── POPUP STYLES ── */
+    .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; }
+    .popup-inner { padding: 14px 16px; }
+    .popup-brand-bar { padding: 6px 16px; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: white; text-transform: uppercase; }
+    .popup-brand-bar.dark-text { color: #111111; }
+    .popup-name { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+    .popup-address { font-size: 11px; color: #666; line-height: 1.5; }
+    .popup-note { font-size: 10px; color: #888; margin-top: 5px; line-height: 1.5; }
+    .popup-row { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-top: 1px solid #f0f0f0; margin-top: 5px; }
+    .popup-row span { color: #888; }
+    .popup-row strong { color: #1a1a1a; }
+    .popup-source { font-size: 9px; color: #ccc; margin-top: 6px; border-top: 1px solid #f5f5f5; padding-top: 6px; }
+
+    /* ── CANDIDATE SITE MARKER ── */
+    .prop-icon {
+      width: 22px; height: 22px;
+      background: #F5C000;
+      border: 2.5px solid #111111;
+      transform: rotate(45deg);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+      border-radius: 2px;
+    }
+
+    /* ── PRINT BUTTON ── */
+    #print-btn {
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 900;
+      background: white;
+      border: none;
+      border-left: 3px solid #F5C000;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: box-shadow 0.15s;
+    }
+    #print-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.16); }
+
+    /* ── FOOTER ── */
+    #footer {
+      background: #0a0a0a;
+      color: #666;
+      font-size: 10px;
+      padding: 0 20px;
+      height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      #header, #footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #layer-panel, #print-btn { display: none; }
+      #map-container { height: 680px; }
+      body { overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-left">
+    <div class="venturex-wordmark">VENTURE X</div>
+    <div class="header-divider"></div>
+    <div class="header-subtitle">Brentwood / Nashville Metro — Market Intelligence &amp; Coworking Landscape</div>
+  </div>
+  <div class="header-right">
+    Prepared for: Venture X Business Development<br>
+    Geography: Nashville MSA (Davidson &amp; Williamson Counties) · May 2026
+  </div>
+</div>
+
+<!-- MAP -->
+<div id="map-container">
+  <div id="map"></div>
+
+  <!-- Export button -->
+  <button id="print-btn" onclick="window.print()" title="Print or save as PDF">
+    🖨 Export / Print
+  </button>
+
+  <!-- Layer control panel -->
+  <div id="layer-panel">
+    <div class="panel-header">Map Layers &amp; Filters</div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Demographic View</div>
+      <div class="demo-btns">
+        <button class="demo-btn active" id="btn-income" onclick="setDemoView('income')">Income</button>
+        <button class="demo-btn" id="btn-density" onclick="setDemoView('density')">Density</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Coworking Operators</div>
+
+      <div class="toggle-row" onclick="toggleBrand('Regus')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#E31837;"></div>
+          Regus
+        </div>
+        <div class="toggle-pill" id="pill-Regus"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('HQ')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#1A5276;"></div>
+          HQ
+        </div>
+        <div class="toggle-pill" id="pill-HQ"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('eSpaces')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#C9A050;"></div>
+          e|spaces
+        </div>
+        <div class="toggle-pill" id="pill-eSpaces"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('Merris')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#27AE60;"></div>
+          Merris
+        </div>
+        <div class="toggle-pill" id="pill-Merris"></div>
+      </div>
+
+      <div class="toggle-row" onclick="toggleBrand('Werkstatt')">
+        <div class="toggle-label">
+          <div class="brand-dot" style="background:#8E44AD;"></div>
+          Werkstatt
+        </div>
+        <div class="toggle-pill" id="pill-Werkstatt"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Venture X Candidate Site</div>
+      <div class="toggle-row" onclick="toggleProperties()">
+        <div class="toggle-label">
+          <div style="width:13px; height:13px; background:#F5C000; border:2px solid #111; transform:rotate(45deg); flex-shrink:0; border-radius:1px;"></div>
+          155 Franklin Road
+        </div>
+        <div class="toggle-pill" id="pill-Properties"></div>
+      </div>
+      <div style="font-size:10px; color:#888; line-height:1.5; margin-top:6px;">
+        Brentwood, TN · Premier Franklin Rd corridor · Williamson County
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Data Sources</div>
+      <div class="source-note">
+        Demographics: U.S. Census Bureau ACS 5-Year Estimates (2022).<br>
+        Coworking: Regus, HQ, e|spaces, Merris &amp; Werkstatt public directories.<br>
+        <em>Locations approximate. For planning use only.</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div class="legend-title" id="legend-title">Median Household Income</div>
+    <div id="income-legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#084594;"></div> Over $100,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#2171b5;"></div> $80,000 – $100,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#6baed6;"></div> $60,000 – $80,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#bdd7e7;"></div> $40,000 – $60,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#eff3ff; border:1px solid #d8d8d8;"></div> Under $40,000</div>
+    </div>
+    <div id="density-legend" style="display:none;">
+      <div class="legend-item"><div class="legend-swatch" style="background:#54278f;"></div> Very High (&gt;4,500/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#756bb1;"></div> High (3,000–4,500/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#9e9ac8;"></div> Moderate (2,000–3,000/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#cbc9e2;"></div> Low (1,000–2,000/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#f2f0f7; border:1px solid #d8d8d8;"></div> Sparse (&lt;1,000/mi²)</div>
+    </div>
+    <hr class="legend-divider">
+    <div class="legend-title">Candidate Site</div>
+    <div class="legend-item">
+      <div style="width:12px; height:12px; background:#F5C000; border:2px solid #111; transform:rotate(45deg); flex-shrink:0; border-radius:1px;"></div>
+      155 Franklin Rd, Brentwood
+    </div>
+    <hr class="legend-divider">
+    <div class="legend-title">Coworking Operators</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E31837; color:#E31837;"></div> Regus</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1A5276; color:#1A5276;"></div> HQ</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#C9A050; color:#C9A050;"></div> e|spaces</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#27AE60; color:#27AE60;"></div> Merris</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8E44AD; color:#8E44AD;"></div> Werkstatt</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div id="footer">
+  <span>Sources: U.S. Census Bureau ACS 2022 · Regus, HQ, e|spaces, Merris &amp; Werkstatt public directories · OpenStreetMap / CARTO · Prepared by Record Rep for Venture X Business Development</span>
+  <span style="color:#444;">⚠ Location data is approximate and intended for strategic planning purposes only.</span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+// ═══════════════════════════════════════════════════════
+//  ZIP CODE DATA — Nashville / Brentwood Metro (MSA)
+//  [zip, neighborhood, lat, lng, medianIncome, popDensity, radiusM]
+//  Source: U.S. Census ACS 5-Year Estimates (2022), approx.
+// ═══════════════════════════════════════════════════════
+const zipData = [
+  // ── Brentwood / Williamson County Core ───────────────
+  ["37027","Brentwood",                    36.0306,-86.7892, 135000, 1800, 3600],
+  ["37067","Franklin North / Cool Springs",35.9678,-86.8342, 100000, 2600, 3000],
+  ["37064","Franklin",                     35.9252,-86.8688,  90000, 2800, 3500],
+  ["37069","Harpeth Hills / Bellevue S.",  36.0397,-86.8940, 125000, 1400, 3200],
+  ["37135","Nolensville",                  35.9524,-86.6699, 112000, 1500, 3200],
+  ["37179","Thompsons Station",            35.8611,-86.9079, 110000, 1200, 3400],
+  ["37174","Spring Hill",                  35.7510,-86.9302,  88000, 2200, 3800],
+  // ── Nashville / Davidson County Core ─────────────────
+  ["37201","Downtown Nashville",           36.1648,-86.7816,  62000, 5500, 1500],
+  ["37203","Gulch / SoBro / Music Row",    36.1490,-86.7920,  65000, 4800, 1700],
+  ["37204","Melrose / Berry Hill",         36.1240,-86.7835,  72000, 3800, 2000],
+  ["37205","Belle Meade / West End",       36.1198,-86.8320, 130000, 3200, 2200],
+  ["37206","East Nashville",               36.1777,-86.7470,  68000, 4200, 2200],
+  ["37207","North Nashville",              36.2000,-86.7640,  38000, 3500, 2400],
+  ["37208","Germantown / Salemtown",       36.1752,-86.7893,  52000, 4500, 1700],
+  ["37209","The Nations / Charlotte Pike", 36.1500,-86.8420,  58000, 3400, 2400],
+  ["37210","South Nashville / Nolensville",36.1100,-86.7440,  42000, 3200, 2200],
+  ["37211","Antioch Rd / Haywood Hills",   36.0710,-86.7120,  48000, 3000, 2700],
+  ["37212","Vanderbilt / Hillsboro Vlg",   36.1375,-86.8050,  55000, 4800, 1900],
+  ["37213","Opryland / Briley Pkwy E.",    36.2052,-86.7048,  45000, 2800, 2400],
+  ["37214","Hermitage West",               36.1803,-86.6733,  60000, 2800, 2700],
+  ["37215","Green Hills / Oak Hill N.",    36.1027,-86.8177, 112000, 3400, 2400],
+  ["37216","Inglewood / Lockeland Spgs",   36.1975,-86.7242,  60000, 3500, 2200],
+  ["37217","Donelson / Airport S.",        36.1493,-86.6846,  55000, 2900, 2700],
+  ["37218","Bordeaux / Whites Creek",      36.2125,-86.8136,  38000, 3200, 2600],
+  ["37219","Downtown N. / Capitol Hill",   36.1679,-86.7799,  58000, 5200, 1500],
+  ["37220","Oak Hill / Woodbine",          36.0919,-86.7848, 108000, 2400, 2400],
+  ["37221","Bellevue",                     36.0757,-86.9031,  66000, 2800, 2900],
+  ["37228","Germantown / Stadium Area",    36.1813,-86.7975,  42000, 3400, 2000],
+  // ── Outer Suburbs ─────────────────────────────────────
+  ["37013","Antioch",                      36.0532,-86.6730,  52000, 3000, 3200],
+  ["37072","Goodlettsville",               36.3228,-86.7130,  60000, 2900, 3000],
+  ["37076","Hermitage / Mt. Juliet W.",    36.1822,-86.6447,  62000, 2600, 3000],
+  ["37115","Madison",                      36.2572,-86.7283,  50000, 3200, 2600],
+  ["37122","Mount Juliet",                 36.2001,-86.5188,  80000, 2400, 3500],
+  ["37138","Old Hickory",                  36.2414,-86.6584,  64000, 2500, 2900],
+  ["37143","Pegram / Kingston Springs W.", 36.0637,-87.0562,  60000,  900, 3000],
+  ["37189","Whites Creek",                 36.2558,-86.8440,  52000, 2000, 2800],
+];
+
+// ═══════════════════════════════════════════════════════
+//  COWORKING LOCATIONS — Nashville / Brentwood Metro
+//  Addresses from public brand directories (2024–2026, approx.)
+// ═══════════════════════════════════════════════════════
+const coworkingData = [
+
+  // ── REGUS ─────────────────────────────────────────────
+  { brand:"Regus", name:"Regus Brentwood / Maryland Farms",   lat:36.0244, lng:-86.7963, address:"750 Old Hickory Blvd, Brentwood, TN 37027",         note:"Maryland Farms Office Park · Williamson County" },
+  { brand:"Regus", name:"Regus Nashville Downtown",           lat:36.1601, lng:-86.7809, address:"424 Church St, Nashville, TN 37219",                 note:"Downtown core · NationsBank Plaza" },
+  { brand:"Regus", name:"Regus Cool Springs",                 lat:36.0054, lng:-86.8170, address:"1 Burton Hills Blvd, Nashville, TN 37215",           note:"Cool Springs / Franklin corridor" },
+  { brand:"Regus", name:"Regus Nashville West End",           lat:36.1494, lng:-86.8121, address:"2 International Plaza Dr, Nashville, TN 37217",      note:"West End / Midtown area" },
+  { brand:"Regus", name:"Regus Franklin Downtown",            lat:35.9251, lng:-86.8689, address:"1900 Mallory Ln, Franklin, TN 37067",                note:"Franklin / Williamson County" },
+
+  // ── HQ ────────────────────────────────────────────────
+  { brand:"HQ",    name:"HQ Nashville Downtown",              lat:36.1617, lng:-86.7826, address:"150 4th Ave N, Nashville, TN 37219",                 note:"Downtown Nashville · Class A office tower" },
+  { brand:"HQ",    name:"HQ Brentwood / Cool Springs",        lat:36.0112, lng:-86.8215, address:"5115 Maryland Way, Brentwood, TN 37027",             note:"Cool Springs corridor · Williamson County" },
+
+  // ── E|SPACES ──────────────────────────────────────────
+  { brand:"eSpaces", name:"e|spaces Nashville Gulch",         lat:36.1479, lng:-86.7842, address:"200 Commerce St, Nashville, TN 37201",               note:"The Gulch · walkable urban mixed-use district" },
+  { brand:"eSpaces", name:"e|spaces Brentwood",               lat:36.0195, lng:-86.8005, address:"5110 Maryland Way, Ste 120, Brentwood, TN 37027",    note:"Maryland Way professional corridor" },
+
+  // ── MERRIS ────────────────────────────────────────────
+  { brand:"Merris",  name:"Merris Brentwood",                 lat:36.0321, lng:-86.7840, address:"1 Maryland Farms, Brentwood, TN 37027",              note:"Boutique coworking · Brentwood professional district" },
+  { brand:"Merris",  name:"Merris Nashville Midtown",         lat:36.1525, lng:-86.7987, address:"222 2nd Ave N, Nashville, TN 37201",                 note:"Midtown Nashville · professional creative hub" },
+
+  // ── WERKSTATT ─────────────────────────────────────────
+  { brand:"Werkstatt", name:"Werkstatt Nashville",            lat:36.1748, lng:-86.7895, address:"1100 Adams St, Nashville, TN 37208",                 note:"Germantown · artisan-creative coworking district" },
+  { brand:"Werkstatt", name:"Werkstatt East Nashville",       lat:36.1801, lng:-86.7455, address:"1006 Fatherland St, Nashville, TN 37206",            note:"East Nashville maker / creative hub" },
+];
+
+// ═══════════════════════════════════════════════════════
+//  COLOR SCALES
+// ═══════════════════════════════════════════════════════
+function incomeColor(v) {
+  if (v >= 100000) return '#084594';
+  if (v >= 80000)  return '#2171b5';
+  if (v >= 60000)  return '#6baed6';
+  if (v >= 40000)  return '#bdd7e7';
+  return '#eff3ff';
+}
+function densityColor(v) {
+  if (v >= 4500) return '#54278f';
+  if (v >= 3000) return '#756bb1';
+  if (v >= 2000) return '#9e9ac8';
+  if (v >= 1000) return '#cbc9e2';
+  return '#f2f0f7';
+}
+const brandColors = {
+  Regus:     '#E31837',
+  HQ:        '#1A5276',
+  eSpaces:   '#C9A050',
+  Merris:    '#27AE60',
+  Werkstatt: '#8E44AD',
+};
+
+// ═══════════════════════════════════════════════════════
+//  MAP INIT — centered on Brentwood / South Nashville
+// ═══════════════════════════════════════════════════════
+const map = L.map('map', {
+  center: [36.0650, -86.8000],
+  zoom: 11,
+  zoomControl: false,
+});
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// CartoDB Positron — clean professional basemap
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors © <a href="https://carto.com">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// ═══════════════════════════════════════════════════════
+//  ZIP CHOROPLETH CIRCLES
+// ═══════════════════════════════════════════════════════
+let zipCircles  = [];
+let currentView = 'income';
+
+function renderZipLayer(view) {
+  zipCircles.forEach(c => map.removeLayer(c));
+  zipCircles = [];
+  zipData.forEach(([zip, name, lat, lng, income, density, radius]) => {
+    const color = view === 'income' ? incomeColor(income) : densityColor(density);
+    const circle = L.circle([lat, lng], {
+      radius,
+      fillColor:   color,
+      fillOpacity: 0.58,
+      color:       color,
+      weight:      0.8,
+      opacity:     0.35,
+    });
+    const incomeStr  = '$' + income.toLocaleString();
+    const densityStr = density.toLocaleString() + '/mi²';
+    circle.bindPopup(`
+      <div class="popup-brand-bar" style="background:#1a1a1a;">ZIP ${zip}</div>
+      <div class="popup-inner">
+        <div class="popup-name">${name}</div>
+        <div class="popup-row"><span>Median Household Income</span><strong>${incomeStr}</strong></div>
+        <div class="popup-row"><span>Population Density</span><strong>${densityStr}</strong></div>
+        <div class="popup-source">U.S. Census Bureau ACS 5-Year Estimates (2022) · Values are approximate</div>
+      </div>
+    `, { maxWidth: 270, className: '' });
+    circle.addTo(map);
+    zipCircles.push(circle);
+  });
+}
+renderZipLayer('income');
+
+// ═══════════════════════════════════════════════════════
+//  COWORKING MARKERS
+// ═══════════════════════════════════════════════════════
+const brandMarkers = { Regus: [], HQ: [], eSpaces: [], Merris: [], Werkstatt: [] };
+const brandOn      = { Regus: true, HQ: true, eSpaces: true, Merris: true, Werkstatt: true };
+
+coworkingData.forEach(loc => {
+  const color    = brandColors[loc.brand];
+  const isRegus  = loc.brand === 'Regus';
+  const isHQ     = loc.brand === 'HQ';
+  const marker = L.circleMarker([loc.lat, loc.lng], {
+    radius:      isRegus ? 10 : (isHQ ? 10 : 9),
+    fillColor:   color,
+    fillOpacity: 0.93,
+    color:       'white',
+    weight:      2.0,
+  });
+  const labelMap = { Regus:'REGUS', HQ:'HQ OFFICES', eSpaces:'E|SPACES', Merris:'MERRIS', Werkstatt:'WERKSTATT' };
+  marker.bindPopup(`
+    <div class="popup-brand-bar" style="background:${color};">${labelMap[loc.brand] || loc.brand}</div>
+    <div class="popup-inner">
+      <div class="popup-name">${loc.name}</div>
+      <div class="popup-address">📍 ${loc.address}</div>
+      ${loc.note ? `<div class="popup-note">${loc.note}</div>` : ''}
+    </div>
+  `, { maxWidth: 290 });
+  marker.addTo(map);
+  brandMarkers[loc.brand].push(marker);
+});
+
+// ═══════════════════════════════════════════════════════
+//  CANDIDATE SITE — 155 Franklin Road, Brentwood, TN
+// ═══════════════════════════════════════════════════════
+const availableProperties = [
+  {
+    name:    "155 Franklin Road",
+    address: "155 Franklin Road, Brentwood, TN 37027",
+    note:    "Premier Franklin Rd corridor · Williamson County (med. HHI ~$135K) · Brentwood professional &amp; executive market · Adjacent to Maryland Farms office campus · Strong daytime population · Minimal direct coworking competition nearby",
+    lat:     36.0293,
+    lng:    -86.7885,
+  },
+];
+
+const propIcon = L.divIcon({
+  html: '<div class="prop-icon"></div>',
+  className: '',
+  iconSize:   [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor:[0, -16],
+});
+
+let propertyMarkers = [];
+let propertiesOn = true;
+
+availableProperties.forEach(p => {
+  const marker = L.marker([p.lat, p.lng], { icon: propIcon });
+  marker.bindPopup(`
+    <div class="popup-brand-bar" style="background:#F5C000; color:#111111;">VENTURE X CANDIDATE SITE</div>
+    <div class="popup-inner">
+      <div class="popup-name">${p.name}</div>
+      <div class="popup-address">📍 ${p.address}</div>
+      <div class="popup-note">${p.note}</div>
+    </div>
+  `, { maxWidth: 310 });
+  marker.addTo(map);
+  propertyMarkers.push(marker);
+});
+
+function toggleProperties() {
+  const pill = document.getElementById('pill-Properties');
+  if (propertiesOn) {
+    propertyMarkers.forEach(m => map.removeLayer(m));
+    pill.classList.add('off');
+  } else {
+    propertyMarkers.forEach(m => m.addTo(map));
+    pill.classList.remove('off');
+  }
+  propertiesOn = !propertiesOn;
+}
+
+// ═══════════════════════════════════════════════════════
+//  LAYER CONTROL FUNCTIONS
+// ═══════════════════════════════════════════════════════
+function setDemoView(view) {
+  currentView = view;
+  renderZipLayer(view);
+  document.getElementById('btn-income').classList.toggle('active', view === 'income');
+  document.getElementById('btn-density').classList.toggle('active', view === 'density');
+  document.getElementById('income-legend').style.display  = view === 'income'  ? '' : 'none';
+  document.getElementById('density-legend').style.display = view === 'density' ? '' : 'none';
+  document.getElementById('legend-title').textContent =
+    view === 'income' ? 'Median Household Income' : 'Population Density';
+}
+
+function toggleBrand(brand) {
+  const pill = document.getElementById('pill-' + brand);
+  if (brandOn[brand]) {
+    brandMarkers[brand].forEach(m => map.removeLayer(m));
+    pill.classList.add('off');
+  } else {
+    brandMarkers[brand].forEach(m => m.addTo(map));
+    pill.classList.remove('off');
+  }
+  brandOn[brand] = !brandOn[brand];
+}
+
+</script>
+</body>
+</html>
