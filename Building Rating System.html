@@ -357,10 +357,9 @@ let nextId = 1;
 let editingId = null;
 let showTopN = 10;
 
-const catW = {};   // category weights (client preference)
-const attrW = {};  // attribute weights (client preference)
+const catW = {};
+const attrW = {};
 
-// Init default weights from CATS
 CATS.forEach(c => {
   catW[c.id] = c.weight;
   c.attrs.forEach(a => { attrW[c.id + '_' + a.id] = a.weight; });
@@ -381,10 +380,9 @@ function loadDB() {
       }
     }
   } catch(e) {}
-  // First run — seed with Brentwood submarket data from CoStar
   buildingDB = JSON.parse(JSON.stringify(BRENTWOOD_DB.buildings));
   nextId = BRENTWOOD_DB.nextId;
-  saveDB(); // persist so edits are preserved
+  saveDB();
 }
 
 function saveDB() {
@@ -393,7 +391,6 @@ function saveDB() {
   } catch(e) {}
 }
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
 function esc(s) {
   return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -409,7 +406,6 @@ function computeMatch(b) {
   let total = 0;
   const cats = {};
   const contribs = [];
-
   CATS.forEach(c => {
     const cw = catW[c.id];
     const cn = cw / totalCW;
@@ -420,19 +416,15 @@ function computeMatch(b) {
       const an = aw / totalAW;
       const sc = (b.scores && b.scores[c.id + '_' + a.id]) || 5;
       cs += an * (sc / 10);
-      // Track for strengths: sort by client weight × building score
       contribs.push({ label: a.name, score: sc, combined: cn * an * sc });
     });
     cats[c.id] = Math.round(cs * 100);
     total += cn * cs;
   });
-
-  // Top 3 attributes where building excels at what client values most
   const strengths = [...contribs].sort((a, b) => b.combined - a.combined).slice(0, 3);
   return { b, total: Math.round(total * 100), cats, strengths };
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   loadDB();
   document.getElementById('evalDate').value = new Date().toISOString().split('T')[0];
@@ -457,7 +449,6 @@ function syncClient() {
   document.getElementById('hdrName').textContent = n;
 }
 
-// ─── CLIENT SETUP: CATEGORY WEIGHTS ──────────────────────────────────────────
 function renderCatGrid() {
   document.getElementById('catgrid').innerHTML = CATS.map(c => `
     <div class="catcard">
@@ -500,13 +491,11 @@ function setAttrW(cid, aid, v) {
   document.getElementById(`av_${cid}_${aid}`).textContent = v;
 }
 
-// ─── BUILDING DATABASE LIST ───────────────────────────────────────────────────
 function renderBuildingList() {
   const count = buildingDB.length;
   document.getElementById('dbBadge').textContent = count;
   document.getElementById('dbCountLabel').textContent = count;
   const el = document.getElementById('blist');
-
   if (!count) {
     el.innerHTML = `
       <div class="empty">
@@ -516,7 +505,6 @@ function renderBuildingList() {
       </div>`;
     return;
   }
-
   el.innerHTML = buildingDB.map((b, i) => {
     const avg = avgScore(b);
     return `
@@ -536,20 +524,16 @@ function renderBuildingList() {
   }).join('');
 }
 
-// ─── BUILDING MODAL ───────────────────────────────────────────────────────────
 function openModal(id) {
   editingId = id;
   const b = id ? buildingDB.find(x => x.id === id) : null;
-
   document.getElementById('modalTitle').textContent = b ? 'Edit Building' : 'Add Building';
   document.getElementById('mName').value  = b ? b.name : '';
   document.getElementById('mAddr').value  = b ? (b.address || '') : '';
   document.getElementById('mClass').value = b ? (b.class || '') : '';
   document.getElementById('mNotes').value = b ? (b.notes || '') : '';
   document.getElementById('mDeleteBtn').style.display = b ? '' : 'none';
-
   const scores = b ? (b.scores || {}) : {};
-
   document.getElementById('modalCats').innerHTML = CATS.map(c => `
     <div class="modal-cat">
       <div class="modal-cathdr">${c.icon} ${c.name}</div>
@@ -569,7 +553,6 @@ function openModal(id) {
           </div>`;
       }).join('')}
     </div>`).join('');
-
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -599,21 +582,18 @@ function clampModal(inp, key) {
 function saveBuilding() {
   const name = document.getElementById('mName').value.trim();
   if (!name) { alert('Please enter a building name.'); document.getElementById('mName').focus(); return; }
-
   const scores = {};
   CATS.forEach(c => c.attrs.forEach(a => {
     const key = c.id + '_' + a.id;
     const inp = document.getElementById('ms_' + key);
     scores[key] = Math.min(10, Math.max(1, parseInt(inp?.value) || 5));
   }));
-
   if (editingId) {
     const b = buildingDB.find(x => x.id === editingId);
     if (b) { b.name = name; b.address = document.getElementById('mAddr').value.trim(); b.class = document.getElementById('mClass').value; b.notes = document.getElementById('mNotes').value.trim(); b.scores = scores; }
   } else {
     buildingDB.push({ id: nextId++, name, address: document.getElementById('mAddr').value.trim(), class: document.getElementById('mClass').value, notes: document.getElementById('mNotes').value.trim(), scores });
   }
-
   saveDB();
   closeModal();
   renderBuildingList();
@@ -637,7 +617,6 @@ function deleteBuilding(id) {
   renderBuildingList();
 }
 
-// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
 function exportDB() {
   if (!buildingDB.length) { alert('No buildings to export yet.'); return; }
   const blob = new Blob([JSON.stringify({ buildings: buildingDB, nextId }, null, 2)], { type: 'application/json' });
@@ -663,14 +642,11 @@ function importDB(e) {
   e.target.value = '';
 }
 
-// ─── TOP MATCHES ──────────────────────────────────────────────────────────────
 function renderMatches() {
-  // Persist showTopN across re-renders
   const sel = document.getElementById('showTopN');
-  if (sel) showTopN = parseInt(sel.value) || 10;
+  if (sel) { const v = parseInt(sel.value); showTopN = isNaN(v) ? 10 : v; }
 
   const el = document.getElementById('matchesContent');
-
   if (!buildingDB.length) {
     el.innerHTML = `
       <div class="empty">
@@ -683,7 +659,6 @@ function renderMatches() {
 
   const ranked = buildingDB.map(computeMatch).sort((a, b) => b.total - a.total);
   const shown  = showTopN === 0 ? ranked : ranked.slice(0, showTopN);
-
   const client  = document.getElementById('clientName').value.trim() || 'Client';
   const date    = document.getElementById('evalDate').value;
   const dateFmt = date ? new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) : '';
