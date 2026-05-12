@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlanta Market Intelligence | Venture X</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* ── HEADER ── */
+    #header {
+      background: #111111;
+      color: white;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      flex-shrink: 0;
+      z-index: 1000;
+      border-bottom: 2px solid #F5C000;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .venturex-wordmark { font-size: 20px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: #F5C000; }
+    .header-divider { width: 1px; height: 28px; background: rgba(245,192,0,0.4); }
+    .header-subtitle { font-size: 13px; font-weight: 400; opacity: 0.9; color: white; }
+    .header-right { font-size: 11px; opacity: 0.8; text-align: right; line-height: 1.5; color: white; }
+
+    /* ── MAP AREA ── */
+    #map-container { position: relative; flex: 1; min-height: 0; }
+    #map { width: 100%; height: 100%; }
+
+    /* ── LAYER CONTROL PANEL ── */
+    #layer-panel {
+      position: absolute; top: 14px; right: 14px;
+      background: white; border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.14);
+      z-index: 900; width: 244px; overflow: hidden;
+    }
+    .panel-header {
+      background: #111111; color: white;
+      padding: 10px 14px; font-size: 10px; font-weight: 700;
+      letter-spacing: 1.2px; text-transform: uppercase;
+      border-bottom: 2px solid #F5C000;
+    }
+    .panel-section { padding: 11px 14px; border-bottom: 1px solid #f0f0f0; }
+    .panel-section:last-child { border-bottom: none; }
+    .panel-section-label {
+      font-size: 9px; font-weight: 700; color: #aaa;
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 9px;
+    }
+    .demo-btns { display: flex; gap: 6px; }
+    .demo-btn {
+      flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 600;
+      border: 1.5px solid #e0e0e0; border-radius: 5px;
+      cursor: pointer; background: white; color: #555; transition: all 0.15s;
+    }
+    .demo-btn.active { background: #F5C000; color: #111111; border-color: #F5C000; }
+    .demo-btn:hover:not(.active) { border-color: #bbb; background: #fafafa; }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 7px; cursor: pointer; user-select: none;
+    }
+    .toggle-row:last-child { margin-bottom: 0; }
+    .toggle-label { display: flex; align-items: center; gap: 9px; font-size: 12px; color: #333; }
+    .brand-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .toggle-pill {
+      width: 34px; height: 18px; background: #F5C000;
+      border-radius: 9px; position: relative; transition: background 0.2s; flex-shrink: 0;
+    }
+    .toggle-pill.off { background: #d0d0d0; }
+    .toggle-pill::after {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      background: white; border-radius: 50%; top: 2px; left: 18px;
+      transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-pill.off::after { left: 2px; }
+    .source-note { font-size: 10px; color: #aaa; line-height: 1.5; }
+
+    /* ── LEGEND ── */
+    #legend {
+      position: absolute; bottom: 46px; left: 14px;
+      background: white; border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+      padding: 13px 16px; z-index: 900; min-width: 210px;
+    }
+    .legend-title { font-size: 9px; font-weight: 700; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 9px; margin-bottom: 5px; font-size: 11px; color: #444; }
+    .legend-swatch { width: 18px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .legend-divider { border: none; border-top: 1px solid #f0f0f0; margin: 9px 0; }
+    .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; border: 2px solid white; box-shadow: 0 0 0 1.5px currentColor; }
+
+    /* ── POPUP STYLES ── */
+    .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; }
+    .popup-inner { padding: 14px 16px; }
+    .popup-brand-bar { padding: 6px 16px; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: white; text-transform: uppercase; }
+    .popup-brand-bar.dark-text { color: #111111; }
+    .popup-name { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+    .popup-address { font-size: 11px; color: #666; line-height: 1.5; }
+    .popup-note { font-size: 10px; color: #888; margin-top: 5px; line-height: 1.5; }
+    .popup-row { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-top: 1px solid #f0f0f0; margin-top: 5px; }
+    .popup-row span { color: #888; }
+    .popup-row strong { color: #1a1a1a; }
+    .popup-source { font-size: 9px; color: #ccc; margin-top: 6px; border-top: 1px solid #f5f5f5; padding-top: 6px; }
+
+    /* ── PRINT BUTTON ── */
+    #print-btn {
+      position: absolute; top: 14px; left: 14px; z-index: 900;
+      background: white; border: none; border-left: 3px solid #F5C000;
+      border-radius: 8px; padding: 8px 14px; font-size: 11px; font-weight: 600;
+      color: #333; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      display: flex; align-items: center; gap: 6px; transition: box-shadow 0.15s;
+    }
+    #print-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.16); }
+
+    /* ── FOOTER ── */
+    #footer {
+      background: #0a0a0a; color: #666; font-size: 10px;
+      padding: 0 20px; height: 38px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-shrink: 0; line-height: 1.4;
+    }
+
+    @media print {
+      #header, #footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #layer-panel, #print-btn { display: none; }
+      #map-container { height: 680px; }
+      body { overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-left">
+    <div class="venturex-wordmark">VENTURE X</div>
+    <div class="header-divider"></div>
+    <div class="header-subtitle">Atlanta Metro — Market Intelligence &amp; Coworking Landscape</div>
+  </div>
+  <div class="header-right">
+    Prepared for: Venture X Business Development<br>
+    Geography: Atlanta MSA (Fulton, DeKalb, Cobb, Gwinnett &amp; Surrounding) · May 2026
+  </div>
+</div>
+
+<!-- MAP -->
+<div id="map-container">
+  <div id="map"></div>
+
+  <button id="print-btn" onclick="window.print()" title="Print or save as PDF">🖨 Export / Print</button>
+
+  <!-- Layer control panel -->
+  <div id="layer-panel">
+    <div class="panel-header">Map Layers &amp; Filters</div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Demographic View</div>
+      <div class="demo-btns">
+        <button class="demo-btn active" id="btn-income" onclick="setDemoView('income')">Income</button>
+        <button class="demo-btn" id="btn-density" onclick="setDemoView('density')">Density</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Coworking Operators</div>
+
+      <div class="toggle-row" onclick="toggleBrand('Regus')">
+        <div class="toggle-label"><div class="brand-dot" style="background:#E31837;"></div>Regus</div>
+        <div class="toggle-pill" id="pill-Regus"></div>
+      </div>
+      <div class="toggle-row" onclick="toggleBrand('Spaces')">
+        <div class="toggle-label"><div class="brand-dot" style="background:#FF6B35;"></div>Spaces</div>
+        <div class="toggle-pill" id="pill-Spaces"></div>
+      </div>
+      <div class="toggle-row" onclick="toggleBrand('WeWork')">
+        <div class="toggle-label"><div class="brand-dot" style="background:#111111;"></div>WeWork</div>
+        <div class="toggle-pill" id="pill-WeWork"></div>
+      </div>
+      <div class="toggle-row" onclick="toggleBrand('Industrious')">
+        <div class="toggle-label"><div class="brand-dot" style="background:#2D9CDB;"></div>Industrious</div>
+        <div class="toggle-pill" id="pill-Industrious"></div>
+      </div>
+      <div class="toggle-row" onclick="toggleBrand('OfficeEvolution')">
+        <div class="toggle-label"><div class="brand-dot" style="background:#00854A;"></div>Office Evolution</div>
+        <div class="toggle-pill" id="pill-OfficeEvolution"></div>
+      </div>
+      <div class="toggle-row" onclick="toggleBrand('Lucid')">
+        <div class="toggle-label"><div class="brand-dot" style="background:#8E44AD;"></div>Lucid Offices</div>
+        <div class="toggle-pill" id="pill-Lucid"></div>
+      </div>
+      <div class="toggle-row" onclick="toggleBrand('ROAM')">
+        <div class="toggle-label"><div class="brand-dot" style="background:#1ABC9C;"></div>ROAM (Notable Local)</div>
+        <div class="toggle-pill" id="pill-ROAM"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-label">Data Sources</div>
+      <div class="source-note">
+        Demographics: U.S. Census Bureau ACS 5-Year Estimates (2022).<br>
+        Coworking: IWG/Regus, Spaces, WeWork, Industrious, Office Evolution, Lucid &amp; ROAM public directories.<br>
+        <em>Locations approximate. For planning use only.</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div class="legend-title" id="legend-title">Median Household Income</div>
+    <div id="income-legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:#084594;"></div> Over $100,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#2171b5;"></div> $80,000 – $100,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#6baed6;"></div> $60,000 – $80,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#bdd7e7;"></div> $40,000 – $60,000</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#eff3ff; border:1px solid #d8d8d8;"></div> Under $40,000</div>
+    </div>
+    <div id="density-legend" style="display:none;">
+      <div class="legend-item"><div class="legend-swatch" style="background:#54278f;"></div> Very High (&gt;4,500/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#756bb1;"></div> High (3,000–4,500/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#9e9ac8;"></div> Moderate (2,000–3,000/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#cbc9e2;"></div> Low (1,000–2,000/mi²)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#f2f0f7; border:1px solid #d8d8d8;"></div> Sparse (&lt;1,000/mi²)</div>
+    </div>
+    <hr class="legend-divider">
+    <div class="legend-title">Coworking Operators</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E31837; color:#E31837;"></div> Regus</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FF6B35; color:#FF6B35;"></div> Spaces</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#111111; color:#111111;"></div> WeWork</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2D9CDB; color:#2D9CDB;"></div> Industrious</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00854A; color:#00854A;"></div> Office Evolution</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8E44AD; color:#8E44AD;"></div> Lucid Offices</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1ABC9C; color:#1ABC9C;"></div> ROAM</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div id="footer">
+  <span>Sources: U.S. Census Bureau ACS 2022 · IWG/Regus, Spaces, WeWork, Industrious, Office Evolution, Lucid Offices &amp; ROAM public directories · OpenStreetMap / CARTO · Prepared by Record Rep for Venture X Business Development</span>
+  <span style="color:#444;">⚠ Location data is approximate and intended for strategic planning purposes only.</span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+// ═══════════════════════════════════════════════════════
+//  ZIP CODE DATA — Atlanta MSA
+//  [zip, neighborhood, lat, lng, medianIncome, popDensity, radiusM]
+//  Source: U.S. Census ACS 5-Year Estimates (2022), approx.
+// ═══════════════════════════════════════════════════════
+const zipData = [
+  // ── Atlanta Core ─────────────────────────────────────
+  ["30303","Downtown Atlanta",              33.7490,-84.3880,  35000, 5500, 1700],
+  ["30305","Buckhead / Garden Hills",       33.8376,-84.3732, 110000, 4500, 2000],
+  ["30306","Virginia-Highland / Poncey",    33.7836,-84.3503,  82000, 5200, 1800],
+  ["30307","Inman Park / Candler Park",     33.7612,-84.3419,  85000, 4800, 2000],
+  ["30308","Midtown East / Old Fourth Ward",33.7724,-84.3759,  72000, 6000, 1700],
+  ["30309","Midtown / Ansley Park",         33.8001,-84.3840,  95000, 5500, 1800],
+  ["30310","West End / Oakland City",       33.7297,-84.4123,  38000, 3800, 2200],
+  ["30312","Summerhill / Grant Park",       33.7396,-84.3740,  62000, 4500, 1900],
+  ["30313","Downtown / Vine City",          33.7571,-84.4143,  28000, 4200, 1800],
+  ["30314","Vine City / English Ave",       33.7600,-84.4330,  30000, 4000, 1800],
+  ["30315","Pittsburgh / South Atlanta",    33.7060,-84.3870,  32000, 3500, 2400],
+  ["30316","East Atlanta / Ormewood Park",  33.7255,-84.3370,  68000, 4200, 2400],
+  ["30317","Kirkwood / Edgewood",           33.7497,-84.3190,  72000, 4500, 2000],
+  ["30318","West Midtown / Westside",       33.7874,-84.4196,  65000, 3800, 2500],
+  ["30319","Brookhaven / Dresden",          33.8626,-84.3376,  98000, 3500, 2500],
+  ["30324","Morningside / Lenox Park",      33.8185,-84.3536,  95000, 4000, 2200],
+  ["30326","Buckhead / Lenox Square",       33.8495,-84.3628,  88000, 3800, 2000],
+  ["30327","Buckhead NW / Chastain Park",   33.8676,-84.4047, 118000, 2800, 2800],
+  ["30331","Cascade / SW Atlanta",          33.7082,-84.4680,  52000, 3000, 3000],
+  // ── Close-In Suburbs ──────────────────────────────────
+  ["30030","Decatur",                       33.7748,-84.2960,  78000, 4500, 2200],
+  ["30033","Toco Hills / N. Druid Hills",   33.8147,-84.3050,  65000, 3200, 2600],
+  ["30328","Sandy Springs South",           33.9138,-84.3746,  82000, 2800, 2900],
+  ["30338","Dunwoody",                      33.9458,-84.3383,  88000, 3200, 2900],
+  ["30339","Cumberland / Vinings",          33.8651,-84.4717,  72000, 3500, 2700],
+  ["30340","Doraville / NE DeKalb",         33.9002,-84.2773,  50000, 3500, 2600],
+  ["30341","Chamblee",                      33.8897,-84.3050,  62000, 3800, 2400],
+  ["30342","Sandy Springs / Chastain",      33.8837,-84.3811, 108000, 3200, 2600],
+  ["30345","Tucker / Northlake",            33.8432,-84.2647,  65000, 3000, 2800],
+  ["30346","Dunwoody / Perimeter Ctr",      33.9212,-84.3434,  80000, 3500, 2700],
+  ["30329","Emory / N. Druid Hills",        33.8075,-84.3218,  72000, 3500, 2500],
+  // ── Cobb County ────────────────────────────────────────
+  ["30060","Marietta",                      33.9526,-84.5495,  52000, 3200, 2800],
+  ["30062","East Cobb",                     33.9777,-84.4641,  88000, 2800, 3000],
+  ["30064","Marietta West",                 33.9480,-84.5940,  72000, 2500, 3000],
+  ["30067","Powers Ferry / Marietta E.",    33.9154,-84.4717,  78000, 3000, 2900],
+  ["30068","East Cobb / Roswell South",     34.0037,-84.4392,  98000, 2500, 3100],
+  ["30080","Smyrna",                        33.8734,-84.5141,  65000, 3200, 3000],
+  ["30082","Smyrna East / Vinings",         33.8634,-84.4860,  72000, 3000, 2800],
+  ["30144","Kennesaw",                      34.0232,-84.6155,  68000, 2800, 3100],
+  ["30152","Kennesaw West / Barrett",       34.0530,-84.6608,  75000, 2400, 3000],
+  ["30126","Mableton",                      33.8126,-84.5691,  58000, 2800, 3000],
+  // ── North Fulton / Alpharetta ──────────────────────────
+  ["30004","Alpharetta North / Milton",     34.0754,-84.2738, 115000, 2400, 3400],
+  ["30005","Alpharetta East / Milton",      34.0540,-84.2010, 128000, 2000, 3500],
+  ["30009","Alpharetta Downtown",           34.0754,-84.2949, 112000, 2600, 2800],
+  ["30022","Alpharetta / Johns Creek W.",   34.0121,-84.2127, 110000, 2800, 3000],
+  ["30075","Roswell",                       34.0232,-84.3616,  88000, 2800, 3000],
+  ["30076","Roswell East / Alpharetta S.",  34.0232,-84.2899,  95000, 2500, 3000],
+  // ── Gwinnett County ────────────────────────────────────
+  ["30024","Suwanee",                       34.0534,-84.0716,  98000, 2600, 3200],
+  ["30092","Peachtree Corners",             33.9676,-84.2218,  80000, 2800, 2900],
+  ["30096","Duluth West",                   33.9779,-84.1446,  65000, 3200, 2900],
+  ["30097","Duluth / Johns Creek",          34.0282,-84.1566,  95000, 2600, 3000],
+  // ── Cherokee County ────────────────────────────────────
+  ["30188","Woodstock South",               34.1015,-84.5196,  78000, 2600, 3200],
+  ["30189","Woodstock North",               34.1310,-84.4892,  85000, 2200, 3400],
+  ["30114","Canton South",                  34.2300,-84.4913,  72000, 2000, 3400],
+  // ── South Fulton / Clayton ─────────────────────────────
+  ["30337","College Park",                  33.6471,-84.4494,  38000, 3000, 2700],
+  ["30349","South Fulton / Fairburn Rd",    33.6299,-84.5193,  45000, 2800, 3000],
+  ["30236","Jonesboro",                     33.5218,-84.3550,  48000, 2800, 3000],
+  ["30260","Morrow",                        33.5832,-84.3392,  42000, 3000, 2900],
+  ["30274","Riverdale",                     33.5676,-84.4133,  45000, 3000, 2900],
+  ["30281","Stockbridge",                   33.5440,-84.2304,  62000, 2200, 3200],
+  ["30269","Peachtree City",                33.3968,-84.5958,  92000, 1800, 3600],
+];
+
+// ═══════════════════════════════════════════════════════
+//  COWORKING LOCATIONS — Atlanta Metro
+//  Source: Public brand directories (2024–2026, approx.)
+// ═══════════════════════════════════════════════════════
+const coworkingData = [
+
+  // ── REGUS ─────────────────────────────────────────────
+  { brand:"Regus",           name:"Regus Downtown Atlanta",              lat:33.7580, lng:-84.3872, address:"230 Peachtree St NW, Atlanta, GA 30303",            note:"Peachtree Center · Downtown core" },
+  { brand:"Regus",           name:"Regus Midtown Atlanta",               lat:33.7868, lng:-84.3841, address:"1201 Peachtree St NE, Atlanta, GA 30361",           note:"Colony Square · Midtown" },
+  { brand:"Regus",           name:"Regus Buckhead",                      lat:33.8495, lng:-84.3680, address:"3343 Peachtree Rd NE, Atlanta, GA 30326",           note:"Lenox / Buckhead tower" },
+  { brand:"Regus",           name:"Regus Perimeter / Dunwoody",          lat:33.9214, lng:-84.3480, address:"1000 Abernathy Rd, Atlanta, GA 30328",              note:"Perimeter Center · Dunwoody" },
+  { brand:"Regus",           name:"Regus Dunwoody / Ravinia",            lat:33.9448, lng:-84.3394, address:"4170 Ashford Dunwoody Rd, Atlanta, GA 30319",       note:"Ravinia complex · Dunwoody" },
+  { brand:"Regus",           name:"Regus Cumberland / Galleria",         lat:33.8753, lng:-84.4680, address:"One Galleria Pkwy, Atlanta, GA 30339",              note:"Cumberland / Vinings submarket" },
+  { brand:"Regus",           name:"Regus Alpharetta",                    lat:34.0786, lng:-84.2990, address:"11660 Alpharetta Hwy, Roswell, GA 30076",           note:"Alpharetta / North Fulton corridor" },
+  { brand:"Regus",           name:"Regus Marietta / Cobb Pkwy",          lat:33.9526, lng:-84.5200, address:"1100 Circle 75 Pkwy, Atlanta, GA 30339",            note:"Cobb Pkwy / I-75 corridor" },
+  { brand:"Regus",           name:"Regus Kennesaw / Town Center",        lat:34.0220, lng:-84.5990, address:"675 Tower Rd, Marietta, GA 30060",                  note:"Town Center / Kennesaw area" },
+  { brand:"Regus",           name:"Regus Peachtree City",                lat:33.3968, lng:-84.5791, address:"200 Westpark Dr, Peachtree City, GA 30269",         note:"Peachtree City office park" },
+
+  // ── SPACES (IWG) ──────────────────────────────────────
+  { brand:"Spaces",          name:"Spaces Midtown Atlanta",              lat:33.7895, lng:-84.3836, address:"1372 Peachtree St NE, Atlanta, GA 30309",           note:"Midtown · walkable urban core" },
+  { brand:"Spaces",          name:"Spaces Buckhead Village",             lat:33.8380, lng:-84.3705, address:"3630 Peachtree Rd NE, Atlanta, GA 30326",           note:"Buckhead · Monarch Tower" },
+  { brand:"Spaces",          name:"Spaces West Midtown",                 lat:33.7895, lng:-84.4132, address:"1100 Spring St NW, Atlanta, GA 30309",              note:"West Midtown / Westside corridor" },
+
+  // ── WeWork ────────────────────────────────────────────
+  { brand:"WeWork",          name:"WeWork Midtown Atlanta",              lat:33.7883, lng:-84.3912, address:"1100 Spring St NW, Atlanta, GA 30309",              note:"Midtown / West Midtown border" },
+  { brand:"WeWork",          name:"WeWork Ponce City Market",            lat:33.7712, lng:-84.3607, address:"675 Ponce De Leon Ave NE, Atlanta, GA 30308",       note:"Ponce City Market · Old Fourth Ward" },
+  { brand:"WeWork",          name:"WeWork Terminus Buckhead",            lat:33.8480, lng:-84.3611, address:"3475 Piedmont Rd NE, Atlanta, GA 30305",            note:"Terminus 100 · Buckhead" },
+
+  // ── INDUSTRIOUS ───────────────────────────────────────
+  { brand:"Industrious",     name:"Industrious Midtown Atlanta",         lat:33.7901, lng:-84.3862, address:"1349 W Peachtree St NW, Atlanta, GA 30309",         note:"Midtown · 1349 West Peachtree" },
+  { brand:"Industrious",     name:"Industrious Buckhead",                lat:33.8415, lng:-84.3760, address:"3715 Northside Pkwy, Atlanta, GA 30327",            note:"Northside / Buckhead" },
+  { brand:"Industrious",     name:"Industrious Peachtree Corners",       lat:33.9696, lng:-84.2218, address:"6600 Peachtree Dunwoody Rd, Atlanta, GA 30328",     note:"Central Perimeter · Peachtree Corners" },
+
+  // ── OFFICE EVOLUTION ──────────────────────────────────
+  { brand:"OfficeEvolution", name:"Office Evolution Buckhead",           lat:33.8460, lng:-84.3710, address:"5901 Peachtree Dunwoody Rd, Atlanta, GA 30328",     note:"Perimeter Center / Buckhead NW" },
+  { brand:"OfficeEvolution", name:"Office Evolution Sandy Springs",      lat:33.9200, lng:-84.3620, address:"8000 Avalon Blvd, Alpharetta, GA 30009",            note:"Sandy Springs / North Fulton" },
+  { brand:"OfficeEvolution", name:"Office Evolution Alpharetta",         lat:34.0610, lng:-84.2990, address:"11175 Cicero Dr, Alpharetta, GA 30022",             note:"Alpharetta tech corridor" },
+  { brand:"OfficeEvolution", name:"Office Evolution Johns Creek",        lat:34.0200, lng:-84.2010, address:"11555 Medlock Bridge Rd, Duluth, GA 30097",         note:"Johns Creek / Duluth" },
+  { brand:"OfficeEvolution", name:"Office Evolution East Cobb",          lat:34.0082, lng:-84.4616, address:"4060 Johns Creek Pkwy, Suwanee, GA 30024",          note:"East Cobb / Roswell S. corridor" },
+  { brand:"OfficeEvolution", name:"Office Evolution Kennesaw",           lat:34.0298, lng:-84.6000, address:"3100 Roswell Rd, Marietta, GA 30062",               note:"Kennesaw / Town Center area" },
+  { brand:"OfficeEvolution", name:"Office Evolution Peachtree City",     lat:33.3990, lng:-84.5820, address:"100 Westpark Dr, Peachtree City, GA 30269",         note:"Peachtree City suburban corridor" },
+
+  // ── LUCID OFFICES ─────────────────────────────────────
+  { brand:"Lucid",           name:"Lucid Private Offices — Perimeter",   lat:33.9190, lng:-84.3490, address:"1100 Abernathy Rd NE, Bldg 500, Atlanta, GA 30328", note:"Perimeter Center · Sandy Springs" },
+  { brand:"Lucid",           name:"Lucid Private Offices — Dunwoody",    lat:33.9430, lng:-84.3350, address:"4200 Northside Pkwy NW, Atlanta, GA 30342",         note:"Dunwoody / Perimeter corridor" },
+  { brand:"Lucid",           name:"Lucid Private Offices — Buckhead",    lat:33.8480, lng:-84.3640, address:"3340 Peachtree Rd NE, Atlanta, GA 30326",           note:"Buckhead tower district" },
+
+  // ── ROAM (notable local) ───────────────────────────────
+  { brand:"ROAM",            name:"ROAM Innovative Workplace — Buckhead",   lat:33.9200, lng:-84.3456, address:"5901 Peachtree Dunwoody Rd NE, Atlanta, GA 30328", note:"Atlanta's premier local cowork brand" },
+  { brand:"ROAM",            name:"ROAM Innovative Workplace — Alpharetta", lat:34.0760, lng:-84.2960, address:"1005 Alderman Dr, Alpharetta, GA 30005",           note:"Alpharetta / North Fulton hub" },
+  { brand:"ROAM",            name:"ROAM Innovative Workplace — Dunwoody",   lat:33.9460, lng:-84.3360, address:"1155 Perimeter Center W, Atlanta, GA 30338",       note:"Perimeter Center / Dunwoody" },
+  { brand:"ROAM",            name:"ROAM Innovative Workplace — Galleria",   lat:33.8740, lng:-84.4690, address:"One Galleria Pkwy, Atlanta, GA 30339",             note:"Cumberland / Galleria · Cobb" },
+];
+
+// ═══════════════════════════════════════════════════════
+//  COLOR SCALES
+// ═══════════════════════════════════════════════════════
+function incomeColor(v) {
+  if (v >= 100000) return '#084594';
+  if (v >= 80000)  return '#2171b5';
+  if (v >= 60000)  return '#6baed6';
+  if (v >= 40000)  return '#bdd7e7';
+  return '#eff3ff';
+}
+function densityColor(v) {
+  if (v >= 4500) return '#54278f';
+  if (v >= 3000) return '#756bb1';
+  if (v >= 2000) return '#9e9ac8';
+  if (v >= 1000) return '#cbc9e2';
+  return '#f2f0f7';
+}
+const brandColors = {
+  Regus:           '#E31837',
+  Spaces:          '#FF6B35',
+  WeWork:          '#111111',
+  Industrious:     '#2D9CDB',
+  OfficeEvolution: '#00854A',
+  Lucid:           '#8E44AD',
+  ROAM:            '#1ABC9C',
+};
+const brandLabels = {
+  Regus:'REGUS', Spaces:'SPACES (IWG)',
+  WeWork:'WEWORK', Industrious:'INDUSTRIOUS', OfficeEvolution:'OFFICE EVOLUTION',
+  Lucid:'LUCID OFFICES', ROAM:'ROAM',
+};
+
+// ═══════════════════════════════════════════════════════
+//  MAP INIT — centered on Atlanta metro
+// ═══════════════════════════════════════════════════════
+const map = L.map('map', {
+  center: [33.8800, -84.3800],
+  zoom: 10,
+  zoomControl: false,
+});
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors © <a href="https://carto.com">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+// ═══════════════════════════════════════════════════════
+//  ZIP CHOROPLETH CIRCLES
+// ═══════════════════════════════════════════════════════
+let zipCircles  = [];
+let currentView = 'income';
+
+function renderZipLayer(view) {
+  zipCircles.forEach(c => map.removeLayer(c));
+  zipCircles = [];
+  zipData.forEach(([zip, name, lat, lng, income, density, radius]) => {
+    const color = view === 'income' ? incomeColor(income) : densityColor(density);
+    const circle = L.circle([lat, lng], {
+      radius, fillColor: color, fillOpacity: 0.58,
+      color: color, weight: 0.8, opacity: 0.35,
+    });
+    circle.bindPopup(`
+      <div class="popup-brand-bar" style="background:#1a1a1a;">ZIP ${zip}</div>
+      <div class="popup-inner">
+        <div class="popup-name">${name}</div>
+        <div class="popup-row"><span>Median Household Income</span><strong>$${income.toLocaleString()}</strong></div>
+        <div class="popup-row"><span>Population Density</span><strong>${density.toLocaleString()}/mi²</strong></div>
+        <div class="popup-source">U.S. Census Bureau ACS 5-Year Estimates (2022) · Values are approximate</div>
+      </div>
+    `, { maxWidth: 270 });
+    circle.addTo(map);
+    zipCircles.push(circle);
+  });
+}
+renderZipLayer('income');
+
+// ═══════════════════════════════════════════════════════
+//  COWORKING MARKERS
+// ═══════════════════════════════════════════════════════
+const brandKeys = ['Regus','Spaces','WeWork','Industrious','OfficeEvolution','Lucid','ROAM'];
+const brandMarkers = {};
+const brandOn      = {};
+brandKeys.forEach(k => { brandMarkers[k] = []; brandOn[k] = true; });
+
+coworkingData.forEach(loc => {
+  const color      = brandColors[loc.brand];
+  const isVX       = loc.brand === 'VentureX';
+  const marker = L.circleMarker([loc.lat, loc.lng], {
+    radius:      isVX ? 12 : 9,
+    fillColor:   color,
+    fillOpacity: 0.93,
+    color:       isVX ? '#111111' : 'white',
+    weight:      isVX ? 2.5 : 1.8,
+  });
+  marker.bindPopup(`
+    <div class="popup-brand-bar${isVX ? ' dark-text' : ''}" style="background:${color};">${brandLabels[loc.brand]}</div>
+    <div class="popup-inner">
+      <div class="popup-name">${loc.name}</div>
+      <div class="popup-address">📍 ${loc.address}</div>
+      ${loc.note ? `<div class="popup-note">${loc.note}</div>` : ''}
+    </div>
+  `, { maxWidth: 300 });
+  marker.addTo(map);
+  brandMarkers[loc.brand].push(marker);
+});
+
+// ═══════════════════════════════════════════════════════
+//  LAYER CONTROL FUNCTIONS
+// ═══════════════════════════════════════════════════════
+function setDemoView(view) {
+  currentView = view;
+  renderZipLayer(view);
+  document.getElementById('btn-income').classList.toggle('active', view === 'income');
+  document.getElementById('btn-density').classList.toggle('active', view === 'density');
+  document.getElementById('income-legend').style.display  = view === 'income'  ? '' : 'none';
+  document.getElementById('density-legend').style.display = view === 'density' ? '' : 'none';
+  document.getElementById('legend-title').textContent =
+    view === 'income' ? 'Median Household Income' : 'Population Density';
+}
+
+function toggleBrand(brand) {
+  const pill = document.getElementById('pill-' + brand);
+  if (brandOn[brand]) {
+    brandMarkers[brand].forEach(m => map.removeLayer(m));
+    pill.classList.add('off');
+  } else {
+    brandMarkers[brand].forEach(m => m.addTo(map));
+    pill.classList.remove('off');
+  }
+  brandOn[brand] = !brandOn[brand];
+}
+
+</script>
+</body>
+</html>
