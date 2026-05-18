@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cleveland Metro Coworking Landscape | IWG</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; }
+
+  #header {
+    background: #003087;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 14px 24px;
+    gap: 16px;
+  }
+  #header .logo {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #fff;
+    border: 3px solid #fff;
+    padding: 3px 10px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  #header .title-block h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  #header .title-block p {
+    font-size: 11px;
+    opacity: 0.75;
+    margin-top: 3px;
+  }
+  #header .badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  #toggle-bar {
+    display: flex;
+    gap: 8px;
+    padding: 9px 20px;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    align-items: center;
+  }
+  #toggle-bar span { font-size: 12px; font-weight: 600; color: #555; margin-right: 4px; }
+  .view-btn {
+    padding: 5px 16px;
+    border-radius: 20px;
+    border: 2px solid #003087;
+    background: #fff;
+    color: #003087;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .view-btn.active { background: #003087; color: #fff; }
+
+  #app { display: flex; height: calc(100vh - 102px); }
+  #map { flex: 1; }
+
+  #panel {
+    width: 272px;
+    background: #fff;
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    font-size: 13px;
+  }
+  #panel h2 {
+    background: #003087;
+    color: #fff;
+    padding: 11px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .panel-section {
+    padding: 13px 16px;
+    border-bottom: 1px solid #eee;
+  }
+  .panel-section h3 {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 10px;
+  }
+
+  .op-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    background: #f7f8fa;
+    border: 1px solid #e2e5ea;
+    transition: all .2s;
+    user-select: none;
+  }
+  .op-pill:hover { background: #eef1f6; }
+  .op-pill.off { opacity: 0.38; }
+  .op-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .op-label { font-weight: 600; font-size: 12px; flex: 1; }
+  .op-count {
+    font-size: 11px;
+    background: #e5e9ef;
+    border-radius: 10px;
+    padding: 1px 7px;
+    color: #555;
+    font-weight: 600;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 11px;
+    color: #444;
+  }
+  .legend-swatch {
+    width: 18px; height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .info-box {
+    background: #eef2fb;
+    border-left: 3px solid #003087;
+    border-radius: 4px;
+    padding: 9px 10px;
+    font-size: 11px;
+    color: #444;
+    line-height: 1.6;
+  }
+  .info-box b { color: #003087; }
+
+  .note-box {
+    background: #fff8e1;
+    border-left: 3px solid #f9a825;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #555;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  /* Leaflet popup overrides */
+  .popup-brand-bar {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+    margin: -8px -8px 7px -8px;
+    border-radius: 4px 4px 0 0;
+  }
+  .popup-name { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+  .popup-addr { font-size: 11px; color: #666; }
+  .popup-note { font-size: 10px; color: #999; margin-top: 4px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo">IWG</div>
+  <div class="title-block">
+    <h1>Cleveland Metro Coworking Landscape</h1>
+    <p>Median Income &amp; Population Density by ZIP · Operator Locations · Market Overview</p>
+  </div>
+  <div class="badge">Market Analysis 2026</div>
+</div>
+
+<div id="toggle-bar">
+  <span>View:</span>
+  <button class="view-btn active" id="btn-income" onclick="showLayer('income')">Median Household Income</button>
+  <button class="view-btn" id="btn-density" onclick="showLayer('density')">Population Density</button>
+</div>
+
+<div id="app">
+  <div id="map"></div>
+  <div id="panel">
+    <h2>Map Controls</h2>
+
+    <div class="panel-section">
+      <h3>Operators — click to toggle</h3>
+      <div id="op-toggles"></div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Income Legend</h3>
+      <div id="income-legend">
+        <div class="legend-row"><div class="legend-swatch" style="background:#084594"></div>&gt; $100K</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#2171b5"></div>$80K – $100K</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#6baed6"></div>$60K – $80K</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#bdd7e7"></div>$40K – $60K</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#eff3ff"></div>&lt; $40K</div>
+      </div>
+      <div id="density-legend" style="display:none">
+        <div class="legend-row"><div class="legend-swatch" style="background:#54278f"></div>&gt; 4,500 /mi²</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#756bb1"></div>3,000 – 4,500 /mi²</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#9e9ac8"></div>2,000 – 3,000 /mi²</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#cbc9e2"></div>1,000 – 2,000 /mi²</div>
+        <div class="legend-row"><div class="legend-swatch" style="background:#f2f0f7"></div>&lt; 1,000 /mi²</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Market Notes</h3>
+      <div class="info-box">
+        <b>Cleveland MSA</b> covers Cuyahoga, Lake, Geauga, Medina &amp; Lorain counties (~2M residents). High-income suburban corridors include <b>Solon, Brecksville, Broadview Heights, Bay Village, Westlake, Avon,</b> and <b>Chagrin Falls</b> — most with limited flexible office supply.
+      </div>
+      <div class="note-box">
+        ⚠ <b>Industrious</b> (1301 E 9th St) closed March 2025. <b>WeWork</b> and <b>TKO Suites</b> have no confirmed active Cleveland MSA locations at time of publication.
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Sources</h3>
+      <div style="font-size:10px;color:#999;line-height:1.7;">
+        Demographics: U.S. Census ACS 5-Year Estimates (2022)<br>
+        Regus/Spaces/HQ: regus.com · spacesworks.com · hq.com<br>
+        Local: cohatch.com<br>
+        Generated: May 2026
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── MAP INIT ──────────────────────────────────────────────────────────
+const map = L.map('map', { center: [41.48, -81.68], zoom: 10 });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  maxZoom: 19,
+}).addTo(map);
+
+// ── ZIP DATA: [lat, lng, medianIncome, density/mi², label] ────────────
+// Sources: ACS 2022 5-Year Estimates
+const zips = [
+  // Downtown / Inner City
+  [41.4887, -81.7179,  52000, 5200, '44113'], // Ohio City / Tremont
+  [41.5030, -81.6822,  38000, 2800, '44114'], // Downtown Cleveland
+  [41.4899, -81.6763,  30000, 4200, '44115'], // Gateway / Midtown
+  [41.4784, -81.7358,  40000, 5800, '44102'], // Detroit Shoreway / Edgewater
+  [41.5165, -81.6555,  26000, 5500, '44103'], // Glenville / Hough
+  [41.4800, -81.6490,  22000, 4800, '44104'], // Central / Kinsman
+  [41.4619, -81.6794,  30000, 4400, '44105'], // Slavic Village
+  [41.5061, -81.6044,  42000, 6200, '44106'], // University Circle
+  [41.5316, -81.6159,  28000, 4600, '44108'], // Glenville (north)
+  [41.4619, -81.7007,  38000, 4200, '44109'], // Old Brooklyn
+  [41.5521, -81.5868,  32000, 3600, '44110'], // Collinwood (east)
+  [41.4559, -81.7679,  42000, 4600, '44111'], // Kamm's Corners
+  [41.5189, -81.5869,  28000, 5200, '44112'], // East Cleveland
+  [41.4404, -81.8010,  44000, 4100, '44135'], // West Park
+  // Inner-Ring Suburbs
+  [41.4812, -81.7997,  56000, 6800, '44107'], // Lakewood
+  [41.4797, -81.8530,  78000, 3200, '44116'], // Rocky River
+  [41.5068, -81.5677,  58000, 5400, '44118'], // Cleveland Heights
+  [41.5774, -81.5418,  48000, 3800, '44119'], // Collinwood / Euclid border
+  [41.4869, -81.5862,  55000, 5100, '44120'], // Shaker Heights (west)
+  [41.5234, -81.5418,  58000, 4400, '44121'], // South Euclid / Univ. Heights
+  [41.4660, -81.5270,  68000, 3200, '44122'], // Beachwood / Warrensville Hts
+  [41.5225, -81.4536,  72000, 2800, '44124'], // Mayfield Heights
+  [41.4545, -81.8530,  68000, 3500, '44126'], // Fairview Park
+  [41.4283, -81.7700,  58000, 3800, '44129'], // Parma Heights
+  [41.3967, -81.7956,  60000, 2600, '44130'], // Middleburg Heights / Brookpark
+  [41.3843, -81.6695,  74000, 2000, '44131'], // Independence / Seven Hills
+  [41.5924, -81.5216,  44000, 3400, '44132'], // Euclid (south)
+  [41.4050, -81.7259,  54000, 4200, '44134'], // Parma
+  [41.4153, -81.8192,  52000, 2800, '44142'], // Brook Park
+  [41.5293, -81.5054,  65000, 3100, '44143'], // Lyndhurst / Richmond Hts
+  // Outer Suburbs — Cuyahoga
+  [41.3888, -81.4418,  98000, 1100, '44139'], // Solon
+  [41.4895, -81.9121,  92000, 1400, '44140'], // Bay Village
+  [41.3219, -81.6231,  98000,  900, '44141'], // Brecksville
+  [41.4553, -81.9168,  88000, 1600, '44145'], // Westlake / Crocker Park
+  [41.3219, -81.7100,  85000, 1200, '44147'], // Broadview Heights
+  [41.3050, -81.7259,  75000, 1600, '44133'], // North Royalton
+  [41.3144, -81.8359,  80000, 1400, '44136'], // Strongsville
+  // Lake County (northeast)
+  [41.6628, -81.3402,  72000, 1200, '44060'], // Mentor
+  [41.7242, -81.2531,  48000, 1000, '44077'], // Painesville
+  [41.6157, -81.4755,  58000, 2400, '44092'], // Wickliffe
+  [41.6382, -81.4178,  64000, 1700, '44094'], // Willoughby
+  [41.5963, -81.4418,  72000, 1500, '44095'], // Willoughby Hills
+  // Geauga County (southeast)
+  [41.4299, -81.3402,  98000,  750, '44022'], // Chagrin Falls
+  [41.3966, -81.2762,  88000,  400, '44023'], // Chagrin Falls (SE)
+  // Medina County (south)
+  [41.1390, -81.8674,  74000,  800, '44256'], // Medina
+  [41.0259, -81.7303,  65000,  900, '44281'], // Wadsworth
+  // Lorain County (west)
+  [41.4513, -82.0350,  95000, 1400, '44011'], // Avon
+  [41.5081, -82.0350,  90000, 1100, '44012'], // Avon Lake
+  [41.3678, -82.1075,  48000, 1800, '44035'], // Elyria
+];
+
+function incomeColor(v) {
+  if (v > 100000) return '#084594';
+  if (v >  80000) return '#2171b5';
+  if (v >  60000) return '#6baed6';
+  if (v >  40000) return '#bdd7e7';
+  return '#eff3ff';
+}
+function densityColor(v) {
+  if (v > 4500) return '#54278f';
+  if (v > 3000) return '#756bb1';
+  if (v > 2000) return '#9e9ac8';
+  if (v > 1000) return '#cbc9e2';
+  return '#f2f0f7';
+}
+
+let currentLayer = 'income';
+let zipCircles = [];
+
+function drawZips(layer) {
+  zipCircles.forEach(c => map.removeLayer(c));
+  zipCircles = [];
+  zips.forEach(([lat, lng, income, density, label]) => {
+    const color = layer === 'income' ? incomeColor(income) : densityColor(density);
+    const valStr = layer === 'income'
+      ? '$' + income.toLocaleString() + ' median income'
+      : density.toLocaleString() + ' people/mi²';
+    const c = L.circle([lat, lng], {
+      radius: 3200,
+      fillColor: color,
+      fillOpacity: 0.58,
+      color: color,
+      weight: 1,
+      opacity: 0.7,
+    });
+    c.bindTooltip(`<b>${label}</b><br>${valStr}`, { sticky: true });
+    c.addTo(map);
+    zipCircles.push(c);
+  });
+}
+
+function showLayer(layer) {
+  currentLayer = layer;
+  drawZips(layer);
+  document.getElementById('btn-income').classList.toggle('active', layer === 'income');
+  document.getElementById('btn-density').classList.toggle('active', layer === 'density');
+  document.getElementById('income-legend').style.display = layer === 'income' ? '' : 'none';
+  document.getElementById('density-legend').style.display = layer === 'density' ? '' : 'none';
+}
+
+drawZips('income');
+
+// ── BRAND CONFIG ──────────────────────────────────────────────────────
+const brandColors = {
+  regus:       '#003087',  // IWG / Regus navy
+  spaces:      '#E30613',  // Spaces red
+  hq:          '#8E2B8E',  // HQ purple
+  industrious: '#FF6B35',  // Industrious orange
+  tko:         '#16A085',  // TKO teal
+  local:       '#27AE60',  // COhatch / Local green
+};
+const brandLabels = {
+  regus:       'Regus',
+  spaces:      'Spaces',
+  hq:          'HQ by IWG',
+  industrious: 'Industrious',
+  tko:         'TKO Suites',
+  local:       'COhatch / Local',
+};
+const brandKeys = ['regus', 'spaces', 'hq', 'industrious', 'tko', 'local'];
+
+// ── COWORKING LOCATIONS ───────────────────────────────────────────────
+const coworkingData = [
+  // ── Regus (6 confirmed locations) ──────────────────────────────────
+  {
+    brand: 'regus',
+    name:  'Regus – Cleveland City Center',
+    addr:  '600 Superior Ave E, Cleveland, OH 44114',
+    note:  'Fifth Third Building · Downtown',
+    lat: 41.4993, lng: -81.6944,
+  },
+  {
+    brand: 'regus',
+    name:  'Regus – 9th Street Cleveland',
+    addr:  '1300 E 9th St, Cleveland, OH 44114',
+    note:  'Health-Tech Corridor · Midtown',
+    lat: 41.4969, lng: -81.6882,
+  },
+  {
+    brand: 'regus',
+    name:  'Regus – Beachwood',
+    addr:  '2000 Auburn Dr, Beachwood, OH 44122',
+    note:  'Beachwood Office Park',
+    lat: 41.4634, lng: -81.5040,
+  },
+  {
+    brand: 'regus',
+    name:  'Regus – Independence',
+    addr:  '6100 Oak Tree Blvd, Independence, OH 44131',
+    note:  'Oak Tree Corporate Campus',
+    lat: 41.3968, lng: -81.6391,
+  },
+  {
+    brand: 'regus',
+    name:  'Regus – Solon',
+    addr:  '30575 Bainbridge Rd, Solon, OH 44139',
+    note:  'Southeast suburban corridor',
+    lat: 41.3948, lng: -81.4418,
+  },
+  {
+    brand: 'regus',
+    name:  'Regus – Westlake / Crocker Park',
+    addr:  '159 Crocker Park Blvd, Westlake, OH 44145',
+    note:  'Crocker Park mixed-use district · 4th Floor',
+    lat: 41.4553, lng: -81.9168,
+  },
+  // ── Spaces (1 confirmed) ────────────────────────────────────────────
+  {
+    brand: 'spaces',
+    name:  'Spaces – Warehouse District',
+    addr:  '1468 W 9th St, Cleveland, OH 44113',
+    note:  'Historic Warehouse District · Downtown',
+    lat: 41.4990, lng: -81.7005,
+  },
+  // ── HQ by IWG (2 locations per hq.com listing) ─────────────────────
+  {
+    brand: 'hq',
+    name:  'HQ – Lakewood',
+    addr:  'Lakewood, OH 44107',
+    note:  'Location per hq.com — exact address to confirm',
+    lat: 41.4812, lng: -81.7997,
+  },
+  {
+    brand: 'hq',
+    name:  'HQ – Strongsville',
+    addr:  'Strongsville, OH 44136',
+    note:  'Location per hq.com — exact address to confirm',
+    lat: 41.3144, lng: -81.8359,
+  },
+  // ── COhatch / Local (2 confirmed) ──────────────────────────────────
+  {
+    brand: 'local',
+    name:  'COhatch – Ohio City',
+    addr:  '2814 Detroit Ave, Cleveland, OH 44113',
+    note:  '38 private offices · coworking · event space',
+    lat: 41.4877, lng: -81.7155,
+  },
+  {
+    brand: 'local',
+    name:  'COhatch – Beachwood',
+    addr:  '26300 Cedar Rd, Beachwood, OH 44122',
+    note:  '33,000 SF · 60 offices · suburban flagship',
+    lat: 41.4694, lng: -81.5119,
+  },
+];
+
+// ── COMPUTE COUNTS (include 0 for brands with no markers) ────────────
+const brandCounts = {};
+brandKeys.forEach(k => brandCounts[k] = 0);
+coworkingData.forEach(d => { if (d.brand in brandCounts) brandCounts[d.brand]++; });
+
+// ── BUILD TOGGLE PILLS ────────────────────────────────────────────────
+const togglesDiv = document.getElementById('op-toggles');
+brandKeys.forEach(key => {
+  const pill = document.createElement('div');
+  pill.className = 'op-pill';
+  pill.id = 'pill-' + key;
+  const count = brandCounts[key];
+  pill.innerHTML = `
+    <div class="op-dot" style="background:${brandColors[key]}"></div>
+    <span class="op-label">${brandLabels[key]}</span>
+    <span class="op-count">${count > 0 ? count : '—'}</span>
+  `;
+  if (count > 0) {
+    pill.onclick = () => toggleBrand(key);
+    pill.title = 'Click to toggle';
+  } else {
+    pill.style.cursor = 'default';
+    pill.title = 'No confirmed active locations found';
+  }
+  togglesDiv.appendChild(pill);
+});
+
+// ── PLACE MARKERS ─────────────────────────────────────────────────────
+const brandOn      = {};
+const brandMarkers = {};
+brandKeys.forEach(k => { brandOn[k] = true; brandMarkers[k] = []; });
+
+coworkingData.forEach(d => {
+  const marker = L.circleMarker([d.lat, d.lng], {
+    radius:      9,
+    fillColor:   brandColors[d.brand],
+    color:       '#fff',
+    weight:      2.5,
+    fillOpacity: 0.92,
+  });
+  marker.bindPopup(`
+    <div class="popup-brand-bar" style="background:${brandColors[d.brand]};color:#fff;">
+      ${brandLabels[d.brand].toUpperCase()}
+    </div>
+    <div class="popup-name">${d.name}</div>
+    <div class="popup-addr">${d.addr}</div>
+    ${d.note ? `<div class="popup-note">${d.note}</div>` : ''}
+  `);
+  marker.addTo(map);
+  brandMarkers[d.brand].push(marker);
+});
+
+function toggleBrand(key) {
+  if (brandCounts[key] === 0) return;
+  brandOn[key] = !brandOn[key];
+  document.getElementById('pill-' + key).classList.toggle('off', !brandOn[key]);
+  brandMarkers[key].forEach(m => {
+    if (brandOn[key]) m.addTo(map);
+    else map.removeLayer(m);
+  });
+}
+</script>
+</body>
+</html>
