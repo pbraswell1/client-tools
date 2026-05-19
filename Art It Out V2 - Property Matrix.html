@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Art It Out (2) — Available Properties</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+:root{color-scheme:light;--navy:#0f2044;--navy-mid:#1a3460;--navy-light:#e8edf5;--gold:#c9a84c;--text:#1a1a2e;--text-muted:#5a6580;--border:#d6dce8;--white:#ffffff;--green:#2d7a4f;--green-bg:#e8f5ee;--orange:#c05c1a;--orange-bg:#fef0e6;--red:#b0253a;--red-bg:#fceaec;--blue:#1a5fa8;--blue-bg:#e6f0fb;--radius:10px;--shadow:0 2px 12px rgba(15,32,68,.10);--shadow-hover:0 8px 32px rgba(15,32,68,.18)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f6fa;color:var(--text);min-height:100vh}
+.header{background:var(--navy);position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+.header-inner{max-width:1280px;margin:0 auto;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:#111}
+.brand-name{color:#fff;font-size:15px;font-weight:700}
+.brand-sub{color:rgba(255,255,255,.55);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.header-client{text-align:right}
+.client-label{color:rgba(255,255,255,.5);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.client-name{color:var(--gold);font-size:20px;font-weight:700}
+.criteria-strip{background:var(--navy-mid);border-bottom:1px solid rgba(201,168,76,.3)}
+.criteria-inner{max-width:1280px;margin:0 auto;padding:10px 28px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.criteria-pill{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);color:rgba(255,255,255,.85);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+.stats-bar{max-width:1280px;margin:24px auto 0;padding:0 28px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)}
+.stat-value{font-size:26px;font-weight:800;color:var(--navy);line-height:1}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.controls{max-width:1280px;margin:20px auto 0;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.view-tabs{display:flex;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+.view-tab{padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text-muted);display:flex;align-items:center;gap:7px;transition:all .18s}
+.view-tab.active{background:var(--navy);color:#fff}
+.view-tab:hover:not(.active){background:var(--navy-light);color:var(--navy)}
+.filter-group{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.filter-select{padding:8px 14px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff;color:var(--text);cursor:pointer;box-shadow:var(--shadow);font-family:inherit}
+.result-count{font-size:13px;color:var(--text-muted);font-weight:500}
+.main-content{max-width:1280px;margin:20px auto 40px;padding:0 28px}
+.cards-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.cards-grid.active{display:grid}
+.prop-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .22s,transform .22s;display:flex;flex-direction:column}
+.prop-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.card-photo{width:100%;height:175px;object-fit:cover;display:block}
+.card-photo-placeholder{width:100%;height:175px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.35);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.card-header{background:var(--navy);padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card-num{background:var(--gold);color:var(--navy);font-size:11px;font-weight:800;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-title-block{flex:1;min-width:0}
+.card-building{color:#fff;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;display:block}
+.card-building:hover{color:var(--gold);text-decoration:underline}
+.card-address{color:rgba(255,255,255,.55);font-size:11.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate-badge{flex-shrink:0;text-align:right}
+.rate-value{font-size:20px;font-weight:800;line-height:1}
+.rate-label{color:rgba(255,255,255,.45);font-size:10px}
+.card-body{padding:14px 18px;flex:1}
+.card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--navy-light);border-radius:7px;padding:8px 10px}
+.metric-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted)}
+.metric-value{font-size:14px;font-weight:700;color:var(--navy)}
+.card-notes{font-size:12.5px;color:var(--text-muted);line-height:1.5;border-top:1px solid var(--border);padding-top:12px}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-orange{background:var(--orange-bg);color:var(--orange)}
+.tag-navy{background:var(--navy-light);color:var(--navy-mid)}
+.card-footer{padding:10px 18px;border-top:1px solid var(--border);background:#fafbfd;display:flex;align-items:center;justify-content:space-between}
+.monthly-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.monthly-value{font-size:16px;font-weight:800;color:var(--navy)}
+.rate-indicator{width:100%;height:3px;border-radius:2px;margin-top:6px}
+.rate-low{background:linear-gradient(90deg,#2d7a4f,#52c07c)}
+.rate-mid{background:linear-gradient(90deg,#1a5fa8,#4a9de0)}
+.rate-high-mid{background:linear-gradient(90deg,#c08c1a,#e8b84a)}
+.rate-high{background:linear-gradient(90deg,#b0253a,#e05070)}
+.matrix-view{display:none;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.matrix-view.active{display:block}
+.table-thumb{width:100px;height:68px;object-fit:cover;border-radius:6px;display:block}
+.table-thumb-placeholder{width:100px;height:68px;border-radius:6px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:10px;font-weight:600;text-align:center}
+.matrix-table{width:100%;border-collapse:collapse;font-size:13px}
+.matrix-table thead tr{background:var(--navy);color:#fff}
+.matrix-table th{padding:13px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;cursor:pointer;user-select:none}
+.matrix-table th:hover{background:var(--navy-mid)}
+.matrix-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.matrix-table tbody tr:hover{background:var(--navy-light)}
+.matrix-table tbody tr:last-child td{border-bottom:none}
+.table-num{background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+.table-building{font-weight:700;color:var(--navy);font-size:13px;text-decoration:none;display:block}
+.table-building:hover{color:var(--blue);text-decoration:underline}
+.table-address{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.table-rate{font-weight:800;font-size:15px}
+.table-rate.low{color:var(--green)}.table-rate.mid{color:var(--blue)}.table-rate.high-mid{color:var(--orange)}.table-rate.high{color:var(--red)}
+.table-monthly{font-weight:700;color:var(--navy)}
+.table-notes{font-size:12px;color:var(--text-muted);max-width:280px;line-height:1.45}
+.map-view{display:none;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);position:relative}
+.map-view.active{display:block}
+#map{height:620px;width:100%;z-index:1}
+.map-legend{position:absolute;bottom:24px;left:12px;z-index:1000;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:var(--shadow);font-size:12px}
+.map-legend-title{font-weight:700;color:var(--navy);margin-bottom:8px;font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+.legend-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;color:var(--text)}
+.legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.15)}
+.leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 4px 20px rgba(15,32,68,.18)!important;padding:0!important;overflow:hidden}
+.leaflet-popup-content{margin:0!important;width:260px!important}
+.popup-photo{width:100%;height:110px;object-fit:cover;display:block}
+.popup-photo-placeholder{width:100%;height:60px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid))}
+.popup-body{padding:12px 14px}
+.popup-name{font-weight:700;font-size:14px;color:var(--navy);text-decoration:none;display:block;margin-bottom:2px}
+.popup-name:hover{color:var(--blue);text-decoration:underline}
+.popup-addr{font-size:11.5px;color:var(--text-muted);margin-bottom:8px}
+.popup-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.popup-stat{background:var(--navy-light);border-radius:5px;padding:5px 7px;text-align:center}
+.popup-stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.popup-stat-value{font-size:13px;font-weight:800;color:var(--navy)}
+.no-results{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:15px;display:none}
+.no-results.visible{display:block}
+.page-footer{max-width:1280px;margin:0 auto 30px;padding:0 28px;display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted)}
+.footer-brand{font-weight:600;color:var(--navy)}
+@media(max-width:700px){.stats-bar{grid-template-columns:repeat(2,1fr)}.cards-grid{grid-template-columns:1fr}.controls{flex-direction:column;align-items:flex-start}#map{height:420px}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo"><svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+  <circle cx="22" cy="22" r="22" fill="#111"/>
+  <circle cx="22" cy="22" r="20" fill="#2c2c2c"/>
+  <circle cx="22" cy="22" r="18.5" fill="none" stroke="#1a1a1a" stroke-width="1.2"/>
+  <circle cx="22" cy="22" r="16.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="22" cy="22" r="14.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="22" cy="22" r="12.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+  <circle cx="22" cy="22" r="10.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+  <circle cx="22" cy="22" r="8.5" fill="#222"/>
+  <circle cx="22" cy="22" r="6" fill="#1a1a1a"/>
+  <circle cx="22" cy="22" r="2" fill="#c9a84c"/>
+</svg></div>
+      <div>
+        <div class="brand-name">Record Real Estate Partners</div>
+        <div class="brand-sub">Atlanta &bull; Commercial Real Estate</div>
+      </div>
+    </div>
+    <div class="header-client">
+      <div class="client-label">Prepared for</div>
+      <div class="client-name">Art It Out (2)</div>
+    </div>
+  </div>
+  <div class="criteria-strip">
+    <div class="criteria-inner">
+      <span class="criteria-pill">Cumberland / Galleria Submarket</span>
+      <span class="criteria-pill">6,000 &ndash; 8,000 RSF</span>
+      <span class="criteria-pill">FS Direct</span>
+      <span class="criteria-pill">1st &amp; 2nd Floors</span>
+    </div>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-card"><div class="stat-label">Options Available</div><div class="stat-value">7</div><div class="stat-sub">across 5 buildings</div></div>
+  <div class="stat-card"><div class="stat-label">Rate Range</div><div class="stat-value">$21&ndash;$29</div><div class="stat-sub">per SF / year</div></div>
+  <div class="stat-card"><div class="stat-label">Size Range</div><div class="stat-value">2,048&ndash;9,456</div><div class="stat-sub">rentable sq. ft.</div></div>
+  <div class="stat-card"><div class="stat-label">Monthly Range</div><div class="stat-value">$4,523&ndash;$18,576</div><div class="stat-sub">estimated base rent</div></div>
+</div>
+
+<div class="controls">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="setView('cards')" id="tabCards">&#9646;&#9646; Card View</button>
+      <button class="view-tab" onclick="setView('matrix')" id="tabMatrix">&#8801; Matrix View</button>
+      <button class="view-tab" onclick="setView('map')" id="tabMap">&#9679; Map View</button>
+    </div>
+    <span class="result-count" id="resultCount">Showing 7 of 7 options</span>
+  </div>
+  <div class="filter-group">
+    <select class="filter-select" onchange="applyFilters()" id="filterRate">
+      <option value="">All Rates</option>
+      <option value="budget">Budget (&le;$22/SF)</option>
+      <option value="mid">Mid-Range ($23&ndash;$28/SF)</option>
+      <option value="upper">Upper-Mid ($29&ndash;$35/SF)</option>
+      <option value="premium">Premium ($36+/SF)</option>
+    </select>
+    <select class="filter-select" onchange="applyFilters()" id="filterSort">
+      <option value="default">Sort: Default</option>
+      <option value="rate-asc">Rate: Low to High</option>
+      <option value="rate-desc">Rate: High to Low</option>
+      <option value="sf-asc">Size: Small to Large</option>
+      <option value="sf-desc">Size: Large to Small</option>
+      <option value="monthly-asc">Monthly: Low to High</option>
+    </select>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="cards-grid active" id="cardsGrid"></div>
+
+  <div class="matrix-view" id="matrixView">
+    <table class="matrix-table">
+      <thead><tr>
+        <th style="width:32px">#</th>
+        <th style="width:116px">Photo</th>
+        <th>Building</th>
+        <th>Floor / Suite</th>
+        <th>SF</th>
+        <th>Rate/SF</th>
+        <th>Monthly Est.</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="matrixBody"></tbody>
+    </table>
+  </div>
+
+  <div class="map-view" id="mapView">
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="map-legend-title">Rate / SF / Year</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#2d7a4f"></div> Budget &mdash; &le;$22</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#1a5fa8"></div> Mid-Range &mdash; $23&ndash;$28</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#c05c1a"></div> Upper-Mid &mdash; $29&ndash;$35</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#b0253a"></div> Premium &mdash; $36+</div>
+    </div>
+  </div>
+
+  <div class="no-results" id="noResults">No properties match your current filters.</div>
+</div>
+
+<div class="page-footer">
+  <span class="footer-brand">Record Real Estate Partners</span>
+  <span>Updated May 18, 2026</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+var P = [
+  {id:1,b:"Cumberland Center I",a:"3065 Akers Mill Rd SE",c:"Atlanta, GA 30339",fl:"2",su:"250",sf:7704,sfd:"7,704",r:29,rd:"$29.00",mo:18576,mod:"$18,576",tags:["upper-mid","roundabout"],ph:"https://images1.loopnet.com/i2/CguB5uvGhAF7c_SxE9oBGRViBLWTBXljaknLtVjpp1Q/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgAcXxzMbLqUQIV5meG7w3drAQQ6_DjaSHSslSplV800YPM",lat:33.8745,lng:-84.4746,n:"Former Sprint regional HQ. The entire first floor is available so they might break it up for the requirement. 2 good options on the 2nd floor. Plenty of parking. Really good location. Has a good roundabout right in front of the building for drop offs."},
+  {id:2,b:"Cumberland Center I",a:"3065 Akers Mill Rd SE",c:"Atlanta, GA 30339",fl:"2",su:"200",sf:7478,sfd:"7,478",r:29,rd:"$29.00",mo:18072,mod:"$18,072",tags:["upper-mid","roundabout"],ph:"https://images1.loopnet.com/i2/CguB5uvGhAF7c_SxE9oBGRViBLWTBXljaknLtVjpp1Q/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgAcXxzMbLqUQIV5meG7w3drAQQ6_DjaSHSslSplV800YPM",lat:33.8746,lng:-84.4745,n:"Former Sprint regional HQ. The entire first floor is available so they might break it up for the requirement. 2 good options on the 2nd floor. Plenty of parking. Really good location."},
+  {id:3,b:"1600 Parkwood",a:"1600 Parkwood Cir SE",c:"Atlanta, GA 30339",fl:"1",su:"100",sf:6448,sfd:"6,448",r:29,rd:"$29.00",mo:15583,mod:"$15,583",tags:["upper-mid","braves-area"],ph:"https://images1.loopnet.com/i2/B_jRZrFDPi0VD8tdbLJAklTVwkssgtF0EiTUOMR9s2w/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgCXpiguKLaDR6fT9HgAM9dyAcCiFUqNoR8za_0DhNz-QBw",lat:33.8897,lng:-84.4678,n:"Walking distance to the Braves Stadium and easy building for people to find while driving to this location. There is a roundabout at the main lobby so really convenient for dropping off. The current owner is the lender so they are looking to lease up the building to sell. Good opportunity to get a great deal."},
+  {id:4,b:"1899 Powers Ferry",a:"1899 Powers Ferry Rd SE",c:"Atlanta, GA 30339",fl:"1",su:"160",sf:6658,sfd:"6,658",r:24,rd:"$24.00",mo:13316,mod:"$13,316",tags:["mid-range","signage"],ph:"https://images1.loopnet.com/i2/PsuHNrSk-QK-m-mRjG8ggB7v2PM6imRf2tsHb9p3KxM/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgDEMulxlYNYSJLCq1k-dvplASYP8Typ9WTkyKpacVyy5wQ",lat:33.8927,lng:-84.4733,n:"This location is walking distance to a number of restaurants. It is a smaller building with a local owner that is very good to tenants. Good monument signage available on Powers Ferry Road. Has a roundabout in front of the building for convenient dropoffs."},
+  {id:5,b:"2400 Lake Park",a:"2400 Lake Park Dr SE",c:"Smyrna, GA 30080",fl:"1",su:"100",sf:9456,sfd:"9,456",r:21,rd:"$21.00",mo:16548,mod:"$16,548",tags:["budget","smyrna"],ph:"https://images1.loopnet.com/i2/aieyXhoVfUMvZoBkJSagubmUqepYHLXmLYYIjfkN_jk/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgBsZOfL4gRUSL-jBEj-X370AQwDzZS1w65ouYm1TnEchdc",lat:33.8786,lng:-84.4898,n:"This location is on the edge of where you want to be. It is typically located in Smyrna, but is very close to the Braves Stadium. Lots of parking. Older building and the rental rate reflects the age and location of the building."},
+  {id:6,b:"Wildwood Park",a:"3301 Windy Ridge Pky SE",c:"Atlanta, GA 30339",fl:"1",su:"100",sf:6744,sfd:"6,744",r:26.5,rd:"$26.50",mo:14890,mod:"$14,890",tags:["mid-range","expansion"],ph:"https://images1.loopnet.com/i2/__PMRWkvYfxITn_vlTrG-tACloGHW44AdM1jYXyEwLw/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgBoqfZJ5U2cQ6j9WJyDP51pASKnbPlOeHXCASIrUlduxHw?e=OQI5WW",lat:33.8842,lng:-84.4821,n:"Smaller building located in the Wildwood office park off of Powers Ferry Road. Lots of retail close by the office park. You can combine the 2 suites available on the 1st floor for 8,700 RSF. Good opportunity to take the 6,744 RSF and have expansion rights on the suite next door."},
+  {id:7,b:"Wildwood Park",a:"3301 Windy Ridge Pky SE",c:"Atlanta, GA 30339",fl:"1",su:"105",sf:2048,sfd:"2,048",r:26.5,rd:"$26.50",mo:4523,mod:"$4,523",tags:["mid-range","expansion"],ph:"https://images1.loopnet.com/i2/__PMRWkvYfxITn_vlTrG-tACloGHW44AdM1jYXyEwLw/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgBoqfZJ5U2cQ6j9WJyDP51pASKnbPlOeHXCASIrUlduxHw?e=OQI5WW",lat:33.8843,lng:-84.4822,n:"Smaller building located in the Wildwood office park off of Powers Ferry Road. Lots of retail close by the office park. You can combine the 2 suites available on the 1st floor for 8,700 RSF. Good opportunity to take the 6,744 RSF and have expansion rights on the suite next door."}
+];
+
+var TC = {
+  "upper-mid":{l:"Upper-Mid Rate",c:"tag-orange"},
+  "mid-range":{l:"Mid-Range Rate",c:"tag-blue"},
+  "budget":{l:"Budget Rate",c:"tag-green"},
+  "roundabout":{l:"Roundabout Drop-Off",c:"tag-navy"},
+  "braves-area":{l:"Near Braves Stadium",c:"tag-navy"},
+  "signage":{l:"Monument Signage",c:"tag-blue"},
+  "smyrna":{l:"Smyrna",c:"tag-navy"},
+  "expansion":{l:"Expansion Rights",c:"tag-green"}
+};
+
+function rc(r){return r<=22?"low":r<=28?"mid":r<=35?"high-mid":"high"}
+function rbc(r){return r<=22?"rate-low":r<=28?"rate-mid":r<=35?"rate-high-mid":"rate-high"}
+function markerColor(r){return r<=22?"#2d7a4f":r<=28?"#1a5fa8":r<=35?"#c05c1a":"#b0253a"}
+
+var fp = P.slice();
+var mapInitialized = false;
+var leafletMap = null;
+var mapMarkers = [];
+
+function setView(v) {
+  document.getElementById("cardsGrid").classList.toggle("active", v==="cards");
+  document.getElementById("matrixView").classList.toggle("active", v==="matrix");
+  document.getElementById("mapView").classList.toggle("active", v==="map");
+  document.getElementById("tabCards").classList.toggle("active", v==="cards");
+  document.getElementById("tabMatrix").classList.toggle("active", v==="matrix");
+  document.getElementById("tabMap").classList.toggle("active", v==="map");
+  if (v==="map") {
+    if (!mapInitialized) { initMap(); }
+    else { updateMapMarkers(); leafletMap.invalidateSize(); }
+  }
+  if (v!=="map") { render(); }
+}
+
+function initMap() {
+  mapInitialized = true;
+  leafletMap = L.map("map", {zoomControl:true}).setView([33.884, -84.477], 14);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(leafletMap);
+  updateMapMarkers();
+}
+
+function makeIcon(p) {
+  var color = markerColor(p.r);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">'
+    + '<path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 26 18 26S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="' + color + '" stroke="white" stroke-width="2"/>'
+    + '<text x="18" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="12" fill="white">' + p.id + '</text>'
+    + '</svg>';
+  return L.divIcon({ html:svg, iconSize:[36,44], iconAnchor:[18,44], popupAnchor:[0,-44], className:"" });
+}
+
+function makePopup(p) {
+  var photoHtml = p.ph
+    ? '<img class="popup-photo" src="' + p.ph + '" alt="' + p.b + '" onerror="this.style.display=\'none\'">'
+    : '<div class="popup-photo-placeholder"></div>';
+  var nameHtml = p.sp
+    ? '<a class="popup-name" href="' + p.sp + '" target="_blank">' + p.b + '</a>'
+    : '<span class="popup-name">' + p.b + '</span>';
+  return '<div>'
+    + photoHtml
+    + '<div class="popup-body">'
+    + nameHtml
+    + '<div class="popup-addr">' + p.a + ', ' + p.c + '</div>'
+    + '<div class="popup-stats">'
+    + '<div class="popup-stat"><div class="popup-stat-label">Rate/SF</div><div class="popup-stat-value ' + rc(p.r) + '">' + p.rd + '</div></div>'
+    + '<div class="popup-stat"><div class="popup-stat-label">Sq. Ft.</div><div class="popup-stat-value">' + p.sfd + '</div></div>'
+    + '<div class="popup-stat"><div class="popup-stat-label">Monthly</div><div class="popup-stat-value">' + p.mod + '</div></div>'
+    + '</div>'
+    + '</div></div>';
+}
+
+function updateMapMarkers() {
+  if (!leafletMap) return;
+  for (var i=0; i<mapMarkers.length; i++) { leafletMap.removeLayer(mapMarkers[i]); }
+  mapMarkers = [];
+  for (var j=0; j<fp.length; j++) {
+    var p = fp[j];
+    var marker = L.marker([p.lat, p.lng], {icon:makeIcon(p)})
+      .bindPopup(makePopup(p), {maxWidth:260, minWidth:260})
+      .addTo(leafletMap);
+    mapMarkers.push(marker);
+  }
+  if (fp.length > 0) {
+    var bounds = L.latLngBounds(fp.map(function(p){ return [p.lat, p.lng]; }));
+    leafletMap.fitBounds(bounds, {padding:[40,40]});
+  }
+  leafletMap.invalidateSize();
+}
+
+function applyFilters() {
+  var rf = document.getElementById("filterRate").value;
+  var sv = document.getElementById("filterSort").value;
+  fp = P.filter(function(p) {
+    if (rf==="budget" && p.r>22) return false;
+    if (rf==="mid" && (p.r<23||p.r>28)) return false;
+    if (rf==="upper" && (p.r<29||p.r>35)) return false;
+    if (rf==="premium" && p.r<36) return false;
+    return true;
+  });
+  if (sv==="rate-asc") fp.sort(function(a,b){return a.r-b.r});
+  else if (sv==="rate-desc") fp.sort(function(a,b){return b.r-a.r});
+  else if (sv==="sf-asc") fp.sort(function(a,b){return a.sf-b.sf});
+  else if (sv==="sf-desc") fp.sort(function(a,b){return b.sf-a.sf});
+  else if (sv==="monthly-asc") fp.sort(function(a,b){return a.mo-b.mo});
+  else fp.sort(function(a,b){return a.id-b.id});
+  document.getElementById("resultCount").textContent = "Showing " + fp.length + " of " + P.length + " options";
+  document.getElementById("noResults").classList.toggle("visible", fp.length===0);
+  render();
+  if (mapInitialized) updateMapMarkers();
+}
+
+function imgHtml(p, cls, w, h) {
+  if (p.ph) return '<img class="' + cls + '" src="' + p.ph + '" alt="' + p.b + '" loading="lazy" width="' + w + '" height="' + h + '" onerror="this.style.display=\'none\'">';
+  return '<div class="' + cls + '-placeholder">No Photo</div>';
+}
+
+function renderCards() {
+  var html = "";
+  for (var i=0; i<fp.length; i++) {
+    var p = fp[i];
+    var tags = "";
+    for (var t=0; t<Math.min(p.tags.length,3); t++) {
+      var cfg = TC[p.tags[t]] || {l:p.tags[t], c:"tag-navy"};
+      tags += '<span class="tag ' + cfg.c + '">' + cfg.l + "</span>";
+    }
+    var buildingLink = p.sp
+      ? '<a class="card-building" href="' + p.sp + '" target="_blank">' + p.b + '</a>'
+      : '<span class="card-building" style="cursor:default">' + p.b + '</span>';
+    html += '<div class="prop-card">';
+    html += imgHtml(p, "card-photo", 340, 175);
+    html += '<div class="card-header">';
+    html += '<div class="card-num">' + p.id + "</div>";
+    html += '<div class="card-title-block">' + buildingLink + '<div class="card-address">' + p.a + " &middot; " + p.c + "</div></div>";
+    html += '<div class="rate-badge"><div class="rate-value table-rate ' + rc(p.r) + '">' + p.rd + '</div><div class="rate-label">per SF/yr</div><div class="rate-indicator ' + rbc(p.r) + '"></div></div>';
+    html += "</div>";
+    html += '<div class="card-body"><div class="card-metrics">';
+    html += '<div class="metric"><div class="metric-label">Floor</div><div class="metric-value">' + p.fl + "</div></div>";
+    html += '<div class="metric"><div class="metric-label">Suite</div><div class="metric-value">' + p.su + "</div></div>";
+    html += '<div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">' + p.sfd + "</div></div>";
+    html += "</div>";
+    html += '<div class="card-tags">' + tags + "</div>";
+    html += '<div class="card-notes">' + p.n + "</div></div>";
+    html += '<div class="card-footer"><div><div class="monthly-label">Est. Monthly</div><div class="monthly-value">' + p.mod + "</div></div></div>";
+    html += "</div>";
+  }
+  document.getElementById("cardsGrid").innerHTML = html;
+}
+
+function renderMatrix() {
+  var html = "";
+  for (var i=0; i<fp.length; i++) {
+    var p = fp[i];
+    var tags = "";
+    for (var t=0; t<Math.min(p.tags.length,2); t++) {
+      var cfg = TC[p.tags[t]] || {l:p.tags[t], c:"tag-navy"};
+      tags += '<span class="tag ' + cfg.c + '" style="font-size:10px;padding:2px 7px">' + cfg.l + "</span> ";
+    }
+    var buildingLink = p.sp
+      ? "<a class='table-building' href='" + p.sp + "' target='_blank'>" + p.b + "</a>"
+      : "<span class='table-building' style='cursor:default'>" + p.b + "</span>";
+    html += "<tr><td><span class='table-num'>" + p.id + "</span></td>";
+    html += "<td style='padding:8px 10px'>" + imgHtml(p,"table-thumb",100,68) + "</td>";
+    html += "<td>" + buildingLink + "<div class='table-address'>" + p.a + "</div><div class='table-address'>" + p.c + "</div></td>";
+    html += "<td style='white-space:nowrap'><strong>Fl. " + p.fl + "</strong><br><span style='color:var(--text-muted);font-size:12px'>Ste. " + p.su + "</span></td>";
+    html += "<td style='font-weight:700;color:var(--navy);white-space:nowrap'>" + p.sfd + " SF</td>";
+    html += "<td><span class='table-rate " + rc(p.r) + "' style='font-size:16px'>" + p.rd + "</span><br><span style='font-size:10px;color:var(--text-muted)'>per SF/yr</span></td>";
+    html += "<td><span class='table-monthly'>" + p.mod + "</span><br><span style='font-size:10px;color:var(--text-muted)'>est. base rent</span></td>";
+    html += "<td class='table-notes'>" + p.n + "</td></tr>";
+  }
+  document.getElementById("matrixBody").innerHTML = html;
+}
+
+function render() { renderCards(); renderMatrix(); }
+render();
+</script>
+</body>
+</html>
