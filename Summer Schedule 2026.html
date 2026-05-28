@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Summer Schedule 2026</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #F7F4EF;
+  min-height: 100vh;
+  color: #2D2D2D;
+}
+
+/* ── Header ── */
+.header {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF9A3C 100%);
+  color: white;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 3px 16px rgba(255,107,53,0.3);
+}
+.header-left h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.5px; }
+.header-left p  { opacity: .88; font-size: .82rem; margin-top: 3px; }
+.earnings-badge {
+  background: rgba(255,255,255,.2);
+  border-radius: 12px;
+  padding: 10px 16px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.28);
+}
+.earnings-badge .amount { font-size: 1.35rem; font-weight: 800; line-height: 1; }
+.earnings-badge .label  { font-size: .67rem; opacity: .82; text-transform: uppercase; letter-spacing: .6px; margin-top: 3px; }
+
+/* ── Week Nav ── */
+.week-nav {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 12px 20px;
+  background: white;
+  border-bottom: 1px solid #E8E0D6;
+  flex-wrap: wrap;
+}
+.week-btn {
+  background: none; border: 2px solid #FF6B35; color: #FF6B35;
+  width: 32px; height: 32px; border-radius: 50%;
+  font-size: 1rem; cursor: pointer; transition: all .18s;
+  display: flex; align-items: center; justify-content: center; font-weight: 700;
+}
+.week-btn:hover:not(:disabled) { background: #FF6B35; color: white; }
+.week-btn:disabled { opacity: .25; cursor: default; }
+.week-info { text-align: center; min-width: 180px; }
+.week-info .week-label { font-size: 1rem; font-weight: 800; }
+.week-info .week-dates { font-size: .78rem; color: #999; margin-top: 1px; }
+.today-btn {
+  background: #FF6B35; color: white; border: none;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: .78rem; font-weight: 700; cursor: pointer; transition: background .18s;
+}
+.today-btn:hover { background: #e55c28; }
+
+/* ── Kid Selector ── */
+.kid-selector {
+  display: flex; background: white;
+  border-bottom: 1px solid #E8E0D6;
+  padding: 10px 14px; gap: 8px; overflow-x: auto;
+}
+.kid-card {
+  flex: 1; min-width: 110px; max-width: 180px;
+  border: 2px solid #E8E0D6; border-radius: 14px;
+  padding: 11px 13px; cursor: pointer;
+  transition: all .2s; background: #FAFAF8;
+}
+.kid-card:hover { border-color: #ccc; background: #F5F2EE; }
+.kid-card.active { border-color: var(--kc); background: white; box-shadow: 0 2px 10px rgba(0,0,0,.09); }
+.kid-top { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+.kid-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--kc); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: .9rem; flex-shrink: 0;
+}
+.kid-name  { font-weight: 800; font-size: .92rem; }
+.kid-sport { font-size: .7rem; color: #999; margin-top: 1px; }
+.kid-prog-row { display: flex; justify-content: space-between; font-size: .68rem; color: #aaa; margin-bottom: 3px; }
+.kid-prog-bar  { height: 4px; background: #E8E0D6; border-radius: 99px; overflow: hidden; }
+.kid-prog-fill { height: 100%; background: var(--kc); border-radius: 99px; transition: width .35s; }
+
+/* ── Day Tabs ── */
+.day-tabs {
+  display: flex; background: white;
+  border-bottom: 2px solid #E8E0D6; overflow-x: auto;
+}
+.day-tab {
+  flex: 1; min-width: 62px;
+  padding: 10px 4px 8px; text-align: center;
+  cursor: pointer; border: none; background: none;
+  transition: all .18s;
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+}
+.day-tab:hover { background: #FFF5EE; }
+.day-tab.active { border-bottom-color: #FF6B35; background: #FFF5EE; }
+.dn  { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #aaa; }
+.dd  { font-size: 1.05rem; font-weight: 700; color: #555; margin-top: 2px; line-height: 1; }
+.day-tab.active .dn { color: #FF6B35; }
+.day-tab.active .dd { color: #FF6B35; }
+.day-tab.today .dd {
+  background: #FF6B35; color: white;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 2px auto 0; font-size: .88rem;
+}
+.tp { height: 3px; background: #E8E0D6; border-radius: 99px; margin-top: 4px; overflow: hidden; }
+.tp-fill { height: 100%; background: #4ECDC4; border-radius: 99px; transition: width .35s; }
+
+/* ── Main ── */
+.main { max-width: 560px; margin: 0 auto; padding: 16px 14px 52px; }
+
+/* ── Progress bar ── */
+.prog-bar-wrap {
+  background: white; border-radius: 16px;
+  padding: 14px 18px; margin-bottom: 12px;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06);
+  display: flex; align-items: center; gap: 14px;
+}
+.prog-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+.prog-ring svg { transform: rotate(-90deg); }
+.prog-pct {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .68rem; font-weight: 800;
+}
+.prog-details { flex: 1; min-width: 0; }
+.prog-name { font-weight: 800; font-size: .94rem; }
+.prog-sub  { font-size: .78rem; color: #999; margin-top: 2px; }
+.prog-track { height: 6px; background: #E8E0D6; border-radius: 99px; margin-top: 7px; overflow: hidden; }
+.prog-fill  { height: 100%; border-radius: 99px; transition: width .4s; }
+
+/* ── Summer dots ── */
+.summer-strip {
+  background: white; border-radius: 16px;
+  padding: 12px 16px; margin-bottom: 12px;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06);
+}
+.strip-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: .78rem; font-weight: 700; color: #888; }
+.wdots { display: flex; gap: 4px; flex-wrap: wrap; }
+.wdot { width: 14px; height: 14px; border-radius: 3px; background: #E8E0D6; cursor: pointer; transition: all .2s; }
+.wdot:hover { transform: scale(1.2); }
+.wdot.past { background: #FFD93D; }
+.wdot.now  { background: #FF6B35; box-shadow: 0 0 0 3px rgba(255,107,53,.22); }
+
+/* ── Section card ── */
+.section-card {
+  background: white; border-radius: 16px;
+  margin-bottom: 10px; overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06);
+}
+.section-head {
+  display: flex; align-items: center; gap: 9px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #F2EBE2;
+}
+.section-icon { font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .55px; color: #AAA; }
+
+/* ── Task rows ── */
+.task-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #F2EBE2;
+  cursor: pointer;
+  user-select: none; -webkit-user-select: none;
+  transition: background .12s;
+}
+.task-row:last-child { border-bottom: none; }
+.task-row:hover { background: #FDFAF7; }
+.task-row:hover .chk { border-color: #4ECDC4; }
+.chk {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 1.5px solid #D8D0C8; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .18s; margin-top: 1px; color: white; font-size: .75rem;
+}
+.task-row.done .chk { background: #4ECDC4; border-color: #4ECDC4; }
+.task-lbl { font-size: .875rem; color: #333; line-height: 1.45; flex: 1; transition: all .18s; }
+.task-row.done .task-lbl { text-decoration: line-through; color: #BEB6AE; }
+.assigned-tag {
+  font-size: .62rem; font-weight: 700;
+  padding: 2px 6px; border-radius: 5px;
+  background: #FFF0E6; color: #CC4800;
+  white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.del-btn {
+  background: none; border: none; color: #CCC;
+  font-size: .82rem; cursor: pointer; padding: 0 1px;
+  flex-shrink: 0; margin-top: 1px; line-height: 1;
+  opacity: 0; transition: opacity .15s, color .15s;
+}
+.task-row:hover .del-btn { opacity: 1; }
+.del-btn:hover { color: #FF6B35; }
+
+/* ── Add task ── */
+.add-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 16px 13px;
+  cursor: pointer; color: #CCC;
+  font-size: .8rem; font-weight: 600;
+  transition: color .18s;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.add-row:hover { color: #FF6B35; }
+.add-plus {
+  width: 19px; height: 19px; border-radius: 50%;
+  border: 1.5px dashed currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; line-height: 1; flex-shrink: 0;
+}
+.add-form {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 16px 13px;
+}
+.add-form input {
+  flex: 1; border: 1.5px solid #E8E0D6; border-radius: 9px;
+  padding: 7px 11px; font-size: .84rem; outline: none;
+  font-family: inherit; transition: border-color .18s;
+}
+.add-form input:focus { border-color: #FF6B35; }
+.btn-add {
+  background: #FF6B35; color: white; border: none;
+  border-radius: 9px; padding: 7px 13px;
+  font-size: .8rem; font-weight: 700; cursor: pointer;
+  white-space: nowrap; transition: background .18s;
+}
+.btn-add:hover { background: #e55c28; }
+.btn-cxl {
+  background: none; border: 1px solid #E8E0D6; border-radius: 9px;
+  padding: 7px 9px; font-size: .8rem; color: #AAA;
+  cursor: pointer; white-space: nowrap; transition: all .18s;
+}
+.btn-cxl:hover { border-color: #bbb; color: #555; }
+
+/* ── Free time ── */
+.free-locked {
+  background: white; border-radius: 16px;
+  padding: 18px 20px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06);
+  opacity: .5;
+}
+.lock-icon { font-size: 1.4rem; flex-shrink: 0; }
+.free-locked .lock-title { font-weight: 800; font-size: .94rem; }
+.free-locked .lock-sub   { font-size: .8rem; color: #999; margin-top: 2px; }
+.free-unlocked {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px; padding: 22px 20px; margin-bottom: 10px;
+  text-align: center; color: white;
+  box-shadow: 0 5px 20px rgba(102,126,234,.32);
+}
+.free-unlocked h3 { font-size: 1.4rem; font-weight: 900; }
+.free-unlocked p  { opacity: .88; margin-top: 5px; font-size: .86rem; }
+.idea-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 13px; }
+.chip {
+  background: rgba(255,255,255,.22); padding: 5px 12px;
+  border-radius: 20px; font-size: .77rem; font-weight: 500;
+  border: 1px solid rgba(255,255,255,.2);
+}
+
+/* ── Pre-summer ── */
+.pre-summer {
+  background: white; border-radius: 16px;
+  padding: 32px 22px; text-align: center;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06); margin-bottom: 12px;
+}
+.pre-summer .pe { font-size: 2.6rem; }
+.pre-summer h3  { font-size: 1.2rem; font-weight: 800; color: #FF6B35; margin-top: 10px; }
+.pre-summer p   { color: #999; margin-top: 5px; font-size: .85rem; line-height: 1.55; }
+
+/* ── Reset ── */
+.reset-wrap { text-align: center; margin-top: 8px; }
+.reset-btn {
+  background: none; border: 1px solid #E8E0D6;
+  color: #BBB; padding: 7px 18px; border-radius: 20px;
+  font-size: .76rem; cursor: pointer; transition: all .18s;
+}
+.reset-btn:hover { border-color: #FF6B35; color: #FF6B35; }
+
+@media (max-width: 520px) {
+  .header { flex-direction: column; text-align: center; gap: 10px; padding: 14px; }
+  .header-left h1 { font-size: 1.2rem; }
+  .kid-card { min-width: 95px; padding: 9px 10px; }
+  .main { padding: 12px 10px 40px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>🌞 Family Summer Schedule</h1>
+    <p>Record Real Estate Partners · Summer 2026</p>
+  </div>
+  <div class="earnings-badge">
+    <div class="amount">$2,500</div>
+    <div class="label">per month · kids' pay</div>
+  </div>
+</div>
+
+<div class="week-nav">
+  <button class="week-btn" id="prevWeek">&#8249;</button>
+  <div class="week-info">
+    <div class="week-label" id="weekLabel">Week 1 of 15</div>
+    <div class="week-dates" id="weekDates">May 25 – May 29</div>
+  </div>
+  <button class="week-btn" id="nextWeek">&#8250;</button>
+  <button class="today-btn" id="todayBtn">Today</button>
+</div>
+
+<div class="kid-selector" id="kidSelector"></div>
+<div class="day-tabs"     id="dayTabs"></div>
+<div class="main"         id="mainContent"></div>
+
+<script>
+// ─────────────────────────────────────────────────
+// Config
+// ─────────────────────────────────────────────────
+const SUMMER_START = new Date(2026, 4, 25);
+const SUMMER_END   = new Date(2026, 8, 5);
+const TOTAL_WEEKS  = 15;
+
+const KIDS = [
+  { name:'Bo',        age:15, sport:'⛳ Golf',            color:'#FF6B35' },
+  { name:'Ansley',    age:13, sport:'💃 Dance',           color:'#9B59B6' },
+  { name:'Charlotte', age:13, sport:'🏀 BBall + Running', color:'#4ECDC4' }
+];
+
+const DAYS_S = ['Mon','Tue','Wed','Thu','Fri'];
+const DAYS_L = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ─────────────────────────────────────────────────
+// Schedule data
+// ─────────────────────────────────────────────────
+const MORNING_SPORT = [
+  { icon:'⛳', label:'Golf focus time', tasks:[
+    'Warm up and stretching',
+    'Chipping and putting practice',
+    'Full swing work or simulated 9 holes',
+    'Cool down — note one thing to improve'
+  ]},
+  { icon:'💃', label:'Dance focus time', tasks:[
+    'Warm up and barre or floor stretching',
+    'Run through current choreography',
+    'Work on a specific skill or combination',
+    'Cool down stretch'
+  ]},
+  { icon:'🏀', label:'BBall + Running focus time', tasks:[
+    'Run: 20–30 min run or interval sprints',
+    'Ball handling and dribbling drills',
+    'Shooting: 50 free throws + mid-range',
+    'Cool down stretch'
+  ]}
+];
+
+const CHORES_BY_DAY = [
+  ['Vacuum and sweep all common areas (living room, hallways, stairs)',
+   'Tidy the entryway and wipe down handles and light switches'],
+  ['Scrub and sanitize all bathrooms — toilets, sinks, showers',
+   'Wipe mirrors; restock soap, towels, and toilet paper'],
+  ['Wipe down all kitchen counters, stovetop, and appliance fronts',
+   'Empty and reload the dishwasher; scrub the sink'],
+  ['Dust all furniture, shelves, and ceiling fans throughout the house',
+   'Tidy and organize all bedrooms — make sure floors are clear'],
+  ['Collect all trash and recycling and take bins out',
+   'Sweep porch or patio; quick walkthrough to prep for the weekend']
+];
+
+const FREE_IDEAS = [
+  '🏊 Pool or lake','🎮 Video games','🎬 Movie','🚴 Bike ride',
+  '🎨 Creative project','🏀 Sports','👫 Hang with friends','📚 Read',
+  '🛹 Skateboard','🎵 Music','🌊 Beach','🎯 Mini golf',
+  '🍦 Ice cream','🎲 Board games','🧘 Chill out'
+];
+
+function getSections(dayIdx, kidIdx) {
+  const sport = MORNING_SPORT[kidIdx];
+  return [
+    { id:'morning', icon:'🌅', label:'Morning routine', tasks:[
+      'Make your bed',
+      'Get dressed and brush teeth',
+      'Eat breakfast and clean up after yourself'
+    ]},
+    { id:'sport', icon: sport.icon, label: sport.label, tasks: sport.tasks },
+    { id:'work', icon:'🏠', label:'Work — Record Real Estate Partners', tasks:[
+      'Morning huddle: review today\'s assignments with mom and dad',
+      'Research assigned properties and comparable sales',
+      'Update listing information in the tracking spreadsheet',
+      'Create or draft social media content for an assigned listing',
+      'Organize and file digital photos and documents',
+      'Complete any admin or marketing task assigned by mom or dad'
+    ]},
+    { id:'chore', icon:'🧹', label:'Chores', tasks: CHORES_BY_DAY[dayIdx] },
+    { id:'lunch', icon:'🍽️', label:'Lunch', tasks:[
+      'Make and enjoy lunch',
+      'Clean up your spot when done'
+    ]},
+    { id:'free', icon:'🎉', label:'Free time', tasks:[] }
+  ];
+}
+
+// ─────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────
+let cWeek = 1, cDay = 0, cKid = 0, addBlock = null;
+
+// ─────────────────────────────────────────────────
+// Storage
+// ─────────────────────────────────────────────────
+const dkey = (k,w,d,b,i)  => `rrp26_k${k}_w${w}_d${d}_${b}_${i}`;
+const ckey = (k,w,d,b)    => `rrp26_ct_k${k}_w${w}_d${d}_${b}`;
+
+const isDone = (k,w,d,b,i) => localStorage.getItem(dkey(k,w,d,b,i)) === '1';
+const setDone = (k,w,d,b,i,v) => v
+  ? localStorage.setItem(dkey(k,w,d,b,i),'1')
+  : localStorage.removeItem(dkey(k,w,d,b,i));
+
+const getCT = (k,w,d,b) => { try { return JSON.parse(localStorage.getItem(ckey(k,w,d,b))||'[]'); } catch { return []; } };
+const saveCT = (k,w,d,b,a) => localStorage.setItem(ckey(k,w,d,b), JSON.stringify(a));
+
+function totals(k,w,d) {
+  let t=0,dn=0;
+  getSections(d,k).forEach(s => {
+    if (!s.tasks||s.id==='free') return;
+    s.tasks.forEach((_,i)=>{ t++; if(isDone(k,w,d,s.id,i)) dn++; });
+    getCT(k,w,d,s.id).forEach(x=>{ t++; if(x.done) dn++; });
+  });
+  return {total:t,done:dn};
+}
+
+// ─────────────────────────────────────────────────
+// Dates
+// ─────────────────────────────────────────────────
+const getMon = wn => { const d=new Date(SUMMER_START); d.setDate(d.getDate()+(wn-1)*7); return d; };
+const getWeekDays = wn => Array.from({length:5},(_,i)=>{ const d=new Date(getMon(wn)); d.setDate(d.getDate()+i); return d; });
+const fmt = d => `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+
+function todayWD() {
+  const t=new Date(); t.setHours(0,0,0,0);
+  const s=new Date(SUMMER_START); s.setHours(0,0,0,0);
+  const e=new Date(SUMMER_END);   e.setHours(0,0,0,0);
+  if(t<=s) return {week:1,day:0};
+  if(t>e)  return {week:TOTAL_WEEKS,day:4};
+  const diff=Math.floor((t-s)/86400000);
+  const week=Math.min(Math.floor(diff/7)+1,TOTAL_WEEKS);
+  const raw=t.getDay()-1;
+  return {week,day:raw<0?0:raw>4?4:raw};
+}
+
+// ─────────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────────
+function render() { renderNav(); renderKids(); renderDays(); renderMain(); }
+
+function renderNav() {
+  const mon=getMon(cWeek), fri=new Date(mon); fri.setDate(fri.getDate()+4);
+  document.getElementById('weekLabel').textContent=`Week ${cWeek} of ${TOTAL_WEEKS}`;
+  document.getElementById('weekDates').textContent=`${fmt(mon)} – ${fmt(fri)}`;
+  document.getElementById('prevWeek').disabled=cWeek<=1;
+  document.getElementById('nextWeek').disabled=cWeek>=TOTAL_WEEKS;
+}
+
+function renderKids() {
+  document.getElementById('kidSelector').innerHTML = KIDS.map((k,i)=>{
+    const {total,done}=totals(i,cWeek,cDay);
+    const pct=total>0?Math.round(done/total*100):0;
+    return `<div class="kid-card${i===cKid?' active':''}" style="--kc:${k.color}" data-k="${i}">
+      <div class="kid-top">
+        <div class="kid-avatar">${k.name[0]}</div>
+        <div><div class="kid-name">${k.name}</div><div class="kid-sport">${k.sport}</div></div>
+      </div>
+      <div class="kid-prog-row"><span>Today</span><span>${done}/${total}</span></div>
+      <div class="kid-prog-bar"><div class="kid-prog-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('kidSelector').querySelectorAll('.kid-card').forEach(c=>{
+    c.addEventListener('click',()=>{ cKid=+c.dataset.k; addBlock=null; render(); });
+  });
+}
+
+function renderDays() {
+  const days=getWeekDays(cWeek), today=new Date(); today.setHours(0,0,0,0);
+  const el=document.getElementById('dayTabs'); el.innerHTML='';
+  days.forEach((date,i)=>{
+    const isT=date.getTime()===today.getTime(), isA=i===cDay;
+    const {total,done}=totals(cKid,cWeek,i);
+    const pct=total>0?Math.round(done/total*100):0;
+    const btn=document.createElement('button');
+    btn.className=`day-tab${isA?' active':''}${isT?' today':''}`;
+    btn.innerHTML=`<div class="dn">${DAYS_S[i]}</div><div class="dd">${date.getDate()}</div><div class="tp"><div class="tp-fill" style="width:${pct}%"></div></div>`;
+    btn.addEventListener('click',()=>{ cDay=i; addBlock=null; render(); });
+    el.appendChild(btn);
+  });
+}
+
+function renderMain() {
+  const kid=KIDS[cKid];
+  const {total,done}=totals(cKid,cWeek,cDay);
+  const pct=total>0?Math.round(done/total*100):0;
+  const days=getWeekDays(cWeek);
+  const allDone=total>0&&done===total;
+
+  const today=new Date(); today.setHours(0,0,0,0);
+  const start=new Date(SUMMER_START); start.setHours(0,0,0,0);
+  const before=today<start;
+
+  // ring
+  const r=20,circ=2*Math.PI*r;
+  const off=circ-(pct/100)*circ;
+
+  // dots
+  let dotsH='';
+  for(let w=1;w<=TOTAL_WEEKS;w++){
+    const wm=getMon(w),wf=new Date(wm); wf.setDate(wf.getDate()+4);
+    let cls='';
+    if(!before){ if(w<cWeek) cls='past'; else if(w===cWeek) cls='now'; }
+    dotsH+=`<div class="wdot ${cls}" title="Week ${w}: ${fmt(wm)}–${fmt(wf)}" data-w="${w}"></div>`;
+  }
+
+  let h='';
+
+  // progress ring card
+  h+=`<div class="prog-bar-wrap">
+    <div class="prog-ring">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="${r}" fill="none" stroke="#E8E0D6" stroke-width="4.5"/>
+        <circle cx="26" cy="26" r="${r}" fill="none" stroke="${kid.color}" stroke-width="4.5"
+          stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
+          stroke-linecap="round" style="transition:stroke-dashoffset .4s"/>
+      </svg>
+      <div class="prog-pct" style="color:${kid.color}">${pct}%</div>
+    </div>
+    <div class="prog-details">
+      <div class="prog-name">${kid.name} · ${DAYS_L[cDay]}, ${fmt(days[cDay])}</div>
+      <div class="prog-sub">${done} of ${total} tasks complete${allDone?' · All done! 🎉':''}</div>
+      <div class="prog-track"><div class="prog-fill" style="background:${kid.color};width:${pct}%"></div></div>
+    </div>
+  </div>`;
+
+  // summer strip
+  h+=`<div class="summer-strip">
+    <div class="strip-head"><span>☀️ Summer 2026</span><span>Week ${cWeek} of ${TOTAL_WEEKS}</span></div>
+    <div class="wdots">${dotsH}</div>
+  </div>`;
+
+  // pre-summer
+  if(before){
+    const days=Math.round((start-today)/86400000);
+    h+=`<div class="pre-summer">
+      <div class="pe">🗓️</div>
+      <h3>Summer starts in ${days} day${days!==1?'s':''}!</h3>
+      <p>Kicks off <strong>Monday, May 25</strong> — Memorial Day.<br>
+      You can already add tasks and preview each kid's list.</p>
+    </div>`;
+  }
+
+  // sections
+  getSections(cDay,cKid).forEach(sec=>{
+    if(sec.id==='free'){
+      const rem=total-done;
+      if(allDone){
+        const ideas=[...FREE_IDEAS].sort(()=>Math.random()-.5).slice(0,9);
+        h+=`<div class="free-unlocked">
+          <h3>🎉 Free time!</h3>
+          <p>Everything's done, ${kid.name} — go enjoy the rest of the day!</p>
+          <div class="idea-chips">${ideas.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+        </div>`;
+      } else {
+        h+=`<div class="free-locked">
+          <div class="lock-icon">🔒</div>
+          <div>
+            <div class="lock-title">Free time</div>
+            <div class="lock-sub">Unlocks when all tasks are done · ${rem} left</div>
+          </div>
+        </div>`;
+      }
+      return;
+    }
+
+    // default tasks
+    const defH=sec.tasks.map((t,i)=>{
+      const dn=isDone(cKid,cWeek,cDay,sec.id,i);
+      return `<div class="task-row${dn?' done':''}" data-type="def" data-sec="${sec.id}" data-i="${i}">
+        <div class="chk">${dn?'✓':''}</div>
+        <span class="task-lbl">${esc(t)}</span>
+      </div>`;
+    }).join('');
+
+    // custom tasks
+    const ct=getCT(cKid,cWeek,cDay,sec.id);
+    const ctH=ct.map((t,i)=>`
+      <div class="task-row${t.done?' done':''}" data-type="ct" data-sec="${sec.id}" data-i="${i}">
+        <div class="chk">${t.done?'✓':''}</div>
+        <span class="task-lbl">${esc(t.text)}</span>
+        <span class="assigned-tag">assigned</span>
+        <button class="del-btn" data-sec="${sec.id}" data-i="${i}">×</button>
+      </div>`).join('');
+
+    // add form
+    const adding=addBlock===sec.id;
+    const addH=adding
+      ? `<div class="add-form">
+           <input id="ai_${sec.id}" type="text" maxlength="120" placeholder="Task for ${kid.name}…" autocomplete="off"/>
+           <button class="btn-add" data-sec="${sec.id}">Add</button>
+           <button class="btn-cxl">Cancel</button>
+         </div>`
+      : `<button class="add-row" data-sec="${sec.id}">
+           <span class="add-plus">+</span> Assign task to ${kid.name}
+         </button>`;
+
+    h+=`<div class="section-card">
+      <div class="section-head">
+        <span style="font-size:1.1rem">${sec.icon}</span>
+        <span class="section-icon">${sec.label}</span>
+      </div>
+      ${defH}${ctH}
+      ${addH}
+    </div>`;
+  });
+
+  h+=`<div class="reset-wrap"><button class="reset-btn" id="resetBtn">Reset ${kid.name}'s checkboxes for today</button></div>`;
+
+  const el=document.getElementById('mainContent');
+  el.innerHTML=h;
+
+  // dots
+  el.querySelectorAll('.wdot').forEach(d=>d.addEventListener('click',()=>{ cWeek=+d.dataset.w; render(); }));
+
+  // default task toggle
+  el.querySelectorAll('.task-row[data-type="def"]').forEach(r=>{
+    r.addEventListener('click',()=>{ setDone(cKid,cWeek,cDay,r.dataset.sec,+r.dataset.i,!r.classList.contains('done')); render(); });
+  });
+
+  // custom task toggle
+  el.querySelectorAll('.task-row[data-type="ct"]').forEach(r=>{
+    r.addEventListener('click',e=>{ if(e.target.classList.contains('del-btn')) return;
+      const a=getCT(cKid,cWeek,cDay,r.dataset.sec), i=+r.dataset.i;
+      if(a[i]){ a[i].done=!a[i].done; saveCT(cKid,cWeek,cDay,r.dataset.sec,a); }
+      render();
+    });
+  });
+
+  // delete custom task
+  el.querySelectorAll('.del-btn').forEach(b=>{
+    b.addEventListener('click',e=>{ e.stopPropagation();
+      const a=getCT(cKid,cWeek,cDay,b.dataset.sec);
+      a.splice(+b.dataset.i,1); saveCT(cKid,cWeek,cDay,b.dataset.sec,a); render();
+    });
+  });
+
+  // open add form
+  el.querySelectorAll('.add-row').forEach(b=>{
+    b.addEventListener('click',()=>{ addBlock=b.dataset.sec; render();
+      const inp=document.getElementById(`ai_${addBlock}`); if(inp) inp.focus();
+    });
+  });
+
+  const doAdd=sec=>{ const inp=document.getElementById(`ai_${sec}`); if(!inp) return;
+    const txt=inp.value.trim(); if(!txt){ inp.focus(); return; }
+    const a=getCT(cKid,cWeek,cDay,sec); a.push({text:txt,done:false}); saveCT(cKid,cWeek,cDay,sec,a);
+    addBlock=null; render();
+  };
+  el.querySelectorAll('.btn-add').forEach(b=>b.addEventListener('click',()=>doAdd(b.dataset.sec)));
+  el.querySelectorAll('.add-form input').forEach(inp=>{
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter') doAdd(addBlock); if(e.key==='Escape'){ addBlock=null; render(); } });
+  });
+  el.querySelectorAll('.btn-cxl').forEach(b=>b.addEventListener('click',()=>{ addBlock=null; render(); }));
+
+  // reset
+  document.getElementById('resetBtn').addEventListener('click',()=>{
+    if(!confirm(`Reset all of ${KIDS[cKid].name}'s checkboxes for today?`)) return;
+    getSections(cDay,cKid).forEach(s=>{
+      if(!s.tasks) return;
+      s.tasks.forEach((_,i)=>setDone(cKid,cWeek,cDay,s.id,i,false));
+      const a=getCT(cKid,cWeek,cDay,s.id); a.forEach(t=>t.done=false); saveCT(cKid,cWeek,cDay,s.id,a);
+    });
+    render();
+  });
+}
+
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// nav
+document.getElementById('prevWeek').addEventListener('click',()=>{ if(cWeek>1){ cWeek--; addBlock=null; render(); } });
+document.getElementById('nextWeek').addEventListener('click',()=>{ if(cWeek<TOTAL_WEEKS){ cWeek++; addBlock=null; render(); } });
+document.getElementById('todayBtn').addEventListener('click',()=>{ const {week,day}=todayWD(); cWeek=week; cDay=day; addBlock=null; render(); });
+
+// init
+(()=>{ const {week,day}=todayWD(); cWeek=week; cDay=day; render(); })();
+</script>
+</body>
+</html>
