@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Art It Out — Tour Book | June 8, 2026</title>
+<style>
+:root{--navy:#0f2044;--navy-mid:#1a3460;--navy-light:#e8edf5;--gold:#c9a84c;--gold-light:#f5e9c8;--text:#1a1a2e;--text-muted:#5a6580;--border:#d6dce8;--white:#ffffff;--green:#2d7a4f;--green-bg:#e8f5ee;--orange:#c05c1a;--orange-bg:#fef0e6;--blue:#1a5fa8;--blue-bg:#e6f0fb;--radius:12px;--shadow:0 2px 12px rgba(15,32,68,.10);--shadow-card:0 4px 24px rgba(15,32,68,.13)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f3f8;color:var(--text);min-height:100vh}
+
+/* HEADER */
+.header{background:var(--navy);padding:0}
+.header-inner{max-width:900px;margin:0 auto;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#111}
+.brand-name{color:#fff;font-size:15px;font-weight:700;line-height:1.3}
+.brand-sub{color:rgba(255,255,255,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.header-right{text-align:right}
+.client-label{color:rgba(255,255,255,.5);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.client-name{color:var(--gold);font-size:20px;font-weight:700}
+
+/* TOUR HERO */
+.tour-hero{background:linear-gradient(135deg,var(--navy-mid),var(--navy));border-bottom:3px solid var(--gold)}
+.tour-hero-inner{max-width:900px;margin:0 auto;padding:28px 24px 32px;text-align:center}
+.tour-date-label{color:rgba(255,255,255,.55);font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:600;margin-bottom:6px}
+.tour-date{color:#fff;font-size:32px;font-weight:800;line-height:1.2}
+.tour-subtitle{color:var(--gold);font-size:14px;font-weight:600;margin-top:6px;letter-spacing:.5px}
+.tour-pills{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.tour-pill{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);color:rgba(255,255,255,.85);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500}
+
+/* STOP CARDS */
+.stops{max-width:900px;margin:32px auto;padding:0 24px 48px;display:flex;flex-direction:column;gap:28px}
+
+.stop-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-card);overflow:hidden;border:1px solid var(--border)}
+
+.stop-header{background:var(--navy);padding:16px 20px;display:flex;align-items:center;gap:16px}
+.stop-time-block{background:var(--gold);color:var(--navy);border-radius:8px;padding:8px 14px;text-align:center;flex-shrink:0;min-width:80px}
+.stop-time{font-size:18px;font-weight:800;line-height:1;white-space:nowrap}
+.stop-time-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.75;margin-top:2px}
+.stop-num-badge{background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);color:var(--gold);font-size:11px;font-weight:800;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stop-title-block{flex:1;min-width:0}
+.stop-building{color:#fff;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;display:block}
+.stop-building:hover{color:var(--gold);text-decoration:underline}
+.stop-address{color:rgba(255,255,255,.55);font-size:12px;margin-top:3px}
+.stop-rate-badge{flex-shrink:0;text-align:right}
+.stop-rate-val{font-size:22px;font-weight:800;color:#fff;line-height:1}
+.stop-rate-label{color:rgba(255,255,255,.45);font-size:10px}
+
+.stop-photo{width:100%;height:210px;object-fit:cover;display:block}
+.stop-photo-placeholder{width:100%;height:210px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+
+.stop-body{padding:18px 20px}
+.stop-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.option-block{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.option-label{background:var(--navy);color:var(--gold);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;padding:5px 10px}
+.option-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px}
+.option-metrics .metric{padding:7px 8px}
+@media(max-width:500px){.options-grid{grid-template-columns:1fr}}
+.metric{background:var(--navy-light);border-radius:8px;padding:10px 12px}
+.metric-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted)}
+.metric-value{font-size:15px;font-weight:700;color:var(--navy);margin-top:2px}
+
+.stop-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-orange{background:var(--orange-bg);color:var(--orange)}
+.tag-navy{background:var(--navy-light);color:var(--navy-mid)}
+
+.stop-notes-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:6px}
+.stop-notes{font-size:13.5px;color:var(--text);line-height:1.65;border-left:3px solid var(--gold);padding-left:12px;margin-bottom:18px}
+
+/* CLIENT NOTES */
+.notes-section{border-top:1px solid var(--border);padding-top:16px}
+.notes-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:10px}
+.notes-lines{display:flex;flex-direction:column;gap:10px}
+.notes-line{height:1px;background:var(--border);border-radius:1px}
+
+/* TOUR PHOTOS SECTION */
+.photos-section{border-top:1px solid var(--border);padding:16px 20px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.photos-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)}
+.photos-btn{display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:8px 16px;border-radius:7px;white-space:nowrap;transition:background .18s}
+.photos-btn:hover{background:var(--navy-mid)}
+.photos-btn svg{flex-shrink:0}
+
+/* FOOTER */
+.page-footer{max-width:900px;margin:0 auto 32px;padding:0 24px;display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted)}
+.footer-brand{font-weight:600;color:var(--navy)}
+
+/* Rate colors */
+.rate-low{color:var(--green)}
+.rate-mid{color:var(--blue)}
+.rate-high-mid{color:var(--orange)}
+
+@media(max-width:600px){
+  .stop-metrics{grid-template-columns:repeat(3,1fr)}
+  .tour-date{font-size:24px}
+  .stop-rate-badge{display:none}
+  .photos-grid{grid-template-columns:repeat(2,1fr)}
+  .header-inner{flex-direction:column;align-items:flex-start;gap:10px}
+  .header-right{text-align:left}
+}
+
+@media print{
+  .stop-card{break-inside:avoid;page-break-inside:avoid}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+          <circle cx="22" cy="22" r="22" fill="#111"/>
+          <circle cx="22" cy="22" r="20" fill="#2c2c2c"/>
+          <circle cx="22" cy="22" r="18.5" fill="none" stroke="#1a1a1a" stroke-width="1.2"/>
+          <circle cx="22" cy="22" r="16.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+          <circle cx="22" cy="22" r="14.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+          <circle cx="22" cy="22" r="12.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+          <circle cx="22" cy="22" r="10.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+          <circle cx="22" cy="22" r="8.5" fill="#222"/>
+          <circle cx="22" cy="22" r="6" fill="#1a1a1a"/>
+          <circle cx="22" cy="22" r="2" fill="#c9a84c"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Record Real Estate Partners</div>
+        <div class="brand-sub">Atlanta &bull; Commercial Real Estate</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="client-label">Prepared for</div>
+      <div class="client-name">Art It Out</div>
+    </div>
+  </div>
+</header>
+
+<div class="tour-hero">
+  <div class="tour-hero-inner">
+    <div class="tour-date-label">Tour Date</div>
+    <div class="tour-date">Monday, June 8, 2026</div>
+    <div class="tour-subtitle">Cumberland / Galleria Submarket &mdash; 5 Properties</div>
+    <div class="tour-pills">
+      <span class="tour-pill">9:30 AM &ndash; 12:10 PM</span>
+      <span class="tour-pill">6,448 &ndash; 7,704 RSF</span>
+      <span class="tour-pill">$24 &ndash; $29 / SF / Year</span>
+    </div>
+  </div>
+</div>
+
+<div class="stops">
+
+  <!-- STOP 1: Wildwood Park -->
+  <div class="stop-card">
+    <div class="stop-header">
+      <div class="stop-time-block">
+        <div class="stop-time">9:30</div>
+        <div class="stop-time-label">AM</div>
+      </div>
+      <div class="stop-num-badge">1</div>
+      <div class="stop-title-block">
+        <a class="stop-building" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgBoqfZJ5U2cQ6j9WJyDP51pASKnbPlOeHXCASIrUlduxHw?e=OQI5WW" target="_blank">Wildwood Park</a>
+        <div class="stop-address">3301 Windy Ridge Pky SE &middot; Atlanta, GA 30339</div>
+      </div>
+      <div class="stop-rate-badge">
+        <div class="stop-rate-val rate-mid">$26.50</div>
+        <div class="stop-rate-label">per SF / yr</div>
+      </div>
+    </div>
+    <img class="stop-photo" src="https://images1.loopnet.com/i2/__PMRWkvYfxITn_vlTrG-tACloGHW44AdM1jYXyEwLw/112/image.jpg" alt="Wildwood Park" onerror="this.style.display='none'"/>
+    <div class="stop-body">
+      <div class="options-grid">
+        <div class="option-block">
+          <div class="option-label">Option A &mdash; Suite 100</div>
+          <div class="option-metrics">
+            <div class="metric"><div class="metric-label">Floor</div><div class="metric-value">1st</div></div>
+            <div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">6,744 SF</div></div>
+            <div class="metric"><div class="metric-label">Est. Monthly</div><div class="metric-value">$14,890</div></div>
+          </div>
+        </div>
+        <div class="option-block">
+          <div class="option-label">Option B &mdash; Suite 105</div>
+          <div class="option-metrics">
+            <div class="metric"><div class="metric-label">Floor</div><div class="metric-value">1st</div></div>
+            <div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">2,048 SF</div></div>
+            <div class="metric"><div class="metric-label">Est. Monthly</div><div class="metric-value">$4,523</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="stop-tags">
+        <span class="tag tag-blue">Mid-Range Rate</span>
+        <span class="tag tag-green">Expansion Rights</span>
+      </div>
+      <div class="stop-notes-label">Broker Notes</div>
+      <div class="stop-notes">Smaller building located in the Wildwood office park off of Powers Ferry Road. Lots of retail close by the office park. You can combine the 2 suites available on the 1st floor for 8,700 RSF. Good opportunity to take the 6,744 RSF and have expansion rights on the suite next door.</div>
+      <div class="notes-section">
+        <div class="notes-title">Tour Notes</div>
+        <div class="notes-lines">
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="photos-section">
+      <div class="photos-title">Tour Photos</div>
+      <a class="photos-btn" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgBoqfZJ5U2cQ6j9WJyDP51pASKnbPlOeHXCASIrUlduxHw?e=OQI5WW" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>View Tour Photos</a>
+    </div>
+  </div>
+
+  <!-- STOP 2: 1899 Powers Ferry -->
+  <div class="stop-card">
+    <div class="stop-header">
+      <div class="stop-time-block">
+        <div class="stop-time">10:00</div>
+        <div class="stop-time-label">AM</div>
+      </div>
+      <div class="stop-num-badge">2</div>
+      <div class="stop-title-block">
+        <a class="stop-building" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgDEMulxlYNYSJLCq1k-dvplASYP8Typ9WTkyKpacVyy5wQ" target="_blank">1899 Powers Ferry</a>
+        <div class="stop-address">1899 Powers Ferry Rd SE &middot; Atlanta, GA 30339</div>
+      </div>
+      <div class="stop-rate-badge">
+        <div class="stop-rate-val rate-mid">$24.00</div>
+        <div class="stop-rate-label">per SF / yr</div>
+      </div>
+    </div>
+    <img class="stop-photo" src="https://images1.loopnet.com/i2/PsuHNrSk-QK-m-mRjG8ggB7v2PM6imRf2tsHb9p3KxM/112/image.jpg" alt="1899 Powers Ferry" onerror="this.style.display='none'"/>
+    <div class="stop-body">
+      <div class="stop-metrics">
+        <div class="metric"><div class="metric-label">Floor / Suite</div><div class="metric-value">1st / 160</div></div>
+        <div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">6,658 SF</div></div>
+        <div class="metric"><div class="metric-label">Est. Monthly</div><div class="metric-value">$13,316</div></div>
+      </div>
+      <div class="stop-tags">
+        <span class="tag tag-blue">Mid-Range Rate</span>
+        <span class="tag tag-blue">Monument Signage</span>
+        <span class="tag tag-navy">Roundabout Drop-Off</span>
+      </div>
+      <div class="stop-notes-label">Broker Notes</div>
+      <div class="stop-notes">This location is walking distance to a number of restaurants. It is a smaller building with a local owner that is very good to tenants. Good monument signage available on Powers Ferry Road. Has a roundabout in front of the building for convenient dropoffs.</div>
+      <div class="notes-section">
+        <div class="notes-title">Tour Notes</div>
+        <div class="notes-lines">
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="photos-section">
+      <div class="photos-title">Tour Photos</div>
+      <a class="photos-btn" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgDEMulxlYNYSJLCq1k-dvplASYP8Typ9WTkyKpacVyy5wQ" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>View Tour Photos</a>
+    </div>
+  </div>
+
+  <!-- STOP 3: 1600 Parkwood -->
+  <div class="stop-card">
+    <div class="stop-header">
+      <div class="stop-time-block">
+        <div class="stop-time">10:30</div>
+        <div class="stop-time-label">AM</div>
+      </div>
+      <div class="stop-num-badge">3</div>
+      <div class="stop-title-block">
+        <a class="stop-building" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgCXpiguKLaDR6fT9HgAM9dyAcCiFUqNoR8za_0DhNz-QBw" target="_blank">1600 Parkwood</a>
+        <div class="stop-address">1600 Parkwood Cir SE &middot; Atlanta, GA 30339</div>
+      </div>
+      <div class="stop-rate-badge">
+        <div class="stop-rate-val rate-high-mid">$29.00</div>
+        <div class="stop-rate-label">per SF / yr</div>
+      </div>
+    </div>
+    <img class="stop-photo" src="https://images1.loopnet.com/i2/B_jRZrFDPi0VD8tdbLJAklTVwkssgtF0EiTUOMR9s2w/112/image.jpg" alt="1600 Parkwood" onerror="this.style.display='none'"/>
+    <div class="stop-body">
+      <div class="stop-metrics">
+        <div class="metric"><div class="metric-label">Floor / Suite</div><div class="metric-value">1st / 100</div></div>
+        <div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">6,448 SF</div></div>
+        <div class="metric"><div class="metric-label">Est. Monthly</div><div class="metric-value">$15,583</div></div>
+      </div>
+      <div class="stop-tags">
+        <span class="tag tag-orange">Upper-Mid Rate</span>
+        <span class="tag tag-navy">Near Braves Stadium</span>
+        <span class="tag tag-navy">Roundabout Drop-Off</span>
+      </div>
+      <div class="stop-notes-label">Broker Notes</div>
+      <div class="stop-notes">Walking distance to the Braves Stadium and easy building for people to find while driving to this location. There is a roundabout at the main lobby so really convenient for dropping off. The current owner is the lender so they are looking to lease up the building to sell. Good opportunity to get a great deal.</div>
+      <div class="notes-section">
+        <div class="notes-title">Tour Notes</div>
+        <div class="notes-lines">
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="photos-section">
+      <div class="photos-title">Tour Photos</div>
+      <a class="photos-btn" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgCXpiguKLaDR6fT9HgAM9dyAcCiFUqNoR8za_0DhNz-QBw" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>View Tour Photos</a>
+    </div>
+  </div>
+
+  <!-- STOP 4: 380 Pennant Park -->
+  <div class="stop-card">
+    <div class="stop-header">
+      <div class="stop-time-block">
+        <div class="stop-time">11:00</div>
+        <div class="stop-time-label">AM</div>
+      </div>
+      <div class="stop-num-badge">4</div>
+      <div class="stop-title-block">
+        <a class="stop-building" href="https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Scout/Scout%20Market%20Analyses/Art%20It%20Out%20(2)%20-%2005-18-26/380%20Interstate%20N%20Pky%20SE" target="_blank">380 Pennant Park</a>
+        <div class="stop-address">380 Interstate N Pky SE &middot; Atlanta, GA 30339</div>
+      </div>
+      <div class="stop-rate-badge">
+        <div class="stop-rate-val rate-mid">$26.00</div>
+        <div class="stop-rate-label">per SF / yr</div>
+      </div>
+    </div>
+    <img class="stop-photo" src="https://images1.loopnet.com/i2/yT60AyIltGoNuDo1Iaf_0wE0ea7bDsy3D_TBnPL6oRs/112/image.jpg" alt="380 Pennant Park" onerror="this.style.display='none'"/>
+    <div class="stop-body">
+      <div class="stop-metrics">
+        <div class="metric"><div class="metric-label">Floor / Suite</div><div class="metric-value">1st / 100</div></div>
+        <div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">6,468 SF</div></div>
+        <div class="metric"><div class="metric-label">Est. Monthly</div><div class="metric-value">$14,014</div></div>
+      </div>
+      <div class="stop-tags">
+        <span class="tag tag-blue">Mid-Range Rate</span>
+        <span class="tag tag-navy">Near Braves Stadium</span>
+        <span class="tag tag-navy">Roundabout Drop-Off</span>
+      </div>
+      <div class="stop-notes-label">Broker Notes</div>
+      <div class="stop-notes">Right off of front door. Turnaround in front of the building. Well located near Truist Park in the Battery. Looks like there are 2 break areas.</div>
+      <div class="notes-section">
+        <div class="notes-title">Tour Notes</div>
+        <div class="notes-lines">
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="photos-section">
+      <div class="photos-title">Tour Photos</div>
+      <a class="photos-btn" href="https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Scout/Scout%20Market%20Analyses/Art%20It%20Out%20(2)%20-%2005-18-26/380%20Interstate%20N%20Pky%20SE" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>View Tour Photos</a>
+    </div>
+  </div>
+
+  <!-- STOP 5: Cumberland Center I -->
+  <div class="stop-card">
+    <div class="stop-header">
+      <div class="stop-time-block">
+        <div class="stop-time">11:40</div>
+        <div class="stop-time-label">AM</div>
+      </div>
+      <div class="stop-num-badge">5</div>
+      <div class="stop-title-block">
+        <a class="stop-building" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgAcXxzMbLqUQIV5meG7w3drAQQ6_DjaSHSslSplV800YPM" target="_blank">Cumberland Center I</a>
+        <div class="stop-address">3065 Akers Mill Rd SE &middot; Atlanta, GA 30339</div>
+      </div>
+      <div class="stop-rate-badge">
+        <div class="stop-rate-val rate-high-mid">$29.00</div>
+        <div class="stop-rate-label">per SF / yr</div>
+      </div>
+    </div>
+    <img class="stop-photo" src="https://images1.loopnet.com/i2/CguB5uvGhAF7c_SxE9oBGRViBLWTBXljaknLtVjpp1Q/112/image.jpg" alt="Cumberland Center I" onerror="this.style.display='none'"/>
+    <div class="stop-body">
+      <div class="options-grid">
+        <div class="option-block">
+          <div class="option-label">Option A &mdash; Suite 250</div>
+          <div class="option-metrics">
+            <div class="metric"><div class="metric-label">Floor</div><div class="metric-value">2nd</div></div>
+            <div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">7,704 SF</div></div>
+            <div class="metric"><div class="metric-label">Est. Monthly</div><div class="metric-value">$18,576</div></div>
+          </div>
+        </div>
+        <div class="option-block">
+          <div class="option-label">Option B &mdash; Suite 200</div>
+          <div class="option-metrics">
+            <div class="metric"><div class="metric-label">Floor</div><div class="metric-value">2nd</div></div>
+            <div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">7,478 SF</div></div>
+            <div class="metric"><div class="metric-label">Est. Monthly</div><div class="metric-value">$18,072</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="stop-tags">
+        <span class="tag tag-orange">Upper-Mid Rate</span>
+        <span class="tag tag-navy">Roundabout Drop-Off</span>
+      </div>
+      <div class="stop-notes-label">Broker Notes</div>
+      <div class="stop-notes">Former Sprint regional HQ. The entire first floor is available so they might break it up for the requirement. 2 good options on the 2nd floor. Plenty of parking. Really good location. Has a good roundabout right in front of the building for drop offs.</div>
+      <div class="notes-section">
+        <div class="notes-title">Tour Notes</div>
+        <div class="notes-lines">
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+          <div class="notes-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="photos-section">
+      <div class="photos-title">Tour Photos</div>
+      <a class="photos-btn" href="https://netorgft13058039-my.sharepoint.com/:f:/g/personal/patrick_recordrep_com/IgAcXxzMbLqUQIV5meG7w3drAQQ6_DjaSHSslSplV800YPM" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>View Tour Photos</a>
+    </div>
+  </div>
+
+</div><!-- /stops -->
+
+<div class="page-footer">
+  <span class="footer-brand">Record Real Estate Partners</span>
+  <span>Art It Out &mdash; Tour June 8, 2026</span>
+</div>
+
+</body>
+</html>
