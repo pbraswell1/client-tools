@@ -736,7 +736,7 @@
     <div class="settings-group">
       <label>Headcount</label>
       <div class="settings-input-wrap">
-        <input type="number" class="settings-input" id="inputHeadcount" value="56" min="1" oninput="recalc()">
+        <input type="number" class="settings-input" id="inputHeadcount" value="0" min="0" readonly style="background:var(--light-gray);cursor:default;">
         <span class="pct-symbol">people</span>
       </div>
     </div>
@@ -899,22 +899,22 @@
 // ─────────────────────────────
 const DEFAULTS = {
   management: [
-    { name: 'Private Office',   qty: 48, w: 12, h: 10 },
-    { name: 'Executive Office', qty: 4,  w: 15, h: 12 },
+    { name: 'Private Office',   qty: 0, w: 12, h: 10 },
+    { name: 'Executive Office', qty: 0, w: 15, h: 12 },
   ],
   general: [
-    { name: 'Workstations',      qty: 4, w: 6,  h: 6  },
-    { name: 'Conference Room',   qty: 2, w: 20, h: 15 },
-    { name: 'Huddle Rooms',      qty: 4, w: 12, h: 10 },
+    { name: 'Workstations',      qty: 0, w: 6,  h: 6  },
+    { name: 'Conference Room',   qty: 0, w: 20, h: 15 },
+    { name: 'Huddle Rooms',      qty: 0, w: 12, h: 10 },
     { name: 'Phone Booth Rooms', qty: 0, w: 8,  h: 6  },
-    { name: 'Wellness Room',     qty: 1, w: 12, h: 10 },
+    { name: 'Wellness Room',     qty: 0, w: 12, h: 10 },
   ],
   common: [
-    { name: 'Break Room + Lounge',       qty: 1, w: 30, h: 30 },
-    { name: 'Work Room',                  qty: 1, w: 15, h: 10 },
-    { name: 'Reception',                  qty: 1, w: 15, h: 10 },
-    { name: 'Sitting Area',               qty: 1, w: 15, h: 10 },
-    { name: 'Storage & IT Room',          qty: 1, w: 6,  h: 6  },
+    { name: 'Break Room + Lounge',       qty: 0, w: 30, h: 30 },
+    { name: 'Work Room',                  qty: 0, w: 15, h: 10 },
+    { name: 'Reception',                  qty: 0, w: 15, h: 10 },
+    { name: 'Sitting Area',               qty: 0, w: 15, h: 10 },
+    { name: 'Storage & IT Room',          qty: 0, w: 6,  h: 6  },
     { name: 'Library / Shared Materials', qty: 0, w: 10, h: 10 },
   ]
 };
@@ -1024,7 +1024,18 @@ function f(n) { return Math.round(n).toLocaleString(); }
 function recalc() {
   const circ = (parseFloat(document.getElementById('inputCirculation').value) || 0) / 100;
   const core = (parseFloat(document.getElementById('inputCoreFactor').value)  || 0) / 100;
-  const hc   = parseInt(document.getElementById('inputHeadcount').value) || 0;
+
+  // Headcount = sum of Private Office + Executive Office + Workstations
+  const hcNames = ['Private Office', 'Executive Office', 'Workstations'];
+  let hc = 0;
+  document.querySelectorAll('tr[id^="row_"]').forEach(tr => {
+    const nameInput = tr.querySelector('.space-name-input');
+    if (nameInput && hcNames.includes(nameInput.value.trim())) {
+      const id = tr.id.replace('row_', '');
+      hc += parseInt(document.getElementById('qty_' + id)?.value) || 0;
+    }
+  });
+  document.getElementById('inputHeadcount').value = hc;
 
   const mgmt   = sectionTotal('management');
   const gen    = sectionTotal('general');
@@ -1078,7 +1089,6 @@ function resetDefaults() {
   if (!confirm('Reset all data to the default template?')) return;
   document.getElementById('inputCirculation').value = 35;
   document.getElementById('inputCoreFactor').value  = 15;
-  document.getElementById('inputHeadcount').value   = 56;
   ['management','general','common'].forEach(s => buildSection(s, DEFAULTS[s]));
   recalc();
 }
