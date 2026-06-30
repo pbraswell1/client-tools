@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IDR &mdash; Nashville Office Search</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+:root{color-scheme:light;--navy:#0f2044;--navy-mid:#1a3460;--navy-light:#e8edf5;--gold:#c9a84c;--text:#1a1a2e;--text-muted:#5a6580;--border:#d6dce8;--white:#ffffff;--green:#2d7a4f;--green-bg:#e8f5ee;--orange:#c05c1a;--orange-bg:#fef0e6;--red:#b0253a;--red-bg:#fceaec;--blue:#1a5fa8;--blue-bg:#e6f0fb;--radius:10px;--shadow:0 2px 12px rgba(15,32,68,.10);--shadow-hover:0 8px 32px rgba(15,32,68,.18)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f6fa;color:var(--text);min-height:100vh}
+.header{background:var(--navy);position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+.header-inner{max-width:1280px;margin:0 auto;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:#111}
+.brand-name{color:#fff;font-size:15px;font-weight:700}
+.brand-sub{color:rgba(255,255,255,.55);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.header-client{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.client-label{color:rgba(255,255,255,.5);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.client-logo{height:36px;display:block}
+.criteria-strip{background:var(--navy-mid);border-bottom:1px solid rgba(201,168,76,.3)}
+.criteria-inner{max-width:1280px;margin:0 auto;padding:10px 28px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.criteria-pill{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);color:rgba(255,255,255,.85);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+.stats-bar{max-width:1280px;margin:24px auto 0;padding:0 28px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)}
+.stat-value{font-size:26px;font-weight:800;color:var(--navy);line-height:1}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.controls{max-width:1280px;margin:20px auto 0;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.view-tabs{display:flex;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+.view-tab{padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text-muted);display:flex;align-items:center;gap:7px;transition:all .18s}
+.view-tab.active{background:var(--navy);color:#fff}
+.view-tab:hover:not(.active){background:var(--navy-light);color:var(--navy)}
+.filter-group{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.filter-select{padding:8px 14px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff;color:var(--text);cursor:pointer;box-shadow:var(--shadow);font-family:inherit}
+.result-count{font-size:13px;color:var(--text-muted);font-weight:500}
+.main-content{max-width:1280px;margin:20px auto 40px;padding:0 28px}
+.cards-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.cards-grid.active{display:grid}
+.prop-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .22s,transform .22s;display:flex;flex-direction:column}
+.prop-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.card-photo{width:100%;height:175px;object-fit:cover;display:block}
+.card-photo-placeholder{width:100%;height:175px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.35);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.card-header{background:var(--navy);padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card-num{background:var(--gold);color:var(--navy);font-size:11px;font-weight:800;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-title-block{flex:1;min-width:0}
+.card-building{color:#fff;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+a.card-building{text-decoration:none}
+a.card-building:hover{color:var(--gold);text-decoration:underline}
+.card-address{color:rgba(255,255,255,.55);font-size:11.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate-badge{flex-shrink:0;text-align:right}
+.rate-value{font-size:20px;font-weight:800;line-height:1}
+.rate-label{color:rgba(255,255,255,.45);font-size:10px}
+.rate-indicator{width:100%;height:3px;border-radius:2px;margin-top:6px}
+.rate-low{background:linear-gradient(90deg,#2d7a4f,#52c07c)}
+.rate-mid{background:linear-gradient(90deg,#1a5fa8,#4a9de0)}
+.rate-high-mid{background:linear-gradient(90deg,#c08c1a,#e8b84a)}
+.rate-high{background:linear-gradient(90deg,#b0253a,#e05070)}
+.card-body{padding:14px 18px;flex:1}
+.card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--navy-light);border-radius:7px;padding:8px 10px}
+.metric-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted)}
+.metric-value{font-size:14px;font-weight:700;color:var(--navy)}
+.card-notes{font-size:12.5px;color:var(--text-muted);line-height:1.5;border-top:1px solid var(--border);padding-top:12px}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-orange{background:var(--orange-bg);color:var(--orange)}
+.tag-navy{background:var(--navy-light);color:var(--navy-mid)}
+.tag-red{background:var(--red-bg);color:var(--red)}
+.card-footer{padding:10px 18px;border-top:1px solid var(--border);background:#fafbfd;display:flex;align-items:center;justify-content:space-between}
+.monthly-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.monthly-value{font-size:16px;font-weight:800;color:var(--navy)}
+.lease-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;background:var(--navy-light);color:var(--navy-mid)}
+.matrix-view{display:none;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.matrix-view.active{display:block}
+.table-thumb{width:100px;height:68px;object-fit:cover;border-radius:6px;display:block}
+.table-thumb-placeholder{width:100px;height:68px;border-radius:6px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:10px;font-weight:600;text-align:center;padding:6px}
+.matrix-table{width:100%;border-collapse:collapse;font-size:13px}
+.matrix-table thead tr{background:var(--navy);color:#fff}
+.matrix-table th{padding:13px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+.matrix-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.matrix-table tbody tr:hover{background:var(--navy-light)}
+.matrix-table tbody tr:last-child td{border-bottom:none}
+.table-num{background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+.table-building{font-weight:700;color:var(--navy);font-size:13px;display:block}
+a.table-building{text-decoration:none}
+a.table-building:hover{color:var(--blue);text-decoration:underline}
+.table-address{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.table-rate{font-weight:800;font-size:15px}
+.table-rate.low{color:var(--green)}.table-rate.mid{color:var(--blue)}.table-rate.high-mid{color:var(--orange)}.table-rate.high{color:var(--red)}
+.table-monthly{font-weight:700;color:var(--navy)}
+.table-notes{font-size:12px;color:var(--text-muted);max-width:260px;line-height:1.45}
+.map-view{display:none;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);position:relative}
+.map-view.active{display:block}
+#map{height:620px;width:100%;z-index:1}
+.map-legend{position:absolute;bottom:24px;left:12px;z-index:1000;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:var(--shadow);font-size:12px}
+.map-legend-title{font-weight:700;color:var(--navy);margin-bottom:8px;font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+.legend-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;color:var(--text)}
+.legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.15)}
+.leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 4px 20px rgba(15,32,68,.18)!important;padding:0!important;overflow:hidden}
+.leaflet-popup-content{margin:0!important;width:260px!important}
+.popup-photo{width:100%;height:110px;object-fit:cover;display:block}
+.popup-photo-placeholder{width:100%;height:60px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid))}
+.popup-body{padding:12px 14px}
+.popup-name{font-weight:700;font-size:14px;color:var(--navy);display:block;margin-bottom:2px}
+a.popup-name{text-decoration:none}
+a.popup-name:hover{color:var(--blue);text-decoration:underline}
+.popup-addr{font-size:11.5px;color:var(--text-muted);margin-bottom:8px}
+.popup-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.popup-stat{background:var(--navy-light);border-radius:5px;padding:5px 7px;text-align:center}
+.popup-stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.popup-stat-value{font-size:13px;font-weight:800;color:var(--navy)}
+.popup-lease{text-align:center;font-size:11px;font-weight:700;color:var(--navy-mid);margin-top:4px;padding:4px 8px;background:var(--navy-light);border-radius:5px}
+.no-results{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:15px;display:none}
+.no-results.visible{display:block}
+.page-footer{max-width:1280px;margin:0 auto 30px;padding:0 28px;display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted)}
+.footer-brand{font-weight:600;color:var(--navy)}
+@media(max-width:700px){.stats-bar{grid-template-columns:repeat(2,1fr)}.cards-grid{grid-template-columns:1fr}.controls{flex-direction:column;align-items:flex-start}#map{height:420px}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo"><svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+  <circle cx="22" cy="22" r="22" fill="#111"/>
+  <circle cx="22" cy="22" r="20" fill="#2c2c2c"/>
+  <circle cx="22" cy="22" r="18.5" fill="none" stroke="#1a1a1a" stroke-width="1.2"/>
+  <circle cx="22" cy="22" r="16.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="22" cy="22" r="14.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="22" cy="22" r="12.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+  <circle cx="22" cy="22" r="10.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+  <circle cx="22" cy="22" r="8.5" fill="#222"/>
+  <circle cx="22" cy="22" r="6" fill="#1a1a1a"/>
+  <circle cx="22" cy="22" r="2" fill="#c9a84c"/>
+</svg></div>
+      <div>
+        <div class="brand-name">Record Real Estate Partners</div>
+        <div class="brand-sub">Nashville &bull; Commercial Real Estate</div>
+      </div>
+    </div>
+    <div class="header-client">
+      <div class="client-label">Prepared for</div>
+      <img class="client-logo" src="https://www.idr-inc.com/wp-content/themes/idr/src/img/logo-reverse.svg" alt="IDR" onerror="this.outerHTML='<div style=\'color:#c9a84c;font-size:22px;font-weight:900;letter-spacing:2px\'>IDR</div>'">
+    </div>
+  </div>
+  <div class="criteria-strip">
+    <div class="criteria-inner">
+      <span class="criteria-pill">Nashville, TN</span>
+      <span class="criteria-pill">3,500 &ndash; 6,700 RSF</span>
+      <span class="criteria-pill">One Nashville &bull; 333 Commerce &bull; One22One</span>
+      <span class="criteria-pill">FSG &amp; FG Options</span>
+    </div>
+  </div>
+</header>
+
+<div style="background:#fffbea;border-bottom:2px solid #c9a84c;border-top:2px solid #c9a84c">
+  <div style="max-width:1280px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <div style="background:#c9a84c;color:#0f2044;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:1px">Current Location</div>
+    </div>
+    <img src="401 Church Street.jpg" alt="L&amp;C Tower" style="height:56px;width:90px;object-fit:cover;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15);flex-shrink:0" onerror="this.style.display='none'">
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:15px;font-weight:800;color:#0f2044">L&amp;C Tower</div>
+      <div style="font-size:12px;color:#5a6580;margin-top:1px">401 Church Street, Nashville, TN &bull; Suite 2600 &bull; 26th Floor</div>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div style="text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#5a6580">Sq. Ft.</div><div style="font-size:17px;font-weight:800;color:#0f2044">6,014</div></div>
+      <div style="text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#5a6580">Rate/SF</div><div style="font-size:17px;font-weight:800;color:#0f2044">$32.00</div></div>
+      <div style="text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#5a6580">Est. Monthly</div><div style="font-size:17px;font-weight:800;color:#0f2044">$16,037</div></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="stats-bar">
+  <div class="stat-card"><div class="stat-label">Options Available</div><div class="stat-value">7</div><div class="stat-sub">across 3 buildings</div></div>
+  <div class="stat-card"><div class="stat-label">Rate Range</div><div class="stat-value">$35&ndash;$60</div><div class="stat-sub">per SF / year</div></div>
+  <div class="stat-card"><div class="stat-label">Size Range</div><div class="stat-value">3,509&ndash;6,712</div><div class="stat-sub">rentable sq. ft.</div></div>
+  <div class="stat-card"><div class="stat-label">Monthly Range</div><div class="stat-value">$16,260&ndash;$22,955</div><div class="stat-sub">estimated base rent</div></div>
+</div>
+
+<div class="controls">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="setView('cards')" id="tabCards">&#9646;&#9646; Card View</button>
+      <button class="view-tab" onclick="setView('matrix')" id="tabMatrix">&#8801; Matrix View</button>
+      <button class="view-tab" onclick="setView('map')" id="tabMap">&#9679; Map View</button>
+    </div>
+    <span class="result-count" id="resultCount">Showing 9 of 9 options</span>
+  </div>
+  <div class="filter-group">
+    <select class="filter-select" onchange="applyFilters()" id="filterRate">
+      <option value="">All Rates</option>
+      <option value="upper">Upper-Mid ($29&ndash;$35/SF)</option>
+      <option value="premium">Premium ($36+/SF)</option>
+    </select>
+    <select class="filter-select" onchange="applyFilters()" id="filterBuilding">
+      <option value="">All Buildings</option>
+      <option value="one-nashville">One Nashville</option>
+      <option value="commerce">333 Commerce</option>
+      <option value="one22one">One22One</option>
+    </select>
+    <select class="filter-select" onchange="applyFilters()" id="filterLease">
+      <option value="">All Lease Types</option>
+      <option value="fsg">FSG</option>
+      <option value="fg">FG</option>
+    </select>
+    <select class="filter-select" onchange="applyFilters()" id="filterSort">
+      <option value="default">Sort: Default</option>
+      <option value="rate-asc">Rate: Low to High</option>
+      <option value="rate-desc">Rate: High to Low</option>
+      <option value="sf-asc">Size: Small to Large</option>
+      <option value="sf-desc">Size: Large to Small</option>
+      <option value="monthly-asc">Monthly: Low to High</option>
+    </select>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="cards-grid active" id="cardsGrid"></div>
+
+  <div class="matrix-view" id="matrixView">
+    <table class="matrix-table">
+      <thead><tr>
+        <th style="width:32px">#</th>
+        <th style="width:116px">Photo</th>
+        <th>Building</th>
+        <th>Floor / Suite</th>
+        <th>SF</th>
+        <th>Rate/SF</th>
+        <th>Lease</th>
+        <th>Monthly Est.</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="matrixBody"></tbody>
+    </table>
+  </div>
+
+  <div class="map-view" id="mapView">
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="map-legend-title">Rate / SF / Year</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#c05c1a"></div> Upper-Mid &mdash; $29&ndash;$35</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#b0253a"></div> Premium &mdash; $36+</div>
+    </div>
+  </div>
+
+  <div class="no-results" id="noResults">No properties match your current filters.</div>
+</div>
+
+<div class="page-footer">
+  <span class="footer-brand">Record Real Estate Partners</span>
+  <span>Updated June 30, 2026</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+var P = [
+  {id:1,b:"One Nashville",a:"150 4th Ave N",c:"Nashville, TN 37219",fl:"4th",su:"410",sf:5970,sfd:"5,970",r:35,rd:"$35.00",mo:17413,mod:"$17,413",lease:"FSG",tags:["second-gen","fsg"],lt:["one-nashville","fsg"],n:"2nd generation space. Rate range $34.50–35.50/SF FSG. Parking: 2/1,000 @ $180/space/mo. Broker: Stewart Lyman, Stream Realty, 615.649.9990.",ph:"One Nashville Place.png",sp:null,lat:36.1645,lng:-86.7789},
+  {id:2,b:"One Nashville",a:"150 4th Ave N",c:"Nashville, TN 37219",fl:"4th",su:"430",sf:5831,sfd:"5,831",r:36,rd:"$36.00",mo:17493,mod:"$17,493",lease:"FSG",tags:["furnished","spec-suite","fsg"],lt:["one-nashville","fsg"],n:"Furnished spec suite. Virtual tour available. Rate range $35.50–36.50/SF FSG. Parking: 2/1,000 @ $180/space/mo. Broker: Stewart Lyman, Stream Realty, 615.649.9990.",ph:"One Nashville Place.png",sp:null,lat:36.1646,lng:-86.7790},
+  {id:3,b:"333 Commerce",a:"333 Commerce St",c:"Nashville, TN 37201",fl:"10th",su:"1050",sf:6712,sfd:"6,712",r:38.5,rd:"$38.50",mo:21534,mod:"$21,534",lease:"FSG",tags:["spec-suite","move-in-ready","fsg"],lt:["commerce","fsg"],n:"Vacant spec suite, ready for occupancy. Rate $38.50/SF FSG. Parking: 3/1,000 @ $185/stall/mo. Broker: Sarah Pettigrew, Cushman & Wakefield, 615.208.3694.",ph:"333 Commerce.jpg",sp:null,lat:36.1622,lng:-86.7751},
+  {id:4,b:"333 Commerce",a:"333 Commerce St",c:"Nashville, TN 37201",fl:"16th",su:"1650",sf:5068,sfd:"5,068",r:38.5,rd:"$38.50",mo:16260,mod:"$16,260",lease:"FSG",tags:["spec-suite","move-in-ready","fsg"],lt:["commerce","fsg"],n:"Vacant spec suite, ready for occupancy. Rate $38.50/SF FSG. Parking: 3/1,000 @ $185/stall/mo. Broker: Sarah Pettigrew, Cushman & Wakefield, 615.208.3694.",ph:"333 Commerce.jpg",sp:null,lat:36.1623,lng:-86.7752},
+  {id:6,b:"One22One",a:"1221 Broadway",c:"Nashville, TN 37203",fl:"15th",su:"1510",sf:3538,sfd:"3,538",r:60,rd:"$60.00",mo:17690,mod:"$17,690",lease:"FG",tags:["under-construction","fg"],lt:["one22one","fg"],n:"Under construction on 15th floor. FG rate $47.00–48.50/SF. OpEx $13.29/SF (effective gross ~$61/SF). Parking: $250/stall/mo. Broker: Charlie Gibson, Stream Realty, 615.260.3286.",ph:"One22 One.jpeg",sp:null,lat:36.1550,lng:-86.7876},
+  {id:7,b:"One22One",a:"1221 Broadway",c:"Nashville, TN 37203",fl:"15th",su:"1520",sf:4591,sfd:"4,591",r:60,rd:"$60.00",mo:22955,mod:"$22,955",lease:"FG",tags:["under-construction","fg"],lt:["one22one","fg"],n:"Under construction on 15th floor. FG rate $47.00–48.50/SF. OpEx $13.29/SF (effective gross ~$61/SF). Parking: $250/stall/mo. Broker: Charlie Gibson, Stream Realty, 615.260.3286.",ph:"One22 One.jpeg",sp:null,lat:36.1551,lng:-86.7878},
+  {id:8,b:"One22One",a:"1221 Broadway",c:"Nashville, TN 37203",fl:"15th",su:"1525",sf:3509,sfd:"3,509",r:60,rd:"$60.00",mo:17545,mod:"$17,545",lease:"FG",tags:["under-construction","fg"],lt:["one22one","fg"],n:"Under construction on 15th floor. FG rate $47.00–48.50/SF. OpEx $13.29/SF (effective gross ~$61/SF). Parking: $250/stall/mo. Broker: Charlie Gibson, Stream Realty, 615.260.3286.",ph:"One22 One.jpeg",sp:null,lat:36.1552,lng:-86.7879},
+];
+
+var TC={
+  "second-gen":{l:"2nd Gen Space",c:"tag-navy"},
+  "fsg":{l:"FSG",c:"tag-blue"},
+  "furnished":{l:"Furnished",c:"tag-green"},
+  "spec-suite":{l:"Spec Suite",c:"tag-green"},
+  "move-in-ready":{l:"Move-In Ready",c:"tag-green"},
+  "available-now":{l:"Available Now",c:"tag-green"},
+  "under-construction":{l:"Under Construction",c:"tag-orange"},
+  "fg":{l:"FG",c:"tag-blue"}
+};
+
+function rc(r){return r<=22?"low":r<=28?"mid":r<=35?"high-mid":"high"}
+function rbc(r){return r<=22?"rate-low":r<=28?"rate-mid":r<=35?"rate-high-mid":"rate-high"}
+function markerColor(r){return r<=22?"#2d7a4f":r<=28?"#1a5fa8":r<=35?"#c05c1a":"#b0253a"}
+
+function bLink(p,cls){
+  if(p.sp)return '<a class="'+cls+'" href="'+p.sp+'" target="_blank">'+p.b+'</a>';
+  return '<span class="'+cls+'">'+p.b+'</span>';
+}
+
+var fp=P.slice();
+var mapInitialized=false;
+var leafletMap=null;
+var mapMarkers=[];
+
+function setView(v){
+  document.getElementById("cardsGrid").classList.toggle("active",v==="cards");
+  document.getElementById("matrixView").classList.toggle("active",v==="matrix");
+  document.getElementById("mapView").classList.toggle("active",v==="map");
+  document.getElementById("tabCards").classList.toggle("active",v==="cards");
+  document.getElementById("tabMatrix").classList.toggle("active",v==="matrix");
+  document.getElementById("tabMap").classList.toggle("active",v==="map");
+  if(v==="map"){if(!mapInitialized){initMap();}else{updateMapMarkers();leafletMap.invalidateSize();}}
+  if(v!=="map"){render();}
+}
+
+
+var CL = {b:"L&C Tower (Current)",a:"401 Church St",c:"Nashville, TN",fl:"26th",su:"2600",sf:"6,014",r:32,rd:"$32.00",mo:"$16,037",ph:"401 Church Street.jpg",lat:36.1631,lng:-86.7796};
+
+function makeStarIcon(){
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">'
+    +'<circle cx="20" cy="20" r="19" fill="#0f2044" stroke="white" stroke-width="2"/>'
+    +'<polygon points="20,7 23.5,16 33,16 25.5,22 28.5,31 20,25.5 11.5,31 14.5,22 7,16 16.5,16" fill="#c9a84c"/>'
+    +'</svg>';
+  return L.divIcon({html:svg,iconSize:[40,40],iconAnchor:[20,20],popupAnchor:[0,-22],className:""});
+}
+
+function makeCurrentPopup(){
+  var h="<div>";
+  h+='<img class="popup-photo" src="'+CL.ph+'" alt="'+CL.b+'">';
+  h+='<div class="popup-body">';
+  h+='<span class="popup-name">'+CL.b+'</span>';
+  h+='<div class="popup-addr">'+CL.a+' &middot; Fl. '+CL.fl+', Ste. '+CL.su+'</div>';
+  h+='<div class="popup-stats">';
+  h+='<div class="popup-stat"><div class="popup-stat-label">Rate/SF</div><div class="popup-stat-value">'+CL.rd+'</div></div>';
+  h+='<div class="popup-stat"><div class="popup-stat-label">Sq. Ft.</div><div class="popup-stat-value">'+CL.sf+'</div></div>';
+  h+='<div class="popup-stat"><div class="popup-stat-label">Monthly</div><div class="popup-stat-value">'+CL.mo+'</div></div>';
+  h+='</div>';
+  h+='<div class="popup-lease" style="background:#fff3cd;color:#856404">Current Location</div>';
+  h+='</div></div>';
+  return h;
+}
+
+function initMap(){
+  mapInitialized=true;
+  leafletMap=L.map("map",{zoomControl:true}).setView([36.160,-86.779],15);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:19
+  }).addTo(leafletMap);
+  updateMapMarkers();
+  L.marker([CL.lat,CL.lng],{icon:makeStarIcon()}).bindPopup(makeCurrentPopup(),{maxWidth:260,minWidth:260}).addTo(leafletMap);
+}
+
+function makeIcon(p){
+  var color=markerColor(p.r);
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">'
+    +'<path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 26 18 26S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="'+color+'" stroke="white" stroke-width="2"/>'
+    +'<text x="18" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="12" fill="white">'+p.id+'</text>'
+    +'</svg>';
+  return L.divIcon({html:svg,iconSize:[36,44],iconAnchor:[18,44],popupAnchor:[0,-44],className:""});
+}
+
+function makePopup(p){
+  var photoHtml=p.ph
+    ?'<img class="popup-photo" src="'+p.ph+'" alt="'+p.b+'" onerror="this.style.display=\'none\'">'
+    :'<div class="popup-photo-placeholder"></div>';
+  var nameHtml=p.sp
+    ?'<a class="popup-name" href="'+p.sp+'" target="_blank">'+p.b+'</a>'
+    :'<span class="popup-name">'+p.b+'</span>';
+  return '<div>'
+    +photoHtml
+    +'<div class="popup-body">'
+    +nameHtml
+    +'<div class="popup-addr">'+p.a+' &middot; Fl. '+p.fl+', Ste. '+p.su+'</div>'
+    +'<div class="popup-stats">'
+    +'<div class="popup-stat"><div class="popup-stat-label">Rate/SF</div><div class="popup-stat-value">'+p.rd+'</div></div>'
+    +'<div class="popup-stat"><div class="popup-stat-label">Sq. Ft.</div><div class="popup-stat-value">'+p.sfd+'</div></div>'
+    +'<div class="popup-stat"><div class="popup-stat-label">Monthly</div><div class="popup-stat-value">'+p.mod+'</div></div>'
+    +'</div>'
+    +'<div class="popup-lease">'+p.lease+' Lease</div>'
+    +'</div></div>';
+}
+
+function updateMapMarkers(){
+  if(!leafletMap)return;
+  for(var i=0;i<mapMarkers.length;i++){leafletMap.removeLayer(mapMarkers[i]);}
+  mapMarkers=[];
+  for(var j=0;j<fp.length;j++){
+    var p=fp[j];
+    var marker=L.marker([p.lat,p.lng],{icon:makeIcon(p)})
+      .bindPopup(makePopup(p),{maxWidth:260,minWidth:260})
+      .addTo(leafletMap);
+    mapMarkers.push(marker);
+  }
+  if(fp.length>0){
+    var bounds=L.latLngBounds(fp.map(function(p){return[p.lat,p.lng];}));
+    leafletMap.fitBounds(bounds,{padding:[60,60]});
+  }
+  leafletMap.invalidateSize();
+}
+
+function applyFilters(){
+  var rf=document.getElementById("filterRate").value;
+  var bf=document.getElementById("filterBuilding").value;
+  var lf=document.getElementById("filterLease").value;
+  var sv=document.getElementById("filterSort").value;
+  fp=P.filter(function(p){
+    if(rf==="upper"&&(p.r<29||p.r>35))return false;
+    if(rf==="premium"&&p.r<36)return false;
+    if(bf&&p.lt.indexOf(bf)<0)return false;
+    if(lf&&p.lt.indexOf(lf)<0)return false;
+    return true;
+  });
+  if(sv==="rate-asc")fp.sort(function(a,b){return a.r-b.r;});
+  else if(sv==="rate-desc")fp.sort(function(a,b){return b.r-a.r;});
+  else if(sv==="sf-asc")fp.sort(function(a,b){var as=a.sf===0?99999:a.sf;var bs=b.sf===0?99999:b.sf;return as-bs;});
+  else if(sv==="sf-desc")fp.sort(function(a,b){var as=a.sf===0?0:a.sf;var bs=b.sf===0?0:b.sf;return bs-as;});
+  else if(sv==="monthly-asc")fp.sort(function(a,b){var am=a.mo===0?99999999:a.mo;var bm=b.mo===0?99999999:b.mo;return am-bm;});
+  else fp.sort(function(a,b){return a.id-b.id;});
+  document.getElementById("resultCount").textContent="Showing "+fp.length+" of "+P.length+" options";
+  document.getElementById("noResults").classList.toggle("visible",fp.length===0);
+  render();
+  if(mapInitialized)updateMapMarkers();
+}
+
+function imgHtml(p,cls,w,h){
+  if(p.ph)return '<img class="'+cls+'" src="'+p.ph+'" alt="'+p.b+'" loading="lazy" width="'+w+'" height="'+h+'" onerror="this.style.display=\'none\'">';
+  return '<div class="'+cls+'-placeholder">No Photo</div>';
+}
+
+function renderCards(){
+  var h="";
+  for(var i=0;i<fp.length;i++){
+    var p=fp[i];
+    var tags="";
+    for(var t=0;t<Math.min(p.tags.length,3);t++){var cfg=TC[p.tags[t]]||{l:p.tags[t],c:"tag-navy"};tags+='<span class="tag '+cfg.c+'">'+cfg.l+"</span>";}
+    var rateColor=rc(p.r)==="high-mid"?"var(--gold)":"var(--red)";
+    h+='<div class="prop-card">';
+    h+=imgHtml(p,"card-photo",340,175);
+    h+='<div class="card-header">';
+    h+='<div class="card-num">'+p.id+"</div>";
+    h+='<div class="card-title-block">'+bLink(p,"card-building")+'<div class="card-address">'+p.a+" &middot; "+p.c+"</div></div>";
+    h+='<div class="rate-badge"><div class="rate-value" style="color:'+rateColor+'">'+p.rd+'</div><div class="rate-label">per SF/yr &bull; '+p.lease+'</div><div class="rate-indicator '+rbc(p.r)+'"></div></div>';
+    h+="</div>";
+    h+='<div class="card-body"><div class="card-metrics">';
+    h+='<div class="metric"><div class="metric-label">Floor</div><div class="metric-value">'+p.fl+"</div></div>";
+    h+='<div class="metric"><div class="metric-label">Suite</div><div class="metric-value">'+p.su+"</div></div>";
+    h+='<div class="metric"><div class="metric-label">Sq. Ft.</div><div class="metric-value">'+p.sfd+"</div></div>";
+    h+="</div>";
+    h+='<div class="card-tags">'+tags+"</div>";
+    h+='<div class="card-notes">'+p.n+"</div></div>";
+    h+='<div class="card-footer"><div><div class="monthly-label">Est. Monthly</div><div class="monthly-value">'+p.mod+"</div></div><span class='lease-badge'>"+p.lease+"</span></div>";
+    h+="</div>";
+  }
+  document.getElementById("cardsGrid").innerHTML=h;
+}
+
+function renderMatrix(){
+  var h="";
+  for(var i=0;i<fp.length;i++){
+    var p=fp[i];
+    var tags="";
+    for(var t=0;t<Math.min(p.tags.length,2);t++){var cfg=TC[p.tags[t]]||{l:p.tags[t],c:"tag-navy"};tags+='<span class="tag '+cfg.c+'" style="font-size:10px;padding:2px 7px">'+cfg.l+"</span> ";}
+    h+="<tr><td><span class='table-num'>"+p.id+"</span></td>";
+    h+="<td style='padding:8px 10px'>"+imgHtml(p,"table-thumb",100,68)+"</td>";
+    h+="<td>"+bLink(p,"table-building")+"<div class='table-address'>"+p.a+"</div><div class='table-address'>"+p.c+"</div></td>";
+    h+="<td style='white-space:nowrap'><strong>Fl. "+p.fl+"</strong><br><span style='color:var(--text-muted);font-size:12px'>Ste. "+p.su+"</span></td>";
+    h+="<td style='font-weight:700;color:var(--navy);white-space:nowrap'>"+p.sfd+(p.sfd!=="TBD"?" SF":"")+"</td>";
+    h+="<td><span class='table-rate "+rc(p.r)+"'>"+p.rd+"</span><br><span style='font-size:10px;color:var(--text-muted)'>per SF/yr</span></td>";
+    h+="<td><span class='lease-badge'>"+p.lease+"</span></td>";
+    h+="<td><span class='table-monthly'>"+p.mod+"</span>"+(p.mod!=="TBD"?"<br><span style='font-size:10px;color:var(--text-muted)'>est. base rent</span>":"")+"</td>";
+    h+="<td class='table-notes'>"+p.n+"</td></tr>";
+  }
+  document.getElementById("matrixBody").innerHTML=h;
+}
+
+function render(){renderCards();renderMatrix();}
+render();
+</script>
+</body>
+</html>
