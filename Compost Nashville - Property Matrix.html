@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Compost Nashville — Available Properties</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+:root{color-scheme:light;--navy:#0f2044;--navy-mid:#1a3460;--navy-light:#e8edf5;--gold:#c9a84c;--text:#1a1a2e;--text-muted:#5a6580;--border:#d6dce8;--white:#ffffff;--green:#2d7a4f;--green-bg:#e8f5ee;--orange:#c05c1a;--orange-bg:#fef0e6;--red:#b0253a;--red-bg:#fceaec;--blue:#1a5fa8;--blue-bg:#e6f0fb;--gray:#5a6580;--gray-bg:#eceef3;--radius:10px;--shadow:0 2px 12px rgba(15,32,68,.10);--shadow-hover:0 8px 32px rgba(15,32,68,.18)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f6fa;color:var(--text);min-height:100vh}
+.header{background:var(--navy);position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+.header-inner{max-width:1320px;margin:0 auto;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:#111}
+.brand-name{color:#fff;font-size:15px;font-weight:700}
+.brand-sub{color:rgba(255,255,255,.55);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.header-client{text-align:right}
+.client-label{color:rgba(255,255,255,.5);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.client-name{color:var(--gold);font-size:20px;font-weight:700}
+.criteria-strip{background:var(--navy-mid);border-bottom:1px solid rgba(201,168,76,.3)}
+.criteria-inner{max-width:1320px;margin:0 auto;padding:10px 28px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.criteria-pill{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);color:rgba(255,255,255,.85);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+.stats-bar{max-width:1320px;margin:24px auto 0;padding:0 28px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)}
+.stat-value{font-size:26px;font-weight:800;color:var(--navy);line-height:1}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.controls{max-width:1320px;margin:20px auto 0;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.view-tabs{display:flex;background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+.view-tab{padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text-muted);display:flex;align-items:center;gap:7px;transition:all .18s}
+.view-tab.active{background:var(--navy);color:#fff}
+.view-tab:hover:not(.active){background:var(--navy-light);color:var(--navy)}
+.filter-group{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.filter-select{padding:8px 14px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:#fff;color:var(--text);cursor:pointer;box-shadow:var(--shadow);font-family:inherit}
+.result-count{font-size:13px;color:var(--text-muted);font-weight:500}
+.main-content{max-width:1320px;margin:20px auto 40px;padding:0 28px}
+.cards-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.cards-grid.active{display:grid}
+.prop-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .22s,transform .22s;display:flex;flex-direction:column}
+.prop-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.card-photo{width:100%;height:175px;object-fit:cover;display:block}
+.card-photo-placeholder{width:100%;height:175px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.35);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.card-header{background:var(--navy);padding:14px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card-num{background:var(--gold);color:var(--navy);font-size:11px;font-weight:800;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-title-block{flex:1;min-width:0}
+.card-building{color:#fff;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;display:block}
+.card-building:hover{color:var(--gold);text-decoration:underline}
+.card-address{color:rgba(255,255,255,.55);font-size:11.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate-badge{flex-shrink:0;text-align:right}
+.rate-value{color:var(--gold);font-size:20px;font-weight:800;line-height:1}
+.rate-value.tbd{color:rgba(255,255,255,.55);font-size:14px}
+.rate-label{color:rgba(255,255,255,.45);font-size:10px}
+.card-body{padding:14px 18px;flex:1}
+.card-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.metric{background:var(--navy-light);border-radius:7px;padding:8px 10px}
+.metric-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted)}
+.metric-value{font-size:13px;font-weight:700;color:var(--navy)}
+.card-specline{font-size:11.5px;color:var(--text-muted);margin-bottom:10px;line-height:1.5}
+.card-notes{font-size:12.5px;color:var(--text-muted);line-height:1.5;border-top:1px solid var(--border);padding-top:12px}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-orange{background:var(--orange-bg);color:var(--orange)}
+.tag-navy{background:var(--navy-light);color:var(--navy-mid)}
+.tag-gray{background:var(--gray-bg);color:var(--gray)}
+.card-footer{padding:10px 18px;border-top:1px solid var(--border);background:#fafbfd;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.monthly-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.monthly-value{font-size:16px;font-weight:800;color:var(--navy)}
+.broker-line{font-size:11px;color:var(--text-muted);text-align:right;line-height:1.4}
+.broker-name{font-weight:600;color:var(--navy-mid)}
+.rate-indicator{width:100%;height:3px;border-radius:2px;margin-top:6px}
+.rate-low{background:linear-gradient(90deg,#2d7a4f,#52c07c)}
+.rate-mid{background:linear-gradient(90deg,#1a5fa8,#4a9de0)}
+.rate-high-mid{background:linear-gradient(90deg,#c08c1a,#e8b84a)}
+.rate-high{background:linear-gradient(90deg,#b0253a,#e05070)}
+.rate-tbd{background:linear-gradient(90deg,#8a93a6,#b7bfcf)}
+.matrix-view{display:none;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto}
+.matrix-view.active{display:block}
+.table-thumb{width:100px;height:68px;object-fit:cover;border-radius:6px;display:block}
+.table-thumb-placeholder{width:100px;height:68px;border-radius:6px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:10px;font-weight:600;text-align:center}
+.matrix-table{width:100%;border-collapse:collapse;font-size:13px}
+.matrix-table thead tr{background:var(--navy);color:#fff}
+.matrix-table th{padding:13px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;cursor:pointer;user-select:none}
+.matrix-table th:hover{background:var(--navy-mid)}
+.matrix-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.matrix-table tbody tr:hover{background:var(--navy-light)}
+.matrix-table tbody tr:last-child td{border-bottom:none}
+.table-num{background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+.table-building{font-weight:700;color:var(--navy);font-size:13px;text-decoration:none;display:block}
+.table-building:hover{color:var(--blue);text-decoration:underline}
+.table-address{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.table-rate{font-weight:800;font-size:15px}
+.table-rate.low{color:var(--green)}.table-rate.mid{color:var(--blue)}.table-rate.high-mid{color:var(--orange)}.table-rate.high{color:var(--red)}.table-rate.tbd{color:var(--gray);font-size:12px;font-weight:600}
+.table-monthly{font-weight:700;color:var(--navy)}
+.table-notes{font-size:12px;color:var(--text-muted);max-width:260px;line-height:1.45}
+.table-broker{font-size:12px;color:var(--text);font-weight:600}
+.table-brokerage{font-size:11px;color:var(--text-muted)}
+/* Map view */
+.map-view{display:none;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);position:relative}
+.map-view.active{display:block}
+#map{height:620px;width:100%;z-index:1}
+.map-legend{position:absolute;bottom:24px;left:12px;z-index:1000;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:var(--shadow);font-size:12px}
+.map-legend-title{font-weight:700;color:var(--navy);margin-bottom:8px;font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+.legend-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;color:var(--text)}
+.legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.15)}
+/* Leaflet popup overrides */
+.leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 4px 20px rgba(15,32,68,.18)!important;padding:0!important;overflow:hidden}
+.leaflet-popup-content{margin:0!important;width:260px!important}
+.popup-photo{width:100%;height:110px;object-fit:cover;display:block}
+.popup-photo-placeholder{width:100%;height:60px;background:linear-gradient(135deg,#0d1c3a,var(--navy-mid))}
+.popup-body{padding:12px 14px}
+.popup-name{font-weight:700;font-size:14px;color:var(--navy);text-decoration:none;display:block;margin-bottom:2px}
+.popup-name:hover{color:var(--blue);text-decoration:underline}
+.popup-addr{font-size:11.5px;color:var(--text-muted);margin-bottom:8px}
+.popup-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.popup-stat{background:var(--navy-light);border-radius:5px;padding:5px 7px;text-align:center}
+.popup-stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.popup-stat-value{font-size:13px;font-weight:800;color:var(--navy)}
+.popup-sp-link{display:block;text-align:center;background:var(--navy);color:#fff;font-size:11px;font-weight:600;padding:6px;border-radius:5px;text-decoration:none;margin-top:4px}
+.popup-sp-link:hover{background:var(--navy-mid)}
+.no-results{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:15px;display:none}
+.no-results.visible{display:block}
+.page-footer{max-width:1320px;margin:0 auto 30px;padding:0 28px;display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted)}
+.footer-brand{font-weight:600;color:var(--navy)}
+@media(max-width:700px){.stats-bar{grid-template-columns:repeat(2,1fr)}.cards-grid{grid-template-columns:1fr}.controls{flex-direction:column;align-items:flex-start}#map{height:420px}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo"><svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+  <circle cx="22" cy="22" r="22" fill="#111"/>
+  <circle cx="22" cy="22" r="20" fill="#2c2c2c"/>
+  <circle cx="22" cy="22" r="18.5" fill="none" stroke="#1a1a1a" stroke-width="1.2"/>
+  <circle cx="22" cy="22" r="16.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="22" cy="22" r="14.5" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="22" cy="22" r="12.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+  <circle cx="22" cy="22" r="10.5" fill="none" stroke="#1a1a1a" stroke-width="0.8"/>
+  <circle cx="22" cy="22" r="8.5" fill="#222"/>
+  <circle cx="22" cy="22" r="6" fill="#1a1a1a"/>
+  <circle cx="22" cy="22" r="2" fill="#c9a84c"/>
+</svg></div>
+      <div>
+        <div class="brand-name">Record Real Estate Partners</div>
+        <div class="brand-sub">Nashville &bull; Commercial Real Estate</div>
+      </div>
+    </div>
+    <div class="header-client">
+      <div class="client-label">Prepared for</div>
+      <div class="client-name">Compost Nashville</div>
+    </div>
+  </div>
+  <div class="criteria-strip">
+    <div class="criteria-inner">
+      <span class="criteria-pill">Nashville Metro</span>
+      <span class="criteria-pill">Industrial &amp; Flex Space</span>
+      <span class="criteria-pill">Broker-Quoted Terms as of 8/14/2026</span>
+      <span class="criteria-pill">~35 Parking Spaces / 10 Delivery Trucks Needed</span>
+    </div>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-card"><div class="stat-label">Options Available</div><div class="stat-value">29</div><div class="stat-sub">across 23 buildings</div></div>
+  <div class="stat-card"><div class="stat-label">Rate Range</div><div class="stat-value">$11.95&ndash;$50.18</div><div class="stat-sub">per SF / year</div></div>
+  <div class="stat-card"><div class="stat-label">Size Range</div><div class="stat-value">837&ndash;48,669</div><div class="stat-sub">square feet</div></div>
+  <div class="stat-card"><div class="stat-label">Monthly Range</div><div class="stat-value">$2,313&ndash;$48,466</div><div class="stat-sub">estimated base rent</div></div>
+</div>
+
+<div class="controls">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="setView('cards')" id="tabCards">&#9646;&#9646; Card View</button>
+      <button class="view-tab" onclick="setView('matrix')" id="tabMatrix">&#8801; Matrix View</button>
+      <button class="view-tab" onclick="setView('map')" id="tabMap">&#9679; Map View</button>
+    </div>
+    <span class="result-count" id="resultCount">Showing 29 of 29 options</span>
+  </div>
+  <div class="filter-group">
+    <select class="filter-select" onchange="applyFilters()" id="filterRate">
+      <option value="">All Rates</option>
+      <option value="budget">Budget (&le;$22/SF)</option>
+      <option value="mid">Mid-Range ($23&ndash;$28/SF)</option>
+      <option value="upper">Upper-Mid ($29&ndash;$35/SF)</option>
+      <option value="premium">Premium ($36+/SF)</option>
+    </select>
+    <select class="filter-select" onchange="applyFilters()" id="filterLoad">
+      <option value="">All Loading Types</option>
+      <option value="dock-high">Dock-High</option>
+      <option value="drive-in">Drive-In / Grade-Level</option>
+    </select>
+    <select class="filter-select" onchange="applyFilters()" id="filterSort">
+      <option value="default">Sort: Default</option>
+      <option value="rate-asc">Rate: Low to High</option>
+      <option value="rate-desc">Rate: High to Low</option>
+      <option value="sf-asc">Size: Small to Large</option>
+      <option value="sf-desc">Size: Large to Small</option>
+      <option value="monthly-asc">Monthly: Low to High</option>
+    </select>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="cards-grid active" id="cardsGrid"></div>
+
+  <div class="matrix-view" id="matrixView">
+    <table class="matrix-table">
+      <thead><tr>
+        <th style="width:32px">#</th>
+        <th style="width:116px">Photo</th>
+        <th>Building</th>
+        <th>SF</th>
+        <th>Clear Ht.</th>
+        <th>Loading</th>
+        <th>Rate/SF</th>
+        <th>Op Ex</th>
+        <th>Monthly Est.</th>
+        <th>Broker</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="matrixBody"></tbody>
+    </table>
+  </div>
+
+  <div class="map-view" id="mapView">
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="map-legend-title">Rate / SF / Year</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#2d7a4f"></div> Budget &mdash; &le;$22</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#1a5fa8"></div> Mid-Range &mdash; $23&ndash;$28</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#c05c1a"></div> Upper-Mid &mdash; $29&ndash;$35</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#b0253a"></div> Premium &mdash; $36+</div>
+    </div>
+  </div>
+
+  <div class="no-results" id="noResults">No properties match your current filters.</div>
+</div>
+
+<div class="page-footer">
+  <span class="footer-brand">Record Real Estate Partners</span>
+  <span>Updated August 14, 2026 (afternoon)</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+var P = [
+  {id:1,b:"430 Haynie Ave",a:"430 Haynie Ave",c:"Nashville, TN 37207",sf:2500,sfd:"2,500",ch:"20'",ld:"1 drive-in (10'x12')",z:"Industrial",r:22,rd:"$22.00",ox:4.75,oxd:"$4.75",mo:4583.33,mod:"$4,583",broker:"Jamie Brandenburg / Wes Wray",brokerage:"Real Equity Commercial",n:"200A 3-phase power; built 2021; ~500 SF office",tags:["drive-in"],ph:"https://images1.loopnet.com/i2/gqx5ZQbJ0SBJE01_PK_JHp_QrrkJyK2R-DwJ6zIGUFU/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/430%20Haynie%20Ave",lat:36.228,lng:-86.7797},
+  {id:2,b:"3940 Dickerson Pike – Suite 102",a:"3940 Dickerson Pike, Ste 102",c:"Nashville, TN 37207",sf:1587,sfd:"1,587",ch:"n/a",ld:"1 drive-in (per unit)",z:"n/a",r:19.95,rd:"$19.95",ox:4.87,oxd:"$4.87",mo:2638.39,mod:"$2,638",broker:"Jamie Brandenburg / Wes Wray",brokerage:"Real Equity Commercial",n:"Bldg 9,600 SF total, built 2022, Class B. Flyer lists asking $22.00/SF — confirm which rate is current with broker.",tags:["drive-in"],ph:"https://images1.loopnet.com/i2/vysRIQi2o_Rs78iiMDsNERkgTkLYEYWQj0c3hXFUyIQ/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/3940%20Dickerson%20Pike",lat:36.2115,lng:-86.7684},
+  {id:3,b:"3940 Dickerson Pike – Suite 104",a:"3940 Dickerson Pike, Ste 104",c:"Nashville, TN 37207",sf:1587,sfd:"1,587",ch:"n/a",ld:"1 drive-in (per unit)",z:"n/a",r:19.95,rd:"$19.95",ox:4.87,oxd:"$4.87",mo:2638.39,mod:"$2,638",broker:"Jamie Brandenburg / Wes Wray",brokerage:"Real Equity Commercial",n:"Bldg 9,600 SF total, built 2022, Class B. Flyer lists asking $22.00/SF — confirm which rate is current with broker.",tags:["drive-in"],ph:"https://images1.loopnet.com/i2/vysRIQi2o_Rs78iiMDsNERkgTkLYEYWQj0c3hXFUyIQ/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/3940%20Dickerson%20Pike",lat:36.2115,lng:-86.7684},
+  {id:4,b:"2317-2319 Grandview Ave (Ste A+B)",a:"2317-2319 Grandview Ave",c:"Nashville, TN 37211",sf:2880,sfd:"2,880",ch:"24'-26'",ld:"2 grade doors (10'x14')",z:"IWD",r:24,rd:"$24.00",ox:4.85,oxd:"$4.85",mo:5760,mod:"$5,760",broker:"Pete Greenfield",brokerage:"Equitable Property Company",n:"Available 9/1/26; built 2006; 20 parking spaces + 65'x50' paved fleet/equipment area; available together or split 1,440 SF each",tags:["drive-in"],ph:"https://images1.loopnet.com/i2/q4np_mPVYEBrUtKtNrxZ78YE2_lYkwTjekCBNsGsAiE/112/image.png",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/2317-2319%20Grandview%20Ave",lat:36.0805,lng:-86.7145},
+  {id:5,b:"2611-2615 Grandview Ave",a:"2611-2615 Grandview Ave",c:"Nashville, TN 37211",sf:6072,sfd:"6,072",ch:"11' (lowest beam)",ld:"1 roll-up (10'x10')",z:"n/a",r:12,rd:"$12.00",ox:null,oxd:"—",mo:6072,mod:"$6,072",broker:"Chris Horrell",brokerage:"Fairfax Realty",n:"Currently sub-leased through 12/31/26 at $9.77/SF NNN; new direct lease at market rate available 2027+. Fenced parking lot. Rate incl. taxes; utilities split between tenants + 3% annual base increases + 2% buyout to leasing agent.",tags:["drive-in","sublease"],ph:null,sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/2611-2615%20Grandview%20Ave",lat:36.0779,lng:-86.7128},
+  {id:6,b:"6100 Centennial Blvd – Space 1",a:"6100 Centennial Blvd",c:"Nashville, TN 37209",sf:1850,sfd:"1,850",ch:"±14' to cross beams",ld:"1 dock door, 1 ramp",z:"IR",r:15,rd:"$15.00",ox:3.4,oxd:"$3.40",mo:2312.5,mod:"$2,312",broker:"Jeffrey Thomas / Michael Groos",brokerage:"Charles Hawkins Co.",n:"Immediate; open warehouse/distribution, no office",tags:["dock-high","immediate"],ph:"https://images1.loopnet.com/i2/6vT5EGAgKrK8PcuqCRf3VEnIIn4RpVWj2YaEDwIJxRc/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/6100%20Centennial%20Blvd",lat:36.1601,lng:-86.8626},
+  {id:7,b:"6100 Centennial Blvd – Space 2",a:"6100 Centennial Blvd",c:"Nashville, TN 37209",sf:17500,sfd:"17,500",ch:"±17'5\"",ld:"5 dock-high, 2 grade-level",z:"IR",r:13.25,rd:"$13.25",ox:3.4,oxd:"$3.40",mo:19322.92,mod:"$19,323",broker:"Jeffrey Thomas / Michael Groos",brokerage:"Charles Hawkins Co.",n:"Available 7/1/2026; ±15,000 SF warehouse + ±2,500 SF office; wet sprinkler",tags:["dock-high","drive-in"],ph:"https://images1.loopnet.com/i2/6vT5EGAgKrK8PcuqCRf3VEnIIn4RpVWj2YaEDwIJxRc/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/6100%20Centennial%20Blvd",lat:36.1601,lng:-86.8626},
+  {id:8,b:"6100 Centennial Blvd – Space 3",a:"6100 Centennial Blvd",c:"Nashville, TN 37209",sf:4480,sfd:"4,480",ch:"16' eave / 17' center",ld:"Grade-level drive-ins (14'x12'6\", 9'11\"x11'11\")",z:"IR",r:13.25,rd:"$13.25",ox:3.4,oxd:"$3.40",mo:4946.67,mod:"$4,947",broker:"Jeffrey Thomas / Michael Groos",brokerage:"Charles Hawkins Co.",n:"Immediate; ±1,670 SF covered outside storage; no office",tags:["drive-in","immediate"],ph:"https://images1.loopnet.com/i2/6vT5EGAgKrK8PcuqCRf3VEnIIn4RpVWj2YaEDwIJxRc/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/6100%20Centennial%20Blvd",lat:36.1601,lng:-86.8626},
+  {id:9,b:"57 Willow St",a:"57 Willow St",c:"Nashville, TN 37210",sf:6300,sfd:"6,300",ch:"16'",ld:"3 grade-level roll-up (12')",z:"IR",r:18.95,rd:"$18.95",ox:2.64,oxd:"$2.64",mo:9948.75,mod:"$9,949",broker:"Ben Burns",brokerage:"Avison Young",n:"±3,700 SF warehouse + ±2,600 SF office (2 levels); also available for sale at $350/SF ($2,205,000)",tags:["drive-in","sale-option"],ph:"https://images1.loopnet.com/i2/uawGVz9Ik_mZH-btk8DF4uQnNy6xizla5cBOU9Yi-fA/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/57%20Willow%20St",lat:36.1421,lng:-86.7401},
+  {id:10,b:"1618-1626 State St (1620 State St)",a:"1620 State St",c:"Nashville, TN 37203",sf:6272,sfd:"6,272",ch:"15'",ld:"1 drive-in (14'x14')",z:"n/a",r:17.22,rd:"$17.22",ox:null,oxd:"—",mo:9000,mod:"$9,000",broker:"Buist Richardson",brokerage:"Avison Young",n:"Flat $9,000/mo NNN quoted (≈$17.22/SF/yr implied); clear span; ±800 SF office + ±5,472 SF warehouse",tags:["drive-in"],ph:"https://images1.loopnet.com/i2/Mkgjm6Wc_5jFj6TtJU2Uf7xF4U8i3C42XOT8CYI5nVU/112/image.png",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/1618-1626%20State%20St",lat:36.1368,lng:-86.7862},
+  {id:12,b:"118-122 Space Park Dr (Space Park South)",a:"101-161 Space Park South Dr",c:"Nashville, TN 37211",sf:2000,sfd:"2,000",ch:"12'-14'",ld:"Dock + drive-in doors",z:"n/a",r:17,rd:"$17.00",ox:3.13,oxd:"$3.13",mo:2833.33,mod:"$2,833",broker:"Mike Gorney / Rush Gorney",brokerage:"Gorney Realty",n:"Fully sprinklered; ample parking; buildings 1-7 range 1,000-4,000 SF",tags:["dock-high","drive-in"],ph:"https://images1.loopnet.com/i2/sVbWm2zMmedRP5gMKzv8Gi_eDMh0A_nbtoVPuvpOks0/118/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/118-122%20Space%20Park%20Dr%20-%20Space%20South%20Park%20Service%20Center",lat:36.0798,lng:-86.6958},
+  {id:13,b:"1100 Menzler Rd",a:"1100 Menzler Rd",c:"Nashville, TN 37210",sf:2250,sfd:"2,250",ch:"n/a",ld:"n/a",z:"n/a",r:25,rd:"$25.00",ox:null,oxd:"—",mo:4687.5,mod:"$4,688",broker:"Mark S.",brokerage:"Private landlord",n:"Warehouse portion only; optional 625-800 SF office add-on at ~$30/SF. No formal flyer — details from broker email/photo only.",tags:["industrial"],ph:"https://images1.loopnet.com/i2/keOM59WhGF_seu2TnN2TEPjooh2We3mSwzrn4sSx5B0/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/1100%20Menzler%20Rd",lat:36.1332,lng:-86.7378},
+  {id:14,b:"525 Hagan St – Suite 2",a:"525 Hagan St",c:"Nashville, TN 37203",sf:5982,sfd:"5,982",ch:"14'",ld:"3 dock + 1 ramped drive-in",z:"n/a",r:20,rd:"$20.00",ox:null,oxd:"—",mo:9970,mod:"$9,970",broker:"Charlotte Ford / Chris Grear / Mike Driscoll",brokerage:"Colliers International",n:"Rate is + utilities & janitorial (no separate OpEx quoted). Landlord (Hines) currently only doing short-term deals: 12-18 mo w/ MTM after. Parking tight but workable if double-parked (~35 spaces). Flyer shows 1,532 SF office + 4,450 SF warehouse.",tags:["dock-high","drive-in"],ph:"https://images1.loopnet.com/i2/9DlB2nPnP3AmdlzrXo5TYXyJooj8xdQlWLJ1ZJAi0NU/112/image.png",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/525%20Hagan%20St",lat:36.1391,lng:-86.7742},
+  {id:15,b:"1200 9th Ave N (United Warehouse)",a:"1200 9th Ave N",c:"Nashville, TN 37208",sf:4500,sfd:"4,500",ch:"18'",ld:"2 power overhead (12'x14')",z:"n/a",r:25,rd:"$25.00",ox:5.05,oxd:"$5.05",mo:9375,mod:"$9,375",broker:"David McGahren",brokerage:"Cushman & Wakefield",n:"Available 12/1/26; small conditioned office area; designated parking",tags:["industrial"],ph:"https://images1.loopnet.com/i2/Sgq2E1GQksZkQIPGjknMB6XC9-vphPmmia7FcZP_9WA/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/1200%209th%20Ave%20N%20-%20United%20Warehouse",lat:36.1743,lng:-86.7969},
+  {id:16,b:"191-195 Polk Ave (Polk Logistics Center)",a:"191-195 Polk Ave",c:"Nashville, TN 37210",sf:48669,sfd:"48,669",ch:"n/a",ld:"2+ dock-high doors",z:"n/a",r:11.95,rd:"$11.95",ox:2.69,oxd:"$2.69",mo:48466.21,mod:"$48,466",broker:"Casey Flannery / Melissa Alexander / Taylor McAnelly",brokerage:"Foundry Commercial",n:"Full building up to 48,669 SF; broker says can subdivide smaller",tags:["dock-high"],ph:"https://images1.loopnet.com/i2/BEyFT6z5UgWjPdAyFBkRw0QdU-hTJmUlEALWHGrCUsk/116/191-195-Polk-Ave-Nashville-TN-Primary-Photo-1-LargeHighDefinition.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/191-195%20Polk%20Ave%20-%20Polk%20Center",lat:36.1305,lng:-86.7522},
+  {id:17,b:"2207 Gladstone Ave",a:"2207 Gladstone Ave",c:"Nashville, TN 37211",sf:837,sfd:"837",ch:"n/a",ld:"n/a",z:"Industrial",r:50.18,rd:"$50.18",ox:null,oxd:"—",mo:3500,mod:"$3,500",broker:"Edward Burrell",brokerage:"Private landlord",n:"Flat $3,500/mo gross quoted (≈$50.18/SF/yr implied — small unit). LL pays taxes (~$6,500/yr); tenant pays maint/insurance, no CAM. 8' security fence, sliding gates. Min. 12-mo lease. Built 2004.",tags:["industrial"],ph:null,sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/2207%20Gladstone%20Ave",lat:36.0898,lng:-86.7335},
+  {id:18,b:"500-520 Royal Pky – Ste 100 (Royal Parkway II)",a:"500 Royal Pky, Ste 100",c:"Nashville, TN 37214",sf:7577,sfd:"7,577",ch:"14'",ld:"Roll-up doors (12'x12')",z:"n/a",r:17.25,rd:"$17.25",ox:4.5,oxd:"$4.50",mo:10891.94,mod:"$10,892",broker:"Frank Thomasson / Ryan Coulter",brokerage:"CBRE",n:"Spec suite, delivery Nov 2026; office + warehouse; 518 shared parking spaces at property",tags:["drive-in","spec-suite"],ph:"https://images1.loopnet.com/i2/rTc6ceBxuSRH3-g7iSN-ZX9K1suUOjjzGUaUFZwIMKc/116/500-520-Royal-Pky-Nashville-TN-Primary-Photo-1-LargeHighDefinition.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/500-520%20Royal%20Pky%20-%20Royal%20Parkway",lat:36.1704,lng:-86.6573},
+  {id:19,b:"500-520 Royal Pky – Ste 105 (Royal Parkway II)",a:"500 Royal Pky, Ste 105",c:"Nashville, TN 37214",sf:5286,sfd:"5,286",ch:"14'",ld:"Roll-up doors (12'x12')",z:"n/a",r:17.25,rd:"$17.25",ox:4.5,oxd:"$4.50",mo:7598.63,mod:"$7,599",broker:"Frank Thomasson / Ryan Coulter",brokerage:"CBRE",n:"Spec suite, delivery Nov 2026; office + warehouse; 518 shared parking spaces at property",tags:["drive-in","spec-suite"],ph:"https://images1.loopnet.com/i2/rTc6ceBxuSRH3-g7iSN-ZX9K1suUOjjzGUaUFZwIMKc/116/500-520-Royal-Pky-Nashville-TN-Primary-Photo-1-LargeHighDefinition.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/500-520%20Royal%20Pky%20-%20Royal%20Parkway",lat:36.1704,lng:-86.6573},
+  {id:20,b:"191 River Hills Dr",a:"191 River Hills Dr",c:"Nashville, TN 37210",sf:6000,sfd:"6,000",ch:"n/a",ld:"2 large drive-ins",z:"IWD",r:16,rd:"$16.00",ox:2.45,oxd:"$2.45",mo:8000,mod:"$8,000",broker:"Charlie Taylor / Madison Wenzler",brokerage:"RealSite Commercial",n:"±1,300 SF office; small fenced outside storage area; single-phase electrical. Broker's own note: \"I frankly don't realistically think 35 parking spots is achievable\" here — worth confirming before relying on this site for truck parking.",tags:["drive-in"],ph:null,sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/191%20River%20Hills%20Dr",lat:36.161208,lng:-86.718329},
+  {id:21,b:"3670 Central Pike (Central Pike Business Center)",a:"3670 Central Pike",c:"Hermitage, TN 37076",sf:5833,sfd:"5,833",ch:"7'10\" typ.; 15'10\" at loft low point",ld:"3 drive-ins",z:"n/a",r:15.5,rd:"$15.50",ox:4.34,oxd:"$4.34",mo:7534.29166666667,mod:"$7,534",broker:"Charlie Taylor / Madison Wenzler",brokerage:"RealSite Commercial",n:"±1,700 SF office; 5,833 SF first floor + 1,145 SF loft (Suite #2). Same broker parking caution as 191 River Hills Dr — \"don't realistically think 35 parking spots is achievable\" at either site.",tags:["drive-in"],ph:"https://images1.loopnet.com/i2/N5BJd9MqZyGUBi9MxzW3VusNv8KTnOdBz9JcREWOkfM/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/3670%20Central%20Pike%20-%20Central%20Pike%20Business%20Center",lat:36.182771,lng:-86.624114},
+  {id:22,b:"254 Spence Ln",a:"254 Spence Ln",c:"Nashville, TN 37210",sf:1200,sfd:"1,200",ch:"n/a",ld:"n/a",z:"n/a",r:29.5,rd:"$29.50",ox:null,oxd:"—",mo:2950,mod:"$2,950",broker:"Michael Havens",brokerage:"Havens Commercial",n:"Flat $2,950/mo + utilities quoted (≈$29.50/SF/yr implied). Marketed as \"office and fleet parking\" — 18 parking spaces, gated site. Only about half the ~35 spaces the client needs.",tags:["industrial"],ph:null,sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/254%20Spence%20Ln",lat:36.150297,lng:-86.721865},
+  {id:23,b:"103-107 Woodruff St - Suite A",a:"103-107 Woodruff St",c:"Madison, TN 37115",sf:2477,sfd:"2,477",ch:"n/a",ld:"n/a",z:"n/a",r:20.5,rd:"$20.50",ox:1.5,oxd:"$1.50",mo:4231.54166666667,mod:"$4,232",broker:"Tyler Brock",brokerage:"Edgefield Commercial",n:"Suite A of two (see Suite B); ±9,910 SF total available if combined. Flyer with floor plan on file.",tags:["industrial"],ph:"https://images1.loopnet.com/i2/i2zYwbPlleLkCI_jX5YPZjKDKxoRNvDtfqKIHGTw71I/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/103-107%20Woodruff%20St",lat:36.259862,lng:-86.713164},
+  {id:24,b:"103-107 Woodruff St - Suite B",a:"103-107 Woodruff St",c:"Madison, TN 37115",sf:7432,sfd:"7,432",ch:"n/a",ld:"n/a",z:"n/a",r:19.5,rd:"$19.50",ox:1.5,oxd:"$1.50",mo:12077,mod:"$12,077",broker:"Tyler Brock",brokerage:"Edgefield Commercial",n:"Suite B of two (see Suite A); ±9,910 SF total available if combined. Flyer with floor plan on file.",tags:["industrial"],ph:"https://images1.loopnet.com/i2/i2zYwbPlleLkCI_jX5YPZjKDKxoRNvDtfqKIHGTw71I/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/103-107%20Woodruff%20St",lat:36.259862,lng:-86.713164},
+  {id:25,b:"1100-1120 Elm Hill Pike (2,500 SF suite)",a:"1100-1120 Elm Hill Pike",c:"Nashville, TN 37210",sf:2500,sfd:"2,500",ch:"n/a",ld:"n/a",z:"n/a",r:20,rd:"$20.00",ox:null,oxd:"—",mo:4166.66666666667,mod:"$4,167",broker:"Ben Mosley",brokerage:"JLL",n:"$20.00/SF industrial gross — OpEx included in rate (base year), no separate OpEx quoted. No floor plan available yet.",tags:["industrial"],ph:"https://images1.loopnet.com/i2/2GG36F3wdcHlE6cb_w2iTRNqqmXf_jZx_Ldz5pEOk50/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/1100-1120%20Elm%20Hill%20Pike%20-%20Elm%20Hill%20Business%20Center%20I",lat:36.143815,lng:-86.733898},
+  {id:26,b:"1100-1120 Elm Hill Pike (5,000 SF suite)",a:"1100-1120 Elm Hill Pike",c:"Nashville, TN 37210",sf:5000,sfd:"5,000",ch:"n/a",ld:"n/a",z:"n/a",r:18,rd:"$18.00",ox:null,oxd:"—",mo:7500,mod:"$7,500",broker:"Ben Mosley",brokerage:"JLL",n:"$18.00/SF industrial gross — OpEx included in rate (base year), no separate OpEx quoted. No floor plan available yet.",tags:["industrial"],ph:"https://images1.loopnet.com/i2/2GG36F3wdcHlE6cb_w2iTRNqqmXf_jZx_Ldz5pEOk50/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/1100-1120%20Elm%20Hill%20Pike%20-%20Elm%20Hill%20Business%20Center%20I",lat:36.143815,lng:-86.733898},
+  {id:27,b:"2606 Eugenia Ave",a:"2606 Eugenia Ave",c:"Nashville, TN 37211",sf:1650,sfd:"1,650",ch:"n/a",ld:"n/a",z:"n/a",r:24.5,rd:"$24.50",ox:4.8,oxd:"$4.80",mo:3368.75,mod:"$3,369",broker:"Ben Mosley",brokerage:"JLL",n:"Available end of August 2026. SF shown is the broker-tracker/CoStar estimate; broker confirmed rate/OpEx but not exact SF. No floor plan available.",tags:["industrial"],ph:"https://images1.loopnet.com/i2/W1MCX4FYdr8Oq4B8RDV1O9VG2wvKItVCNTYfdKm-Cb0/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/2606%20Eugenia%20Ave",lat:36.115122,lng:-86.754124},
+  {id:28,b:"2915-2929 Murfreesboro Pike",a:"2915-2929 Murfreesboro Pike",c:"Antioch, TN 37013",sf:5000,sfd:"5,000",ch:"24'-28'",ld:"1 dock door (additional can be added)",z:"n/a",r:16.5,rd:"$16.50",ox:4.04,oxd:"$4.04",mo:6875,mod:"$6,875",broker:"Kevin Irwin / Robert Stout / McNeill Stout / Clancy Hoban",brokerage:"Charles Hawkins Co.",n:"End-cap suite; ±1,450 SF office; building depth 100'; sprinklered; high-profile frontage on Murfreesboro Pike (35,373 AADT). Available December 2026 — not immediate.",tags:["dock-high"],ph:"https://images1.loopnet.com/i2/_dowJL5OkOE8NszWgKv-8-jNDyAwIULsj8FtVyHf5c4/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/2915-2929%20Murfreesboro%20Pike",lat:36.064809,lng:-86.628578},
+  {id:29,b:"1420 Donelson Pike - Suite B12 (Airpark Business Center)",a:"1420 Donelson Pike, Ste B12",c:"Nashville, TN 37217",sf:4361,sfd:"4,361",ch:"n/a",ld:"n/a",z:"n/a",r:14,rd:"$14.00",ox:3.55,oxd:"$3.55",mo:5087.83333333333,mod:"$5,088",broker:"Kevin Irwin / Jonathan Douillard / Tee Patterson",brokerage:"Charles Hawkins Co.",n:"64% office buildout. Flyer on file.",tags:["industrial"],ph:"https://images1.loopnet.com/i2/M5pExJsx9pZSJ5fvRqmmkvfpTCw8wzX9EDpKQ5isPFU/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/1420%20Donelson%20Pike%20-%20Airpark%20Business%20Center",lat:36.097212,lng:-86.677536},
+  {id:31,b:"719 Gallatin Pike N",a:"719 Gallatin Pike N",c:"Madison, TN 37115",sf:2393,sfd:"2,393",ch:"20'-25'",ld:"1 grade-level roll-up door (12'x14')",z:"n/a",r:19.75,rd:"$19.75",ox:5,oxd:"$5.00",mo:3938.47916666667,mod:"$3,938",broker:"Steve DeSoto / Mike Havens",brokerage:"Alliant Commercial / Havens Commercial",n:"New-construction flex/warehouse; ±9,572 SF building divisible into 4 units of ~2,393 SF each; 18'x10\" finished office + ADA restroom. OpEx is broker's rough estimate only (\"probably in the $5/sf range\") — confirm before relying on it.",tags:["drive-in"],ph:"https://images1.loopnet.com/i2/b7E80EfYbeBNjFur9Heagsk7pOTLhFA81YD9eacL1CY/112/image.jpg",sp:"https://netorgft13058039-my.sharepoint.com/personal/patrick_recordrep_com/Documents/Compost%20Nashville/719%20Gallatin%20Pike%20N",lat:36.271154,lng:-86.710432}
+];
+
+var TC={
+  "dock-high":{l:"Dock-High Loading",c:"tag-blue"},
+  "drive-in":{l:"Drive-In / Grade-Level",c:"tag-navy"},
+  "sale-option":{l:"Also For Sale",c:"tag-green"},
+  "sublease":{l:"Sublease",c:"tag-orange"},
+  "immediate":{l:"Immediate Availability",c:"tag-green"},
+  "spec-suite":{l:"Spec Suite",c:"tag-green"},
+  "industrial":{l:"Industrial / Flex",c:"tag-gray"}
+};
+
+function rc(r){if(r===null||r===undefined)return "tbd";return r<=22?"low":r<=28?"mid":r<=35?"high-mid":"high"}
+function rbc(r){if(r===null||r===undefined)return "rate-tbd";return r<=22?"rate-low":r<=28?"rate-mid":r<=35?"rate-high-mid":"rate-high"}
+function markerColor(r){if(r===null||r===undefined)return "#8a93a6";return r<=22?"#2d7a4f":r<=28?"#1a5fa8":r<=35?"#c05c1a":"#b0253a"}
+
+var fp=P.slice();
+var mapInitialized=false;
+var leafletMap=null;
+var mapMarkers=[];
+
+function setView(v){
+  document.getElementById("cardsGrid").classList.toggle("active",v==="cards");
+  document.getElementById("matrixView").classList.toggle("active",v==="matrix");
+  document.getElementById("mapView").classList.toggle("active",v==="map");
+  document.getElementById("tabCards").classList.toggle("active",v==="cards");
+  document.getElementById("tabMatrix").classList.toggle("active",v==="matrix");
+  document.getElementById("tabMap").classList.toggle("active",v==="map");
+  if(v==="map"){
+    if(!mapInitialized){initMap();}
+    else{updateMapMarkers();leafletMap.invalidateSize();}
+  }
+  if(v!=="map"){render();}
+}
+
+function initMap(){
+  mapInitialized=true;
+  leafletMap=L.map("map",{zoomControl:true}).setView([36.16,-86.78],11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:19
+  }).addTo(leafletMap);
+  updateMapMarkers();
+}
+
+function makeIcon(p){
+  var color=markerColor(p.r);
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">'
+    +'<path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 26 18 26S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="'+color+'" stroke="white" stroke-width="2"/>'
+    +'<text x="18" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="12" fill="white">'+p.id+'</text>'
+    +'</svg>';
+  return L.divIcon({
+    html:svg,
+    iconSize:[36,44],
+    iconAnchor:[18,44],
+    popupAnchor:[0,-44],
+    className:""
+  });
+}
+
+function makePopup(p){
+  var photoHtml=p.ph
+    ? '<img class="popup-photo" src="'+p.ph+'" alt="'+p.b+'" onerror="this.style.display=\'none\'">'
+    : '<div class="popup-photo-placeholder"></div>';
+  return '<div>'
+    +photoHtml
+    +'<div class="popup-body">'
+    +'<a class="popup-name" href="'+p.sp+'" target="_blank">'+p.b+'</a>'
+    +'<div class="popup-addr">'+p.a+', '+p.c+'</div>'
+    +'<div class="popup-stats">'
+    +'<div class="popup-stat"><div class="popup-stat-label">Rate/SF</div><div class="popup-stat-value '+rc(p.r)+'">'+p.rd+'</div></div>'
+    +'<div class="popup-stat"><div class="popup-stat-label">Sq. Ft.</div><div class="popup-stat-value">'+p.sfd+'</div></div>'
+    +'<div class="popup-stat"><div class="popup-stat-label">Monthly</div><div class="popup-stat-value">'+p.mod+'</div></div>'
+    +'</div>'
+    +'<a class="popup-sp-link" href="'+p.sp+'" target="_blank">View Files in SharePoint &rarr;</a>'
+    +'</div></div>';
+}
+
+function updateMapMarkers(){
+  if(!leafletMap)return;
+  for(var i=0;i<mapMarkers.length;i++){leafletMap.removeLayer(mapMarkers[i]);}
+  mapMarkers=[];
+  for(var j=0;j<fp.length;j++){
+    var p=fp[j];
+    var marker=L.marker([p.lat,p.lng],{icon:makeIcon(p)})
+      .bindPopup(makePopup(p),{maxWidth:260,minWidth:260})
+      .addTo(leafletMap);
+    mapMarkers.push(marker);
+  }
+  if(fp.length>0){
+    var bounds=L.latLngBounds(fp.map(function(p){return[p.lat,p.lng];}));
+    leafletMap.fitBounds(bounds,{padding:[40,40]});
+  }
+  leafletMap.invalidateSize();
+}
+
+function applyFilters(){
+  var rf=document.getElementById("filterRate").value;
+  var lf=document.getElementById("filterLoad").value;
+  var sv=document.getElementById("filterSort").value;
+  fp=P.filter(function(p){
+    if(rf==="budget"&&(p.r===null||p.r>22))return false;
+    if(rf==="mid"&&(p.r===null||p.r<23||p.r>28))return false;
+    if(rf==="upper"&&(p.r===null||p.r<29||p.r>35))return false;
+    if(rf==="premium"&&(p.r===null||p.r<36))return false;
+    if(lf==="dock-high"&&p.tags.indexOf("dock-high")<0)return false;
+    if(lf==="drive-in"&&p.tags.indexOf("drive-in")<0)return false;
+    return true;
+  });
+  if(sv==="rate-asc")fp.sort(function(a,b){if(a.r===null)return 1;if(b.r===null)return -1;return a.r-b.r});
+  else if(sv==="rate-desc")fp.sort(function(a,b){if(a.r===null)return 1;if(b.r===null)return -1;return b.r-a.r});
+  else if(sv==="sf-asc")fp.sort(function(a,b){return a.sf-b.sf});
+  else if(sv==="sf-desc")fp.sort(function(a,b){return b.sf-a.sf});
+  else if(sv==="monthly-asc")fp.sort(function(a,b){if(a.mo===null)return 1;if(b.mo===null)return -1;return a.mo-b.mo});
+  else fp.sort(function(a,b){return a.id-b.id});
+  document.getElementById("resultCount").textContent="Showing "+fp.length+" of "+P.length+" options";
+  document.getElementById("noResults").classList.toggle("visible",fp.length===0);
+  render();
+  if(mapInitialized)updateMapMarkers();
+}
+
+function imgHtml(p,cls,w,h){
+  if(p.ph)return '<img class="'+cls+'" src="'+p.ph+'" alt="'+p.b+'" loading="lazy" width="'+w+'" height="'+h+'" onerror="this.style.display=\'none\'">';
+  return '<div class="'+cls+'-placeholder">No Photo</div>';
+}
+
+function renderCards(){
+  var h="";
+  for(var i=0;i<fp.length;i++){
+    var p=fp[i];
+    var tags="";
+    for(var t=0;t<Math.min(p.tags.length,3);t++){var cfg=TC[p.tags[t]]||{l:p.tags[t],c:"tag-navy"};tags+='<span class="tag '+cfg.c+'">'+cfg.l+"</span>";}
+    h+='<div class="prop-card">';
+    h+=imgHtml(p,"card-photo",340,175);
+    h+='<div class="card-header">';
+    h+='<div class="card-num">'+p.id+"</div>";
+    h+='<div class="card-title-block"><a class="card-building" href="'+p.sp+'" target="_blank">'+p.b+'</a><div class="card-address">'+p.a+" &middot; "+p.c+"</div></div>";
+    h+='<div class="rate-badge"><div class="rate-value table-rate '+rc(p.r)+'">'+p.rd+'</div><div class="rate-label">'+(p.r===null?"":"per SF/yr")+'</div><div class="rate-indicator '+rbc(p.r)+'"></div></div>';
+    h+="</div>";
+    h+='<div class="card-body"><div class="card-metrics">';
+    h+='<div class="metric"><div class="metric-label">SF Available</div><div class="metric-value">'+p.sfd+"</div></div>";
+    h+='<div class="metric"><div class="metric-label">Clear Height</div><div class="metric-value">'+p.ch+"</div></div>";
+    h+='<div class="metric"><div class="metric-label">Op Ex /SF</div><div class="metric-value">'+p.oxd+"</div></div>";
+    h+="</div>";
+    h+='<div class="card-specline"><strong>Loading:</strong> '+p.ld+' &nbsp;&middot;&nbsp; <strong>Zoning:</strong> '+p.z+'</div>';
+    h+='<div class="card-tags">'+tags+"</div>";
+    h+='<div class="card-notes">'+p.n+"</div></div>";
+    h+='<div class="card-footer"><div><div class="monthly-label">Est. Monthly</div><div class="monthly-value">'+p.mod+'</div></div><div class="broker-line"><div class="broker-name">'+p.broker+'</div><div>'+p.brokerage+'</div></div></div>';
+    h+="</div>";
+  }
+  document.getElementById("cardsGrid").innerHTML=h;
+}
+
+function renderMatrix(){
+  var h="";
+  for(var i=0;i<fp.length;i++){
+    var p=fp[i];
+    h+="<tr><td><span class='table-num'>"+p.id+"</span></td>";
+    h+="<td style='padding:8px 10px'>"+imgHtml(p,"table-thumb",100,68)+"</td>";
+    h+="<td><a class='table-building' href='"+p.sp+"' target='_blank'>"+p.b+"</a><div class='table-address'>"+p.a+"</div><div class='table-address'>"+p.c+"</div></td>";
+    h+="<td style='font-weight:700;color:var(--navy);white-space:nowrap'>"+p.sfd+" SF</td>";
+    h+="<td style='white-space:nowrap;font-size:12px'>"+p.ch+"</td>";
+    h+="<td style='font-size:12px;max-width:170px'>"+p.ld+"</td>";
+    h+="<td><span class='table-rate "+rc(p.r)+"'>"+p.rd+"</span></td>";
+    h+="<td style='font-size:12px'>"+p.oxd+"</td>";
+    h+="<td><span class='table-monthly'>"+p.mod+"</span></td>";
+    h+="<td><div class='table-broker'>"+p.broker+"</div><div class='table-brokerage'>"+p.brokerage+"</div></td>";
+    h+="<td class='table-notes'>"+p.n+"</td></tr>";
+  }
+  document.getElementById("matrixBody").innerHTML=h;
+}
+
+function render(){renderCards();renderMatrix();}
+render();
+</script>
+</body>
+</html>
