@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>629 Myatt Drive — Site Analysis</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  :root{
+    --ink:#12181f; --ink-2:#3d4a58; --ink-3:#6b7885;
+    --line:#dfe4ea; --line-2:#eef1f4;
+    --paper:#ffffff; --paper-2:#f6f8fa;
+    --navy:#16324f; --navy-2:#1f4b76;
+    --amber:#b26a00; --amber-bg:#fdf3e3;
+    --green:#1f6b47; --green-bg:#eaf4ee;
+    --red:#a32e2e; --red-bg:#fbecec;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--paper-2);
+       -webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+
+  /* ---------- header ---------- */
+  header{background:var(--navy);color:#fff;padding:14px 22px;display:flex;
+         align-items:baseline;gap:16px;flex-wrap:wrap}
+  header .eyebrow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+                  color:#9fc0dd;font-weight:600}
+  header h1{margin:0;font-size:19px;font-weight:650;letter-spacing:-.01em}
+  header .sub{font-size:12.5px;color:#b9d2e8;margin-left:auto}
+
+  /* ---------- layout ---------- */
+  .wrap{display:flex;height:calc(100% - 52px);align-items:stretch}
+  #panel{width:456px;min-width:380px;overflow-y:auto;background:var(--paper);
+         border-right:1px solid var(--line);padding:0 0 60px}
+  #mapwrap{flex:1;position:relative;min-width:0}
+  #map{position:absolute;inset:0;background:#e8edf1}
+
+  /* ---------- panel content ---------- */
+  section{padding:18px 22px;border-bottom:1px solid var(--line-2)}
+  h2{margin:0 0 12px;font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+     color:var(--ink-3);font-weight:700}
+  h3{margin:16px 0 6px;font-size:13.5px;font-weight:650;color:var(--ink)}
+  p{margin:0 0 10px;color:var(--ink-2)}
+  .lede{font-size:14.5px;color:var(--ink);line-height:1.55}
+
+  .kv{display:grid;grid-template-columns:128px 1fr;gap:5px 12px;font-size:13px}
+  .kv dt{color:var(--ink-3)}
+  .kv dd{margin:0;color:var(--ink);font-weight:520}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;font-weight:650;color:var(--ink-3);font-size:10.5px;
+     letter-spacing:.06em;text-transform:uppercase;padding:0 8px 6px 0;
+     border-bottom:1px solid var(--line)}
+  td{padding:7px 8px 7px 0;border-bottom:1px solid var(--line-2);color:var(--ink-2)}
+  td.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+  tr.total td{font-weight:680;color:var(--ink);border-bottom:none;
+              border-top:1.5px solid var(--line)}
+  .name{color:var(--ink);font-weight:550}
+
+  /* scorecard */
+  .score{display:flex;gap:10px;align-items:flex-start;padding:9px 0;
+         border-bottom:1px solid var(--line-2)}
+  .score:last-child{border-bottom:none}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:5px}
+  .dot.y{background:#2e8b57}.dot.m{background:#d99100}.dot.n{background:#c0392b}
+  .score .t{font-weight:600;color:var(--ink);font-size:13px}
+  .score .d{font-size:12.5px;color:var(--ink-3);margin-top:1px}
+
+  .flag{display:flex;gap:10px;padding:10px 12px;border-radius:6px;margin-bottom:8px;
+        font-size:12.8px;line-height:1.45}
+  .flag b{display:block;margin-bottom:2px}
+  .flag.warn{background:var(--amber-bg);color:#6b4200}
+  .flag.warn b{color:var(--amber)}
+  .flag.bad{background:var(--red-bg);color:#7a2222}
+  .flag.bad b{color:var(--red)}
+  .flag.good{background:var(--green-bg);color:#175034}
+  .flag.good b{color:var(--green)}
+
+  ul.tight{margin:0 0 10px;padding-left:17px;color:var(--ink-2);font-size:13px}
+  ul.tight li{margin-bottom:5px}
+
+  .gap{font-size:12.5px;color:var(--ink-2);padding-left:17px;position:relative;
+       margin-bottom:6px}
+  .gap:before{content:"○";position:absolute;left:0;color:var(--ink-3);font-size:10px;top:2px}
+
+  .pill{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10.5px;
+        font-weight:650;letter-spacing:.03em;text-transform:uppercase;
+        background:var(--paper-2);color:var(--ink-3);border:1px solid var(--line)}
+  .pill.est{background:#fff8e8;color:var(--amber);border-color:#f0dcb4}
+
+  .src{font-size:11.5px;color:var(--ink-3);line-height:1.55}
+  .src a{color:var(--navy-2);text-decoration:none;border-bottom:1px solid #c9d8e6}
+  .src a:hover{border-bottom-color:var(--navy-2)}
+
+  /* ---------- map legend ---------- */
+  .legend{background:rgba(255,255,255,.95);padding:11px 13px;border-radius:6px;
+          box-shadow:0 1px 8px rgba(20,40,60,.18);font-size:12px;line-height:1.5;
+          max-width:210px}
+  .legend .lt{font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+              color:var(--ink-3);font-weight:700;margin-bottom:7px}
+  .legend .row{display:flex;align-items:center;gap:8px;margin-bottom:4px;color:var(--ink-2)}
+  .swatch{width:12px;height:12px;border-radius:50%;flex:none;border:2px solid #fff;
+          box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+  .ringline{width:14px;height:0;border-top:2px dashed #7a8a99;flex:none}
+
+  .leaflet-popup-content{margin:11px 13px;font-family:var(--font);font-size:12.5px;
+                         line-height:1.5;color:var(--ink-2)}
+  .leaflet-popup-content b{color:var(--ink);font-size:13.5px;display:block;margin-bottom:3px}
+  .leaflet-popup-content .meta{color:var(--ink-3);font-size:11.5px;margin-top:5px}
+  .leaflet-container{font-family:var(--font)}
+
+  .mapnote{position:absolute;left:12px;bottom:22px;z-index:500;background:rgba(255,255,255,.94);
+           border-radius:5px;padding:7px 10px;font-size:11px;color:var(--ink-3);
+           max-width:250px;box-shadow:0 1px 6px rgba(20,40,60,.15)}
+
+  @media (max-width:900px){
+    .wrap{flex-direction:column;height:auto}
+    #panel{width:100%;min-width:0;border-right:none;border-bottom:1px solid var(--line)}
+    #mapwrap{height:70vh;min-height:420px}
+    #map{position:relative;height:100%}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="eyebrow">Record Real Estate Partners &nbsp;·&nbsp; Slumberland Furniture &nbsp;·&nbsp; Metro Nashville</div>
+    <h1>629 Myatt Drive, Madison (Nashville), TN 37115</h1>
+  </div>
+  <div class="sub">Site analysis — August 2026</div>
+</header>
+
+<div class="wrap">
+
+<div id="panel">
+
+  <section>
+    <h2>The read</h2>
+    <p class="lede">A 20,460 SF commercial box on 2.1 acres sitting <b>0.5 miles east of Gallatin Pike</b>, inside the Myatt Drive industrial/flex corridor. The trade area is the real story here — a blended household income of roughly <b>$81,300</b> across five ZIPs pulled from Hendersonville, Old Hickory and Goodlettsville. The site itself is the problem: no arterial frontage, FEMA flood zone AE, and the building sits at the very bottom of Slumberland's 20,000–45,000 SF prototype.</p>
+  </section>
+
+  <section>
+    <h2>Fit against Slumberland's prototype</h2>
+    <div class="score"><span class="dot m"></span><div><div class="t">Building size — 20,460 SF</div><div class="d">Prototype is 20,000–45,000 SF freestanding/outlet. This is the floor of the range, with no expansion room on a 2.1-acre pad.</div></div></div>
+    <div class="score"><span class="dot y"></span><div><div class="t">Trade area population</div><div class="d">~186,000 across the five-ZIP drive-time area vs. a chain median 5-mile population of ~37,800.</div></div></div>
+    <div class="score"><span class="dot y"></span><div><div class="t">Household income — ~$81,300 blended</div><div class="d">Above the chain's $74.2K median. Note the immediate ZIP (37115) is well below at $53,034.</div></div></div>
+    <div class="score"><span class="dot n"></span><div><div class="t">Road visibility</div><div class="d">Chain sites average ~6,700 AADT. Gallatin Pike carries 43,790 — but this site fronts Myatt Drive, a back-of-house service street with no published count and no retail traffic.</div></div></div>
+    <div class="score"><span class="dot m"></span><div><div class="t">Market entry</div><div class="d">Slumberland operates 118 stores across 12 Midwestern states. Tennessee is not one of them — this is a new-market entry with no distribution or brand awareness in place.</div></div></div>
+  </section>
+
+  <section>
+    <h2>Property</h2>
+    <dl class="kv">
+      <dt>Building</dt><dd>20,460 SF</dd>
+      <dt>Site</dt><dd>2.10 acres</dd>
+      <dt>Zoning</dt><dd>CS — Commercial Services</dd>
+      <dt>Assessor use</dt><dd>Strip commercial center</dd>
+      <dt>Parcel</dt><dd>034-06-0-031, Davidson County</dd>
+      <dt>Flood zone</dt><dd>FEMA AE <span class="pill est">flag</span></dd>
+      <dt>Submarket</dt><dd>North Nashville / Madison–Rivergate</dd>
+      <dt>Coordinates</dt><dd>36.29126, −86.69397</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Trade area <span class="pill est">ZIP-level</span></h2>
+    <p style="font-size:12.5px">Five ZIPs inside a roughly 10-minute drive. Ring demographics from CoStar/Esri would sharpen this, but the ZIP view already shows the pattern: a soft immediate ring wrapped in much stronger owner-occupied suburbs.</p>
+    <table>
+      <thead><tr><th>ZIP / Area</th><th style="text-align:right">Pop.</th><th style="text-align:right">Median HHI</th><th style="text-align:right">Own</th></tr></thead>
+      <tbody>
+        <tr><td><span class="name">37115</span><br>Madison</td><td class="n">39,821</td><td class="n">$53,034</td><td class="n">41%</td></tr>
+        <tr><td><span class="name">37072</span><br>Goodlettsville</td><td class="n">33,065</td><td class="n">$75,514</td><td class="n">62%</td></tr>
+        <tr><td><span class="name">37138</span><br>Old Hickory</td><td class="n">23,631</td><td class="n">$87,450</td><td class="n">72%</td></tr>
+        <tr><td><span class="name">37216</span><br>Inglewood / E. Nashville</td><td class="n">18,191</td><td class="n">$82,134</td><td class="n">61%</td></tr>
+        <tr><td><span class="name">37075</span><br>Hendersonville</td><td class="n">71,023</td><td class="n">$97,597</td><td class="n">67%</td></tr>
+        <tr class="total"><td>Blended</td><td class="n">185,731</td><td class="n">$81,306</td><td class="n">60.6%</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:11.5px;color:var(--ink-3);margin-top:9px">Blended figures are population-weighted averages of ZIP medians, not true household-weighted medians. Median home value across the same area works out to roughly $357,000.</p>
+  </section>
+
+  <section>
+    <h2>Competition</h2>
+    <p style="font-size:12.5px">Nashville's north-side furniture cluster sits on Gallatin Pike within about a mile. That cuts both ways: it is a proven furniture destination node, and it is already served by three nationals.</p>
+    <table>
+      <thead><tr><th>Retailer</th><th>Address</th><th style="text-align:right">Dist.</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Ashley HomeStore</td><td>2160 Gallatin Pike N</td><td class="n">0.8 mi</td></tr>
+        <tr><td class="name">Havertys</td><td>2208 Gallatin Pike N</td><td class="n">1.0 mi</td></tr>
+        <tr><td class="name">Rooms To Go</td><td>2253 Gallatin Pike N</td><td class="n">1.1 mi</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:11.5px;color:var(--ink-3);margin-top:9px">Straight-line distances from the subject. Mattress specialty and secondary players not yet inventoried.</p>
+  </section>
+
+  <section>
+    <h2>Co-tenancy &amp; anchors</h2>
+    <h3>MarketPlace at Rivergate</h3>
+    <p style="font-size:12.5px">111,460 SF on 30.54 acres, 514 spaces. Harbor Freight, Aaron's, Rainbow, Twin Peaks; IHOP, Cook Out, LongHorn, Starbucks, Five Guys, Zaxby's nearby. <b>Gallatin Pike N here carries 43,790 vehicles per day</b>, two-way.</p>
+    <h3>Shoppes at RiverGate</h3>
+    <p style="font-size:12.5px">172,000 SF. Sprouts Farmers Market (25,715 SF) opened December 2024.</p>
+    <h3>Target Rivergate</h3>
+    <p style="font-size:12.5px">2050 Gallatin Rd N — 0.8 miles from the subject.</p>
+  </section>
+
+  <section>
+    <h2>What's changing</h2>
+    <div class="flag good">
+      <div><b>RiverGate Mall redevelopment — ~$450M, 57 acres</b>
+      Merus is converting the closed mall into a mixed-use district: roughly 700 apartments, 100 townhomes and 80 senior units, plus 130,000+ SF of retail and dining, office and medical, and entertainment. Demolition starts spring 2026 with phased delivery into the early 2030s. Backed by TIF from Metro Nashville and Goodlettsville, plus a land donation for WeGo rapid bus transit.</div>
+    </div>
+    <ul class="tight">
+      <li><b>In-N-Out Burger</b> planned near RiverGate; <b>Thorntons</b> under construction.</li>
+      <li><b>The Chadwick</b> — 180 gated single-family homes and townhomes at 251 Newsbitt Lane.</li>
+      <li>Metro is running <b>complete-streets and BRT planning</b> along the Gallatin Pike corridor.</li>
+    </ul>
+    <p style="font-size:12.5px">Near term, the mall's closure removes traffic from the node before the new density arrives. A lease signed today buys into the trough.</p>
+  </section>
+
+  <section>
+    <h2>Access</h2>
+    <dl class="kv">
+      <dt>Frontage</dt><dd>Myatt Drive (service street)</dd>
+      <dt>To Gallatin Pike</dt><dd>~0.5 mi west</dd>
+      <dt>To Old Hickory Blvd</dt><dd>~1.5 mi south</dd>
+      <dt>Downtown Nashville</dt><dd>8–10 mi · 15–20 min<br><span style="color:var(--ink-3);font-size:12px">35–45 min at rush</span></dd>
+      <dt>BNA airport</dt><dd>15–20 min via Briley Pkwy</dd>
+    </dl>
+    <p style="font-size:12.5px;margin-top:11px">Myatt Drive is a warehouse and flex corridor — Myatt Business Center, distribution users, a Valvoline at 723 Myatt. It carries no retail shopper traffic and the subject has no visibility from any arterial.</p>
+  </section>
+
+  <section>
+    <h2>Flags</h2>
+    <div class="flag bad"><div><b>FEMA flood zone AE</b>The parcel is in a mapped 100-year floodplain. Expect flood insurance cost, lender scrutiny, and questions about inventory risk — Madison took significant damage in the 2010 Nashville flood.</div></div>
+    <div class="flag bad"><div><b>No arterial frontage</b>A furniture showroom on a back-of-house industrial street depends entirely on destination traffic and ad spend. This is the single biggest departure from the chain's freestanding, high-visibility format.</div></div>
+    <div class="flag warn"><div><b>Immediate ZIP is the weakest in the trade area</b>37115 runs 41% owner-occupied and 52% renter at $53,034 median income. Furniture purchase behavior tracks homeownership; the buying power here is in the outer ZIPs, not the walk-up ring.</div></div>
+    <div class="flag warn"><div><b>Size at the floor of the prototype</b>20,460 SF with a 2.1-acre pad leaves no room to grow into the 30–45K SF format the chain uses in stronger markets.</div></div>
+    <div class="flag warn"><div><b>Three nationals within 1.5 miles</b>Ashley, Havertys and Rooms To Go already hold the Gallatin Pike furniture node.</div></div>
+  </section>
+
+  <section>
+    <h2>Pull from CoStar before we present</h2>
+    <div class="gap">AADT on Myatt Drive and E. Old Hickory Blvd</div>
+    <div class="gap">Asking rent, NNN, lease status and availability date</div>
+    <div class="gap">Year built, clear height, loading configuration, parking count</div>
+    <div class="gap">Current tenancy and vacancy at the property</div>
+    <div class="gap">1 / 3 / 5-mile ring demographics (Esri) to replace the ZIP proxy</div>
+    <div class="gap">True drive-time polygons to replace the radius rings on the map</div>
+    <div class="gap">Base flood elevation and whether the building pad sits above it</div>
+  </section>
+
+  <section>
+    <h2>Sources</h2>
+    <p class="src">
+      <a href="https://www.loopnet.com/property/629-myatt-dr-madison-tn-37115/47037-03406003100/" target="_blank" rel="noopener">LoopNet — 629 Myatt Dr property record</a> ·
+      <a href="https://crehq.com/companies/slumberland-furniture/" target="_blank" rel="noopener">CREHQ — Slumberland site criteria</a> ·
+      <a href="https://www.unitedstateszipcodes.org/37115/" target="_blank" rel="noopener">ZIP demographics 37115</a>,
+      <a href="https://www.unitedstateszipcodes.org/37072/" target="_blank" rel="noopener">37072</a>,
+      <a href="https://www.unitedstateszipcodes.org/37138/" target="_blank" rel="noopener">37138</a>,
+      <a href="https://www.unitedstateszipcodes.org/37216/" target="_blank" rel="noopener">37216</a>,
+      <a href="https://www.unitedstateszipcodes.org/37075/" target="_blank" rel="noopener">37075</a> ·
+      <a href="https://www.loopnet.com/Listing/2103-2151-Gallatin-Pike-N-Madison-TN/26639239/" target="_blank" rel="noopener">LoopNet — MarketPlace at Rivergate (traffic count, tenants)</a> ·
+      <a href="https://www.merus1894.com/news/merus-advances-rivergate-redevelopment-450-million-investment" target="_blank" rel="noopener">Merus — RiverGate redevelopment</a> ·
+      <a href="https://legacysouth.com/blog/madison-is-booming-heres-whats-coming-to-this-growing-neighborhood/" target="_blank" rel="noopener">Legacy South — Madison development pipeline</a> ·
+      <a href="https://www.oakstreetrealestategroup.com/blog/madison-nashville/" target="_blank" rel="noopener">Oak Street — Madison 2026 guide (drive times, housing)</a> ·
+      <a href="https://geocoding.geo.census.gov/" target="_blank" rel="noopener">U.S. Census geocoder (coordinates)</a>
+    </p>
+  </section>
+
+</div><!-- /panel -->
+
+<div id="mapwrap">
+  <div id="map"></div>
+  <div class="mapnote">Rings are straight-line radii, not drive times. Marker positions are geocoded to address centroids and are approximate.</div>
+</div>
+
+</div><!-- /wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function(){
+  var SITE = [36.291259, -86.693967];
+
+  var map = L.map('map', {scrollWheelZoom:true, zoomControl:true}).setView([36.2975, -86.6955], 14);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution:'&copy; OpenStreetMap contributors &copy; CARTO',
+    subdomains:'abcd', maxZoom:19
+  }).addTo(map);
+
+  // ---- radius rings ----
+  var rings = L.layerGroup().addTo(map);
+  [[1609,'1 mile'],[4828,'3 miles'],[8047,'5 miles']].forEach(function(r){
+    L.circle(SITE, {radius:r[0], color:'#7a8a99', weight:1.5, dashArray:'5,5',
+                    fill:false, interactive:false}).addTo(rings);
+  });
+
+  function mk(color, size){
+    return L.divIcon({
+      className:'',
+      html:'<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+
+           ';border:2.5px solid #fff;box-shadow:0 1px 5px rgba(10,30,50,.45)"></div>',
+      iconSize:[size,size], iconAnchor:[size/2,size/2], popupAnchor:[0,-size/2-2]
+    });
+  }
+  function pop(title, body, meta){
+    return '<b>'+title+'</b>'+body+(meta?'<div class="meta">'+meta+'</div>':'');
+  }
+
+  // ---- subject site ----
+  var site = L.layerGroup().addTo(map);
+  L.marker(SITE, {icon: L.divIcon({
+      className:'',
+      html:'<div style="width:22px;height:22px;border-radius:50%;background:#16324f;'+
+           'border:3px solid #fff;box-shadow:0 2px 10px rgba(10,30,50,.55);'+
+           'display:flex;align-items:center;justify-content:center">'+
+           '<div style="width:6px;height:6px;border-radius:50%;background:#fff"></div></div>',
+      iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-13]})})
+   .bindPopup(pop('629 Myatt Drive',
+      '20,460 SF on 2.10 acres · Zoned CS<br>Flood zone AE · Parcel 034-06-0-031',
+      'Subject site — 0.5 mi east of Gallatin Pike'))
+   .addTo(site);
+
+  // ---- competitors ----
+  var comp = L.layerGroup().addTo(map);
+  [
+    ['Ashley HomeStore','2160 Gallatin Pike N','0.8 mi from site',36.302834,-86.691844],
+    ['Havertys','2208 Gallatin Pike N','1.0 mi from site',36.304700,-86.688940],
+    ['Rooms To Go','2253 Gallatin Pike N','1.1 mi from site',36.306455,-86.686251]
+  ].forEach(function(c){
+    L.marker([c[3],c[4]],{icon:mk('#c0392b',14)})
+     .bindPopup(pop(c[0], c[1], 'Direct competitor · '+c[2])).addTo(comp);
+  });
+
+  // ---- anchors / co-tenancy ----
+  var anchors = L.layerGroup().addTo(map);
+  [
+    ['Target Rivergate','2050 Gallatin Rd N','Anchor · 0.8 mi from site',36.302000,-86.692400],
+    ['MarketPlace at Rivergate','2103–2151 Gallatin Pike N','111,460 SF · 30.54 AC · Harbor Freight, Aaron\'s, Rainbow, Twin Peaks<br>Gallatin Pike N: 43,790 VPD',36.303900,-86.690200],
+    ['Shoppes at RiverGate','Gallatin Pike N','172,000 SF · Sprouts Farmers Market (25,715 SF, Dec 2024)',36.300600,-86.693600]
+  ].forEach(function(a){
+    L.marker([a[3],a[4]],{icon:mk('#1f6b47',13)})
+     .bindPopup(pop(a[0], a[1], a[2])).addTo(anchors);
+  });
+
+  // ---- catalyst ----
+  var catalyst = L.layerGroup().addTo(map);
+  L.marker([36.302761,-86.691952],{icon:mk('#b26a00',16)})
+   .bindPopup(pop('RiverGate Mall redevelopment',
+     '57 acres · ~$450M (Merus)<br>~700 apartments, 100 townhomes, 80 senior units<br>130,000+ SF retail &amp; dining, office/medical, entertainment',
+     'Demolition spring 2026 · phased through early 2030s · TIF + WeGo BRT'))
+   .addTo(catalyst);
+
+  // ---- Gallatin Pike reference points ----
+  var pike = L.layerGroup();
+  [
+    ['Gallatin Pike @ Old Hickory Blvd','Madison retail core · ~1.5 mi south of site',36.273500,-86.709967],
+    ['Gallatin Pike @ Myatt Dr','Nearest pike frontage · ~0.5 mi west of site',36.293130,-86.702356]
+  ].forEach(function(p){
+    L.marker([p[2],p[3]],{icon:mk('#6b7885',11)}).bindPopup(pop(p[0],p[1],'')).addTo(pike);
+  });
+  pike.addTo(map);
+
+  L.control.layers(null, {
+    'Subject site': site,
+    'Furniture competitors': comp,
+    'Retail anchors': anchors,
+    'RiverGate redevelopment': catalyst,
+    'Corridor reference': pike,
+    'Radius rings (1/3/5 mi)': rings
+  }, {collapsed:false, position:'topright'}).addTo(map);
+
+  var legend = L.control({position:'bottomright'});
+  legend.onAdd = function(){
+    var d = L.DomUtil.create('div','legend');
+    d.innerHTML =
+      '<div class="lt">Legend</div>'+
+      '<div class="row"><span class="swatch" style="background:#16324f"></span>Subject site</div>'+
+      '<div class="row"><span class="swatch" style="background:#c0392b"></span>Furniture competitor</div>'+
+      '<div class="row"><span class="swatch" style="background:#1f6b47"></span>Retail anchor</div>'+
+      '<div class="row"><span class="swatch" style="background:#b26a00"></span>RiverGate redevelopment</div>'+
+      '<div class="row"><span class="swatch" style="background:#6b7885"></span>Corridor reference</div>'+
+      '<div class="row"><span class="ringline"></span>1 / 3 / 5-mile radius</div>';
+    return d;
+  };
+  legend.addTo(map);
+
+  map.fitBounds(L.latLngBounds([[36.2700,-86.7130],[36.3090,-86.6820]]), {padding:[40,40]});
+})();
+</script>
+</body>
+</html>
