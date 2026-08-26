@@ -1,0 +1,394 @@
+<title>Slumberland Furniture — Available Properties (Nashville Market)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<style>
+  :root{
+    --navy:#132743; --navy2:#1c3559; --ink:#1b2430; --paper:#f6f7f9; --line:#dde2e8;
+    --muted:#5b6472; --accent:#c9852f; --good:#1f7a4d; --warn:#b3781a; --bad:#b23b3b;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--paper);}
+  #app{display:flex;height:100vh;width:100vw;overflow:hidden;}
+
+  /* ---------- Sidebar ---------- */
+  #sidebar{width:480px;min-width:480px;background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100%;}
+  #brand{background:var(--navy);color:#fff;padding:16px 20px 14px;}
+  #brand h1{font-size:15px;letter-spacing:.02em;margin:0 0 2px;font-weight:700;}
+  #brand p{margin:0;font-size:12px;color:#b9c6da;}
+
+  #tabs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);background:#eef1f5;}
+  .tab{font-size:11.5px;padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;line-height:1.2;}
+  .tab:hover{border-color:var(--accent);color:var(--ink);}
+  .tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+  #content{flex:1;overflow-y:auto;padding:0;}
+  .panel{padding:18px 20px 40px;}
+
+  /* headers */
+  .site-head h2{font-size:20px;margin:0 0 2px;}
+  .site-head .addr2{color:var(--muted);font-size:13px;margin:0 0 4px;}
+  .site-head .submkt{display:inline-block;font-size:11px;background:#eef1f5;color:var(--navy2);padding:2px 8px;border-radius:20px;margin-bottom:10px;}
+  .coordnote{font-size:11px;color:var(--muted);font-style:italic;margin:2px 0 14px;}
+  .coordnote.warn{color:var(--warn);font-weight:600;font-style:normal;}
+  .recon-note{font-size:11.5px;background:#fdf3e3;border:1px solid #f0dcb0;color:#7a5510;padding:8px 10px;border-radius:6px;margin-bottom:14px;}
+
+  .read{font-size:13.5px;line-height:1.55;background:#f0f4fa;border-left:3px solid var(--navy2);padding:10px 12px;border-radius:0 6px 6px 0;margin-bottom:18px;}
+
+  h3.section{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--navy2);border-bottom:1px solid var(--line);padding-bottom:5px;margin:22px 0 10px;}
+  h3.section:first-of-type{margin-top:4px;}
+
+  table.kv{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px;}
+  table.kv td{padding:4px 6px;vertical-align:top;border-bottom:1px solid #f0f1f3;}
+  table.kv td.k{color:var(--muted);width:40%;}
+  table.kv td.v{font-weight:500;}
+
+  table.fit{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;}
+  table.fit th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);padding:4px 6px;border-bottom:1px solid var(--line);}
+  table.fit td{padding:6px 6px;border-bottom:1px solid #f0f1f3;vertical-align:top;}
+  .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+  .badge.pass{background:#e5f3ea;color:var(--good);}
+  .badge.marginal{background:#fdf1de;color:var(--warn);}
+  .badge.gap{background:#eceff3;color:var(--muted);}
+  .badge.fail{background:#fbe9e9;color:var(--bad);}
+  .badge.mismatch{background:#fbe9e9;color:var(--bad);}
+  .badge.unresolved{background:#fbe9e9;color:var(--bad);}
+  .badge.other{background:#eceff3;color:var(--muted);}
+
+  table.zips{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:8px;}
+  table.zips th{text-align:left;font-size:10px;text-transform:uppercase;color:var(--muted);padding:4px 5px;border-bottom:1px solid var(--line);}
+  table.zips td{padding:4px 5px;border-bottom:1px solid #f0f1f3;}
+  table.zips tr.blend td{font-weight:700;background:#f0f4fa;}
+  .tanote{font-size:11.5px;color:var(--muted);margin:4px 0 14px;line-height:1.4;}
+
+  ul.plain{margin:4px 0 14px;padding-left:18px;font-size:12.5px;line-height:1.55;}
+  ul.plain li{margin-bottom:5px;}
+  ul.flags li{color:#7a2c2c;}
+  ul.gaps li{color:var(--muted);}
+
+  .comp-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f0f1f3;}
+  .comp-row .nm{font-weight:600;}
+  .comp-row .ad{color:var(--muted);font-size:11.5px;}
+  .comp-row .dist{white-space:nowrap;font-weight:700;color:var(--navy2);}
+
+  .sources{font-size:11px;color:var(--muted);line-height:1.7;}
+  .sources a{color:var(--navy2);}
+
+  /* Compare table */
+  table.compare{width:100%;border-collapse:collapse;font-size:11.5px;}
+  table.compare th{background:var(--navy);color:#fff;text-align:left;padding:7px 8px;position:sticky;top:0;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;}
+  table.compare td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.compare tr:nth-child(even) td{background:#f8f9fb;}
+  table.compare tr.clickable{cursor:pointer;}
+  table.compare tr.clickable:hover td{background:#eaf0f8;}
+  .cmp-wrap{overflow-x:auto;}
+  .legend{font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.6;}
+  .legend .badge{margin-right:4px;}
+
+  /* ---------- Map side ---------- */
+  #mapside{flex:1;position:relative;height:100%;}
+  #map{position:absolute;inset:0;}
+  #maplegend{position:absolute;bottom:14px;left:14px;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:11.5px;z-index:500;max-width:230px;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+  #maplegend div{margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+  #maplegend .dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;}
+  #layertoggles{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:11.5px;z-index:500;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+  #layertoggles label{display:block;margin-bottom:4px;cursor:pointer;}
+  .maptitle{position:absolute;top:14px;left:14px;background:rgba(19,39,67,.92);color:#fff;padding:8px 12px;border-radius:8px;font-size:12.5px;z-index:500;max-width:340px;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+  .maptitle b{display:block;font-size:13.5px;margin-bottom:2px;}
+  .netnote{position:absolute;bottom:14px;right:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);color:var(--muted);font-size:10.5px;padding:6px 9px;border-radius:6px;z-index:500;max-width:260px;}
+
+  @media (max-width: 900px){
+    #sidebar{width:100%;min-width:0;position:absolute;z-index:900;height:100%;}
+    #mapside{display:none;}
+  }
+</style>
+
+<div id="app">
+  <div id="sidebar">
+    <div id="brand">
+      <h1>SLUMBERLAND FURNITURE — AVAILABLE PROPERTIES</h1>
+      <p>Metro Nashville site-selection dossier — prepared for Record Real Estate Partners</p>
+    </div>
+    <div id="tabs"></div>
+    <div id="content"></div>
+  </div>
+  <div id="mapside">
+    <div id="map"></div>
+    <div class="maptitle" id="maptitle"></div>
+    <div id="layertoggles"></div>
+    <div id="maplegend"></div>
+    <div class="netnote">Map tiles require an internet connection to load. Dossier data works offline.</div>
+  </div>
+</div>
+
+<script>
+const DATA = {"benchmark": {"sf_range": [20000, 45000], "pop_median": 37846, "hhi_median": 74200, "aadt_median": 6705, "note": "CREHQ-published medians aggregated from Slumberland's 118 existing stores (12 Midwestern states). No Tennessee stores exist today -- every option here is a new-market entry."}, "sites": [{"id": "myatt", "short": "629 Myatt Dr", "address": "629 Myatt Drive", "cityState": "Madison, TN 37115", "submarket": "Nashville / North Nashville", "coords": [36.291259, -86.693967], "coordNote": "Geocoded (U.S. Census geocoder). Good to roughly a block.", "reconstructedNote": "This card is rebuilt from the project's research playbook (claude/research-playbook.md) -- the original working file from this site's first pass was not reachable from this session. Figures match the playbook's recorded findings from Aug 24, 2026.", "read": "The smallest-margin fit of the group on building size (20,460 SF barely clears the 20,000 SF floor of Slumberland's prototype), sitting a half-mile off the Gallatin Pike N furniture row rather than directly on it. Its defining issue is the FEMA AE flood zone -- confirm base flood elevation against the building pad before underwriting.", "property": {"building_sf": "20,460 SF", "lot": "2.10 AC", "zoning": "CS", "landUse": "Strip commercial center", "parcel": "034-06-0-031", "county": "Davidson", "flood": "AE -- 1%-annual-chance floodplain (Special Flood Hazard Area)", "yearBuilt": "Not disclosed in source consulted", "tenancy": "Not disclosed in source consulted", "askingRent": "Not disclosed in source consulted"}, "fitRows": [{"metric": "Building size", "benchmark": "20,000\u201345,000 SF", "site": "20,460 SF", "verdict": "marginal"}, {"metric": "Format", "benchmark": "Freestanding / outlet", "site": "Freestanding, off main spine", "verdict": "pass"}, {"metric": "Trade-area HHI (blended)", "benchmark": "$74,200 median", "site": "$81,306", "verdict": "pass"}, {"metric": "Frontage AADT", "benchmark": "6,705 median", "site": "Not confirmed at Myatt Dr itself; Gallatin Pike N node 0.8 mi away carries 43,790 vpd", "verdict": "gap"}], "tradeArea": {"zips": [{"zip": "37115", "area": "Madison", "pop": 39821, "hhi": 53034, "owner": 41, "home": 271100, "age": 37}, {"zip": "37072", "area": "Goodlettsville", "pop": 33065, "hhi": 75514, "owner": 62, "home": 340900, "age": 40}, {"zip": "37138", "area": "Old Hickory", "pop": 23631, "hhi": 87450, "owner": 72, "home": 347500, "age": 43}, {"zip": "37216", "area": "Inglewood / E. Nashville", "pop": 18191, "hhi": 82134, "owner": 61, "home": 404100, "age": 35}, {"zip": "37075", "area": "Hendersonville", "pop": 71023, "hhi": 97597, "owner": 67, "home": 403400, "age": 39}], "blended": {"pop": 185731, "hhi": 81306, "owner": 60.6, "home": 356900, "age": null}, "note": "Population-weighted blend of 5 ZIPs within roughly a 10-minute drive of the Madison\u2013Rivergate node. \u201cBlended,\u201d not a true household-weighted median."}, "competition": [{"name": "Ashley HomeStore", "addr": "2160 Gallatin Pike N", "distance": "0.81 mi", "coords": [36.302834, -86.691844]}, {"name": "Target \u2013 Rivergate", "addr": "2050 Gallatin Rd N", "distance": "0.75 mi", "coords": [36.302, -86.6924]}, {"name": "RiverGate Mall", "addr": "2088 Gallatin Pike N", "distance": "0.80 mi", "coords": [36.302761, -86.691952]}, {"name": "Havertys", "addr": "2208 Gallatin Pike N", "distance": "0.97 mi", "coords": [36.3047, -86.68894]}, {"name": "Rooms To Go", "addr": "2253 Gallatin Pike N", "distance": "1.13 mi", "coords": [36.306455, -86.686251]}], "coTenancy": "MarketPlace at Rivergate (2103\u20132151 Gallatin Pike N): 111,460 SF GLA, 30.54 AC, 514 spaces. Anchors: Harbor Freight, Aaron's, Rainbow, Twin Peaks. Nearby: IHOP, Cook Out, LongHorn, Starbucks, Sprouts, Five Guys, Zaxby's, Fifth Third, Wells Fargo.", "whatsChanging": ["RiverGate redevelopment (Merus, developer's own release): 57 acres, ~$450M, ~700 apartments + 100 townhomes + 80 senior units, 130,000+ SF retail/dining. Demolition spring 2026, phased into the early 2030s. TIF from Metro Nashville and Goodlettsville; land donation for WeGo BRT.", "Wider pipeline per a local brokerage blog (lower-confidence, different plan vintage: ~458 units / 71,400 SF vs. the developer's ~880 units / 130,000+ SF): The Chadwick, In-N-Out, Thorntons, Shoppes at RiverGate / Sprouts."], "access": "Myatt Drive sits off the Gallatin Pike N retail spine -- a short drive, not a direct storefront view, from the RiverGate cluster. Straight-line distances above understate real drive time.", "flags": ["FEMA AE flood zone is the headline issue here -- confirm base flood elevation vs. the building pad before underwriting; this can affect insurability and financing.", "At 20,460 SF this is the thinnest size margin against the 20,000\u201345,000 SF prototype among the freestanding options in this set.", "Off the main retail spine -- confirm actual signalized access and visibility from Gallatin Pike N."], "costarGaps": ["AADT on Myatt Drive itself (not just the Gallatin Pike N node)", "Asking rent, NNN, lease status, availability date", "Year built, clear height, loading, parking count", "Current tenancy and vacancy", "1 / 3 / 5-mile ring demographics (Esri) to replace the ZIP proxy", "True drive-time polygons to replace the radius rings", "Base flood elevation vs. building pad"], "sources": [{"t": "LoopNet property record", "u": "https://www.loopnet.com/"}, {"t": "U.S. Census geocoder", "u": "https://geocoding.geo.census.gov/"}, {"t": "CREHQ \u2013 Slumberland Furniture", "u": "https://crehq.com/companies/slumberland-furniture/"}, {"t": "unitedstateszipcodes.org (5 ZIPs)", "u": "https://www.unitedstateszipcodes.org/"}, {"t": "MarketPlace at Rivergate \u2013 LoopNet listing", "u": "https://www.loopnet.com/"}, {"t": "Merus \u2013 RiverGate redevelopment release", "u": "https://merus1894.com/news/"}, {"t": "Legacy South \u2013 brokerage pipeline blog", "u": "https://legacysouth.com/"}]}, {"id": "countryvillage", "short": "Country Village Dr", "address": "210\u2013250 Country Village Drive", "cityState": "Smyrna, TN 37167", "submarket": "Nashville / Rutherford County (I-24 corridor)", "coords": [35.957561642011, -86.52305019967], "coordNote": "Geocoded (U.S. Census geocoder) to the matched address \u201c210 Country Village Dr.\u201d", "read": "A right-sized inline box (28,368 SF available inside a 35,568 SF center) in the least furniture-saturated market of the six -- nearest full-line national competitor is nearly 10 miles away. The catches: it's a former supermarket box marketed for sale and lease simultaneously, and the standout traffic count belongs to a highway junction two miles away, not the storefront itself.", "property": {"building_sf": "35,568 SF total (Country Village Plaza); 28,368 SF currently available", "lot": "3.80 AC", "zoning": "Not specified in source consulted", "landUse": "Supermarket (former grocery box)", "parcel": "033-038.00-000", "county": "Rutherford", "flood": "B and X -- moderate flood hazard (between the 100- and 500-year floodplains)", "yearBuilt": "Not disclosed in source consulted", "tenancy": "Also actively marketed for sale at $4,999,000, alongside the $10.00/SF/YR gross lease ask -- confirm which path the owner actually prefers", "askingRent": "$10.00/SF/YR gross (28,368 SF)"}, "fitRows": [{"metric": "Building size", "benchmark": "20,000\u201345,000 SF", "site": "28,368 SF available", "verdict": "pass"}, {"metric": "Format", "benchmark": "Freestanding / outlet", "site": "Inline box, former supermarket", "verdict": "marginal"}, {"metric": "Trade-area HHI (blended)", "benchmark": "$74,200 median", "site": "$75,947", "verdict": "pass"}, {"metric": "Frontage AADT", "benchmark": "6,705 median", "site": "Not confirmed on Country Village Dr; Sam Ridley Pkwy/I-24/US-41 junction ~2 mi away carries a combined 163,870 vpd", "verdict": "gap"}], "tradeArea": {"zips": [{"zip": "37167", "area": "Smyrna", "pop": 61731, "hhi": 79720, "owner": 59, "home": 330600, "age": 36}, {"zip": "37086", "area": "La Vergne", "pop": 37463, "hhi": 79285, "owner": 67, "home": 268700, "age": 32}, {"zip": "37013", "area": "Antioch", "pop": 96379, "hhi": 72233, "owner": 51, "home": 294000, "age": 32}], "blended": {"pop": 195573, "hhi": 75947, "owner": 56.6, "home": 300706, "age": 33.3}, "note": "Population-weighted blend of 3 ZIPs within roughly a 10-minute drive along the I-24 Smyrna/La Vergne corridor. Youngest, most blue-collar-skewing trade area of the six -- consistent with the Nissan assembly workforce nearby."}, "competition": [{"name": "Big Lots", "addr": "299 N Lowry St, Smyrna", "distance": "2.32 mi", "coords": [35.991037155482, -86.526140907165]}, {"name": "Ashley HomeStore", "addr": "5301 Hickory Hollow Pkwy, Antioch", "distance": "9.64 mi", "coords": [36.047009936702, -86.655432502761]}, {"name": "Rooms To Go Outlet", "addr": "125 Logistics Dr, Lebanon (clearance format)", "distance": "19.07 mi", "coords": [36.174850433836, -86.312438593284]}], "coTenancy": "LoopNet marketing copy cites Food Lion and FirstBank nearby. Broader area anchor is employment, not retail: Nissan North America's Smyrna assembly plant (one of Nissan's largest plants worldwide; a 1.5M+ SF supplier-park expansion was added in 2016\u201317).", "whatsChanging": ["Town of Smyrna capital project improving Sam Ridley Pkwy / Old Nashville Hwy, the corridor this site sits just off of.", "Continued residential growth along the I-24 Smyrna/La Vergne corridor."], "access": "Frontage is on Country Village Dr, a secondary retail street off Sam Ridley Pkwy/Old Nashville Hwy, roughly 2 miles from I-24 Exit 78. Confirm visibility and ingress/egress from Sam Ridley Pkwy itself -- Country Village Dr is set back from it.", "flags": ["Listed for sale ($4,999,000) and for lease ($10/SF gross) at the same time -- confirm which the ownership actually wants before pursuing a lease deal.", "Assessor land use is \u201cSupermarket\u201d -- de-grocery buildout (refrigeration, layout) should be priced into TI costs.", "The 163,870 vpd figure is a highway-junction count roughly 2 miles away, not traffic passing the storefront -- treat it as area context, not a site-specific number.", "Lightest furniture competition of the six markets studied -- no full-line national chain within 9+ miles."], "costarGaps": ["Direct Country Village Dr AADT", "Confirmed lease vs. sale intent, and true asking rate", "Year built, clear height, loading, parking count", "Current tenancy/vacancy detail beyond the 28,368 SF cited", "1 / 3 / 5-mile ring demographics (Esri)", "True drive-time polygons"], "sources": [{"t": "LoopNet listing (Country Village Dr)", "u": "https://www.loopnet.com/Listing/210-250-Country-Village-Dr-Smyrna-TN/35488067/"}, {"t": "LoopNet property record", "u": "https://www.loopnet.com/property/210-country-village-dr-smyrna-tn-37167/47149-R0019943/"}, {"t": "U.S. Census geocoder", "u": "https://geocoding.geo.census.gov/"}, {"t": "unitedstateszipcodes.org (3 ZIPs)", "u": "https://www.unitedstateszipcodes.org/"}, {"t": "TNECD \u2013 Nissan Smyrna expansion", "u": "https://tnecd.com/news/governor-haslam-commissioner-boyd-announce-nissan-to-undergo-major-expansion-at-smyrna-facility/"}, {"t": "Furniture.com store locator (Ashley, Rooms To Go)", "u": "https://www.furniture.com/"}, {"t": "Big Lots store locator", "u": "https://local.biglots.com/tn/smyrna/299-n-lowry-st"}]}, {"id": "wmain", "short": "907 W. Main", "address": "907 W. Main Street", "cityState": "Lebanon, TN 37087", "submarket": "Nashville / Wilson County", "coords": [36.210607139239, -86.311764187366], "coordNote": "Geocoded (U.S. Census geocoder) to the matched address \u201c907 W Main St.\u201d", "read": "The best raw building fit in the set: a freestanding, recently renovated 23,165 SF box available 3Q 2026 in the wealthiest trade area of the six. It's an in-town Main Street address rather than the newer highway-node power center 2.5 miles away, and Big Lots sits almost directly across the street.", "property": {"building_sf": "23,165 SF", "lot": "Not disclosed in source consulted", "zoning": "Not disclosed in source consulted", "landUse": "Not disclosed in source consulted", "parcel": "Not disclosed in source consulted", "county": "Wilson", "flood": "Not disclosed in source consulted", "yearBuilt": "1999; over $200,000 in building improvements completed 2023\u20132024 (two 20-ton and one 12-ton HVAC units replaced; EPDM roof in good condition; skylights recently replaced)", "tenancy": "Vacant / available 3Q 2026. Fully sprinklered. 50 parking spaces.", "askingRent": "Base rent negotiable; ~$1.50/SF/YR additional rent (taxes, insurance, admin). Absolute net lease, 5\u201310 yr term + renewal options."}, "fitRows": [{"metric": "Building size", "benchmark": "20,000\u201345,000 SF", "site": "23,165 SF", "verdict": "pass"}, {"metric": "Format", "benchmark": "Freestanding / outlet", "site": "Freestanding, recently renovated", "verdict": "pass"}, {"metric": "Trade-area HHI (blended)", "benchmark": "$74,200 median", "site": "$93,924 (highest of the six)", "verdict": "pass"}, {"metric": "Frontage AADT", "benchmark": "6,705 median", "site": "Not confirmed on W Main St; I-40/Hartmann Dr node ~2.5 mi away carries 74,909 vpd", "verdict": "gap"}], "tradeArea": {"zips": [{"zip": "37087", "area": "Lebanon", "pop": 51658, "hhi": 80978, "owner": 64, "home": 359900, "age": 39}, {"zip": "37090", "area": "Lebanon (east)", "pop": 18369, "hhi": 85048, "owner": 67, "home": 392800, "age": 42}, {"zip": "37122", "area": "Mount Juliet", "pop": 64018, "hhi": 109306, "owner": 76, "home": 451800, "age": 40}, {"zip": "37138", "area": "Old Hickory", "pop": 23631, "hhi": 87450, "owner": 72, "home": 347500, "age": 43}], "blended": {"pop": 157676, "hhi": 93924, "owner": 70.4, "home": 399187, "age": 40.4}, "note": "Population-weighted blend of 4 ZIPs within roughly a 10-minute drive; Old Hickory reused from the 629 Myatt Dr trade area since it falls within range of both. Highest income and homeownership of the six trade areas studied, driven by Mount Juliet's inclusion."}, "competition": [{"name": "Big Lots", "addr": "1031 W Main St, Lebanon", "distance": "0.32 mi", "coords": [36.212025433327, -86.317272441185]}, {"name": "Rooms To Go Outlet", "addr": "125 Logistics Dr, Lebanon (clearance format)", "distance": "2.47 mi", "coords": [36.174850433836, -86.312438593284]}, {"name": "Ashley HomeStore", "addr": "56 Belinda Pkwy, Mount Juliet", "distance": "11.13 mi", "coords": [36.170377802286, -86.50504034277]}], "coTenancy": "Immediate W Main St corridor is legacy in-town Lebanon retail/mixed use. The newer power-center node is 2.5 mi away at I-40/Hartmann Dr (Lebanon Marketplace: Home Depot, Chili's, Outback Steakhouse, Daily's, Hampton Inn, Wilson County Motors, Cracker Barrel, Wilson Bank & Trust; Phase II has capacity for up to 180,000 SF more).", "whatsChanging": ["Wilson County/Lebanon is repeatedly cited among Tennessee's fastest-growing counties, with nearly 2,000 homes opening in a single nearby development as of 2025.", "Lebanon Marketplace Phase II (I-40 & S. Hartmann Dr) has capacity for up to 180,000 SF of additional retail; that project's own marketing cites a 10-mile primary trade area of 73,664 people, 14.4% population growth, and $72,249 average HHI -- a tighter, different geography than the ZIP-blended table above, included here as a cross-check rather than merged into it."], "access": "Frontage directly on W Main St (also US-70) in-town Lebanon -- good pass-by convenience on a legacy commercial corridor, likely lower peak volume than the newer I-40 power-center node 2.5 miles away where Home Depot and the other big boxes cluster.", "flags": ["Lot size, zoning, parcel/APN, and FEMA flood zone were not in the marketing flyer used -- a full CoStar pull is needed before underwriting.", "In-town Main Street corridor vs. the newer highway-node power center 2.5 mi away -- confirm whether Slumberland wants in-town visibility or highway co-tenancy.", "Big Lots sits almost directly across the street (0.32 mi) -- a mattress/furniture-adjacent competitor immediately nearby, though not a full-line chain."], "costarGaps": ["Lot size, zoning, parcel/APN", "FEMA flood zone", "Direct W Main St AADT", "Current occupant/vacancy status confirmation", "1 / 3 / 5-mile ring demographics (Esri)", "True drive-time polygons"], "sources": [{"t": "Marketing flyer \u2013 907 W. Main, Lebanon", "u": "https://images1.showcase.com/d2/bfmGh2-9Y_f8MEILSSERnFytsHB_koy8l_r0i_8JdXg/document.pdf"}, {"t": "U.S. Census geocoder", "u": "https://geocoding.geo.census.gov/"}, {"t": "unitedstateszipcodes.org (4 ZIPs)", "u": "https://www.unitedstateszipcodes.org/"}, {"t": "Lebanon Marketplace Phase II flyer", "u": "https://images2.loopnet.com/d2/m8S7yzg23ORQqXVWCuZM_nXhaZKmf3y00Quz96byRSk/document.pdf"}, {"t": "WKRN \u2013 Wilson County development", "u": "https://www.wkrn.com/news/local-news/wilson-county-development-with-nearly-2000-homes-to-open-in-2025/"}, {"t": "Big Lots / Rooms To Go / Ashley store locators", "u": "https://local.biglots.com/tn/lebanon/1031-w-main-st"}]}, {"id": "harley", "short": "Harley Davidson Blvd", "address": "1616 Harley Davidson Boulevard", "cityState": "Columbia, TN 38401", "submarket": "Maury County (I-65 corridor, exact location unresolved)", "coords": [35.7, -87.0], "coordNote": "NOT reliably geocoded. The U.S. Census geocoder returned no match under several spellings of this address. The pin shown is the ZIP 38401 centroid (city-block accuracy is not available) -- treat its position on the map as a rough placeholder only.", "read": "On paper, the best size/format match in the set (38,580 SF, freestanding) -- but this is a $11.5M acquisition of an occupied, purpose-built motorcycle dealership, not a vacant lease box, and the parcel's actual location is unresolved: the mailing address says Columbia, but the broker's own marketing copy places it near I-65 between Columbia and Spring Hill. That single question changes the trade-area conclusion materially and should be resolved before this site goes further.", "property": {"building_sf": "38,580 SF, single story (Class B, built 2008)", "lot": "5.28 AC; 340' frontage on Harley Davidson Blvd", "zoning": "C2", "landUse": "Motorcycle dealership (single-tenant, owner-user)", "parcel": "093-001.01", "county": "Maury", "flood": "Not disclosed in sources consulted", "yearBuilt": "2008", "tenancy": "Currently occupied by Harley-Davidson of Columbia, an operating dealership -- this is a FOR-SALE owner-user asset, not a vacant/available lease listing. Building includes an 18,180 SF showroom, 12,820 SF office/service area, a 2,500-capacity outdoor amphitheater, and a 7,776 SF mezzanine -- a highly specialized layout built for a powersports dealer, not a furniture showroom. 50 parking spaces.", "askingRent": "For sale at $11,500,000 ($298.08/SF). Land assessment $334,960 + improvements $1,268,280 = total assessment $1,603,240."}, "fitRows": [{"metric": "Building size", "benchmark": "20,000\u201345,000 SF", "site": "38,580 SF", "verdict": "pass"}, {"metric": "Format", "benchmark": "Freestanding / outlet", "site": "Freestanding, but occupied owner-user asset -- acquisition + relocation + gut renovation, not a lease-up", "verdict": "different deal type"}, {"metric": "Trade-area HHI (blended)", "benchmark": "$74,200 median", "site": "$68,816 (Columbia-centered scenario) or $82,258 (Columbia/Spring Hill scenario) -- see below", "verdict": "unresolved"}, {"metric": "Frontage AADT", "benchmark": "6,705 median", "site": "Not disclosed; broker copy claims I-65 frontage, unconfirmed against the mailing address", "verdict": "gap"}], "tradeArea": {"zips": [{"zip": "38401", "area": "Columbia", "pop": 63075, "hhi": 69467, "owner": 63, "home": 295200, "age": 40}, {"zip": "38474", "area": "Mount Pleasant (Scenario A: in-town Columbia)", "pop": 8045, "hhi": 63711, "owner": 66, "home": 228200, "age": 40}, {"zip": "37174", "area": "Spring Hill (Scenario B: near I-65, per broker copy)", "pop": 48849, "hhi": 98775, "owner": 69, "home": 450300, "age": 35}], "blended": {"pop": null, "hhi": null, "owner": null, "home": null, "age": null}, "scenarios": [{"label": "Scenario A -- in Columbia proper (38401 + Mount Pleasant 38474)", "pop": 71120, "hhi": 68816, "owner": 63.3, "home": 287621, "age": 40.0}, {"label": "Scenario B -- near I-65 between Columbia and Spring Hill (38401 + Spring Hill 37174), per the listing's own marketing copy", "pop": 111924, "hhi": 82258, "owner": 65.6, "home": 362893, "age": 37.8}], "note": "Location uncertainty means the trade area itself is unresolved -- the two scenarios above produce materially different underwriting conclusions (income above vs. below the CREHQ median). Resolve the confirmed parcel address before relying on either."}, "competition": [{"name": "Royal Furniture (regional/independent)", "addr": "119 Nashville Hwy, Columbia", "distance": "~5.6 mi (from ZIP-centroid placeholder -- directional only)", "coords": [35.623170255944, -87.033522680542]}, {"name": "Big Lots", "addr": "1301 S James Campbell Blvd, Columbia", "distance": "~7.7 mi (from ZIP-centroid placeholder -- directional only)", "coords": [35.600911395255, -87.063236961426]}], "coTenancy": "N/A -- single-tenant owner-user asset, not part of a shopping center.", "whatsChanging": ["Maury County is Tennessee's fastest-growing county (2.89% annual growth per the 2019\u201320 Census), driven substantially by the $2.3B GM/Ultium Cells EV battery plant in Spring Hill (1,300 jobs) plus roughly $5.5B in cumulative capital investment across 37 projects since 2014.", "County leaders cite affordability relative to Nashville, proximity to infrastructure, and lower cost of living as draws for new residents.", "If this parcel does sit nearer the Columbia/Spring Hill line (Scenario B), it is positioned inside the strongest population-growth story of the six markets studied."], "access": "Broker marketing claims \u201croad frontage along Interstate 65 allowing great visibility and access,\u201d positioned \u201cbetween Columbia and Spring Hill.\u201d This conflicts with the Columbia, TN 38401 mailing address and is unconfirmed -- verify the actual parcel location, ingress/egress, and visibility before relying on this claim.", "flags": ["This is a for-sale, owner-occupied dealership, not a vacant lease box -- a fundamentally different deal (acquisition + tenant relocation + renovation) than every other site in this set.", "The parcel's actual location is unresolved -- the Census geocoder could not place the address under several spellings, and the broker's own copy conflicts with the mailing address.", "The building's specialized layout (showroom, service bays, 2,500-capacity amphitheater) would need significant reconfiguration for furniture retail.", "FEMA flood zone not established."], "costarGaps": ["Confirmed parcel location / coordinates", "FEMA flood zone", "Direct road AADT", "Current lease/occupancy timeline if the dealership were to vacate", "1 / 3 / 5-mile ring demographics tied to the confirmed location", "True drive-time polygons"], "sources": [{"t": "LoopNet listing (Harley Davidson Blvd)", "u": "https://www.loopnet.com/Listing/1616-Harley-Davidson-Blvd-Columbia-TN/30189450/"}, {"t": "LoopNet listing (2)", "u": "https://www.loopnet.com/Listing/1616-Harley-Davidson-Blvd-Columbia-TN/21459408/"}, {"t": "Crexi property record (blocked by robots.txt -- not readable this session)", "u": "https://www.crexi.com/property-records/1616-HARLEY-DAVIDSON-COLUMBIA-TN-38401-7771/20db302c89624952c1d2e6e3abfb79020aacc9bd"}, {"t": "unitedstateszipcodes.org (38401, 38474, 37174)", "u": "https://www.unitedstateszipcodes.org/"}, {"t": "Maury Alliance -- county growth", "u": "https://mauryalliance.com/secretsout/"}, {"t": "Royal Furniture / Big Lots store locators", "u": "https://www.royalfurniture.com/locations/columbia"}]}, {"id": "oldfort", "short": "Old Fort Pkwy", "address": "1720 Old Fort Parkway", "cityState": "Murfreesboro, TN 37129", "submarket": "Rutherford County (Stones River Town Centre)", "coords": [35.847224572399, -86.421417298304], "coordNote": "Geocoded to the mall's overall address; a specific suite/pad number would refine this further.", "read": "This address is the regional mall itself, not a single freestanding building -- and none of its currently marketed inline vacancies (max 15,814 SF) come close to Slumberland's prototype. The corridor's traffic count (35,000 vpd, directly at the frontage) is the strongest of any site studied, but this market already has all three national full-line furniture chains within two miles.", "property": {"building_sf": "594,588 SF total center; ~497,591 SF owner-occupied by anchors; ~79,773 SF currently marketed across multiple inline vacancies (150\u201315,814 SF each) -- no single available inline unit reaches the 20,000\u201345,000 SF prototype", "lot": "Not disclosed in source consulted", "zoning": "Not disclosed in source consulted", "landUse": "Regional enclosed mall", "parcel": "Not disclosed in source consulted", "county": "Rutherford", "flood": "Not disclosed in source consulted", "yearBuilt": "Center has operated 20+ years per its own marketing", "tenancy": "Anchors: Dillard's (146,000 SF), Sears (52,420 SF -- confirm current operating status; the large majority of Sears locations nationally have closed), J.C. Penney (96,997 SF). Junior anchors/outlots: AMC Theatres, Books-A-Million, Electronic Express, Chuck E. Cheese's, TGI Friday's, Olive Garden.", "askingRent": "Not disclosed in source consulted. Leasing contact: Rob Morris, Sterling Organization."}, "fitRows": [{"metric": "Building size", "benchmark": "20,000\u201345,000 SF", "site": "Largest marketed inline vacancy is 15,814 SF -- below range. A vacant anchor/junior-anchor box (e.g., if Sears's 52,420 SF is actually available) would fit, but needs direct confirmation.", "verdict": "gap"}, {"metric": "Format", "benchmark": "Freestanding / outlet", "site": "Inline mall shop space", "verdict": "mismatch"}, {"metric": "Trade-area HHI (blended)", "benchmark": "$74,200 median", "site": "$80,308 (ZIP-blended); mall's own materials cite $73,552 avg. HHI in a tighter 5-mile ring", "verdict": "pass"}, {"metric": "Frontage AADT", "benchmark": "6,705 median", "site": "35,000 vpd directly on Old Fort Pkwy/SR-96 -- strongest direct count of any site studied", "verdict": "pass"}], "tradeArea": {"zips": [{"zip": "37129", "area": "Murfreesboro", "pop": 60494, "hhi": 89772, "owner": 62, "home": 371100, "age": 37}, {"zip": "37130", "area": "Murfreesboro", "pop": 59677, "hhi": 60389, "owner": 40, "home": 347100, "age": 31}, {"zip": "37128", "area": "Murfreesboro", "pop": 70329, "hhi": 89069, "owner": 59, "home": 364100, "age": 34}], "blended": {"pop": 190500, "hhi": 80308, "owner": 54.0, "home": 360997, "age": 34.0}, "note": "Population-weighted blend of 3 core Murfreesboro ZIPs within roughly a 10-minute drive. The mall's own leasing materials separately cite a tighter 5-mile-radius figure -- population 140,530, average HHI $73,552 -- included below as a cross-check."}, "competition": [{"name": "Ashley HomeStore", "addr": "460 N Thompson Ln, Murfreesboro", "distance": "0.78 mi", "coords": [35.855907184196, -86.430196040817]}, {"name": "Havertys", "addr": "2615 Medical Center Pkwy, Murfreesboro", "distance": "1.50 mi", "coords": [35.860455850063, -86.442728576994]}, {"name": "Rooms To Go", "addr": "2846 Medical Center Pkwy, Murfreesboro", "distance": "1.80 mi", "coords": [35.864101791885, -86.44592335254]}], "coTenancy": "Regional mall draw (Dillard's / JCPenney / AMC) plus a dense nearby retail node along Medical Center Pkwy / N Thompson Ln. MTSU (Middle Tennessee State University) is nearby. The center's own marketing calls it \u201cthe only regional mall in its primary trade area,\u201d roughly 15 miles southeast of downtown Nashville.", "whatsChanging": ["Sterling Organization's own marketing references an \u201cambitious multi-million dollar redevelopment\u201d and a \u201clifestyle expansion\u201d at the center. Scope, budget, and timeline were not disclosed in the sources reviewed -- confirm current status and whether it affects available space or timing."], "access": "Excellent regional access via Old Fort Pkwy/SR-96 and proximity to I-24. Frontage/visibility here would be a real strength if a suitably sized box becomes available.", "flags": ["No currently marketed space matches the prototype size range -- this needs a direct conversation with Sterling Organization's leasing team about anchor/junior-anchor availability, not just the inline shop list.", "Heaviest furniture competition of any site studied: Ashley, Havertys, and Rooms To Go are all within 2 miles, along Medical Center Pkwy.", "Confirm Sears is still operating at this location before carrying it as an active anchor -- it is sourced from a marketing flyer, and most Sears stores nationally have closed.", "FEMA flood zone not established."], "costarGaps": ["Confirmed available big-box/anchor space (vs. inline shops only)", "Current Sears operating status", "FEMA flood zone", "Lease rate", "Current redevelopment scope/timeline", "1 / 3 / 5-mile ring demographics (Esri) to replace the ZIP proxy", "True drive-time polygons"], "sources": [{"t": "Stones River Mall leasing flyer (LoopNet)", "u": "https://images2.loopnet.com/d2/qngX4fnpMxMvlwe9rhiUFmPU6AlggO5l_scmqHXb3RA/document.pdf"}, {"t": "U.S. Census geocoder", "u": "https://geocoding.geo.census.gov/"}, {"t": "unitedstateszipcodes.org (3 ZIPs)", "u": "https://www.unitedstateszipcodes.org/"}, {"t": "Stones River Town Centre \u2013 center info", "u": "https://shopstonesriver.com/center-info/"}, {"t": "Ashley / Rooms To Go / Havertys locations", "u": "https://www.furniture.com/stores/tennessee/murfreesboro"}]}, {"id": "gallatin2410", "short": "2410 Gallatin Pike N", "address": "2410 Gallatin Pike North", "cityState": "Madison, TN 37115", "submarket": "Nashville / North Nashville (same corridor as 629 Myatt Dr)", "coords": [36.309207758008, -86.677160030546], "coordNote": "Geocoded (U.S. Census geocoder) to the matched address \u201c2410 Gallatin Pike N.\u201d", "read": "Direct frontage on the same Gallatin Pike N furniture row as 629 Myatt Dr -- and only 1.55 miles from it. The trade area, competition, and redevelopment story here are essentially identical to 629 Myatt's, because it's the same submarket. Building size was corrected by Patrick to 16,000 RSF (the LoopNet property record had shown 7,130 SF) -- that's a much closer fit to the prototype than initially scored, though still under the 20,000 SF floor.", "property": {"building_sf": "16,000 RSF (per Patrick, Aug 26, 2026 -- corrects the 7,130 SF figure carried on the LoopNet property record; treat 16,000 RSF as the authoritative number and flag the discrepancy to whoever pulls a CoStar/BOMA measurement next)", "lot": "1.10 AC", "zoning": "CS", "landUse": "Strip commercial center", "parcel": "026-00-0-061.02", "county": "Davidson", "flood": "B and X -- moderate flood hazard (lower risk than 629 Myatt Dr's AE designation)", "yearBuilt": "Not disclosed in source consulted", "tenancy": "Not disclosed in source consulted", "askingRent": "Not disclosed in source consulted"}, "fitRows": [{"metric": "Building size", "benchmark": "20,000\u201345,000 SF", "site": "16,000 RSF (per Patrick -- corrects LoopNet's 7,130 SF) -- 4,000 SF short of the prototype floor", "verdict": "marginal"}, {"metric": "Format", "benchmark": "Freestanding / outlet", "site": "Freestanding, direct spine frontage", "verdict": "pass (size aside)"}, {"metric": "Trade-area HHI (blended)", "benchmark": "$74,200 median", "site": "$81,306 (same trade area as 629 Myatt Dr)", "verdict": "pass"}, {"metric": "Frontage AADT", "benchmark": "6,705 median", "site": "43,790 vpd directly on Gallatin Pike N", "verdict": "pass"}], "tradeArea": {"zips": [{"zip": "37115", "area": "Madison", "pop": 39821, "hhi": 53034, "owner": 41, "home": 271100, "age": 37}, {"zip": "37072", "area": "Goodlettsville", "pop": 33065, "hhi": 75514, "owner": 62, "home": 340900, "age": 40}, {"zip": "37138", "area": "Old Hickory", "pop": 23631, "hhi": 87450, "owner": 72, "home": 347500, "age": 43}, {"zip": "37216", "area": "Inglewood / E. Nashville", "pop": 18191, "hhi": 82134, "owner": 61, "home": 404100, "age": 35}, {"zip": "37075", "area": "Hendersonville", "pop": 71023, "hhi": 97597, "owner": 67, "home": 403400, "age": 39}], "blended": {"pop": 185731, "hhi": 81306, "owner": 60.6, "home": 356900, "age": null}, "note": "Identical ZIP set to 629 Myatt Dr -- the two sites are 1.55 mi apart in the same submarket, so they share the same trade area."}, "competition": [{"name": "Rooms To Go", "addr": "2253 Gallatin Pike N", "distance": "0.54 mi", "coords": [36.306455, -86.686251]}, {"name": "Havertys", "addr": "2208 Gallatin Pike N", "distance": "0.73 mi", "coords": [36.3047, -86.68894]}, {"name": "Ashley HomeStore", "addr": "2160 Gallatin Pike N", "distance": "0.93 mi", "coords": [36.302834, -86.691844]}, {"name": "RiverGate Mall", "addr": "2088 Gallatin Pike N", "distance": "0.94 mi", "coords": [36.302761, -86.691952]}, {"name": "Target \u2013 Rivergate", "addr": "2050 Gallatin Rd N", "distance": "0.98 mi", "coords": [36.302, -86.6924]}, {"name": "629 Myatt Dr (this project's other Madison option)", "addr": "629 Myatt Dr", "distance": "1.55 mi", "coords": [36.291259, -86.693967]}], "coTenancy": "Same MarketPlace at Rivergate node documented for 629 Myatt Dr (Harbor Freight, Aaron's, Rainbow, Twin Peaks anchors; IHOP, Cook Out, LongHorn, Starbucks, Sprouts, Five Guys, Zaxby's, Fifth Third, Wells Fargo nearby) -- this site sits closer to that node than 629 Myatt Dr does.", "whatsChanging": ["Same RiverGate redevelopment pipeline documented for 629 Myatt Dr (Merus's 57-acre, ~$450M mixed-use project; demolition spring 2026, phased into the early 2030s) -- this site is closer to the redevelopment footprint than 629 Myatt Dr."], "access": "Direct frontage on Gallatin Pike N, the corridor's main retail spine -- better immediate visibility/access than 629 Myatt Dr's side-street position.", "flags": ["At 16,000 RSF the building still sits about 4,000 SF under Slumberland's 20,000 SF floor -- closer than the LoopNet record suggested (7,130 SF), but confirm whether Slumberland would accept a slightly-under-prototype store here or would want an expansion/adjacent-parcel assemblage to clear 20,000 SF.", "The 7,130 SF vs. 16,000 RSF gap between the public LoopNet record and Patrick's figure is large enough that the two numbers may be describing different things (e.g., ground floor only vs. total rentable, or a stale record) -- worth a quick confirmation of what's actually being marketed before this goes further.", "Near-duplicate trade area and competitive set to 629 Myatt Dr, only 1.55 mi away -- decide whether these two sites are meant to complement each other or substitute for one another; two Slumberland stores this close together would cannibalize the same draw.", "Flood designation (B/X) is more favorable than 629 Myatt Dr's (AE) -- may be part of the case for preferring this parcel."], "costarGaps": ["Reconcile 7,130 SF (LoopNet) vs. 16,000 RSF (Patrick) with a current rent roll or BOMA measurement", "Year built / condition", "Current tenancy", "Asking rent", "Direct AADT reconfirmation", "1 / 3 / 5-mile ring demographics (Esri)", "True drive-time polygons", "Base flood elevation"], "sources": [{"t": "LoopNet property record", "u": "https://www.loopnet.com/property/2410-gallatin-pike-n-madison-tn-37115/47037-02600006102/"}, {"t": "U.S. Census geocoder", "u": "https://geocoding.geo.census.gov/"}, {"t": "unitedstateszipcodes.org (5 ZIPs, reused from 629 Myatt Dr)", "u": "https://www.unitedstateszipcodes.org/"}, {"t": "Rivergate competitor/co-tenancy/pipeline sources (reused from 629 Myatt Dr)", "u": "https://merus1894.com/news/"}]}]};
+const SITES = DATA.sites;
+const BENCH = DATA.benchmark;
+
+let currentId = "compare";
+let map, layerGroups = {};
+let mapReady = false;
+
+function fmtMoney(n){ if(n===null||n===undefined) return "—"; return "$"+Math.round(n).toLocaleString(); }
+function fmtNum(n){ if(n===null||n===undefined) return "—"; return Math.round(n).toLocaleString(); }
+function fmtPct(n){ if(n===null||n===undefined) return "—"; return n.toFixed(1)+"%"; }
+function verdictClass(v){
+  v = (v||"").toLowerCase();
+  if(v==="pass" || v.indexOf("pass")===0) return "pass";
+  if(v==="marginal" || v.indexOf("marginal")===0) return "marginal";
+  if(v==="gap") return "gap";
+  if(v==="fail") return "fail";
+  if(v==="mismatch") return "mismatch";
+  if(v==="unresolved") return "unresolved";
+  return "other";
+}
+
+/* ---------------- Tabs ---------------- */
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = "";
+  const cmp = document.createElement('div');
+  cmp.className = 'tab' + (currentId==='compare' ? ' active':'');
+  cmp.textContent = 'Compare all sites';
+  cmp.onclick = () => selectSite('compare');
+  tabs.appendChild(cmp);
+  SITES.forEach(s=>{
+    const t = document.createElement('div');
+    t.className = 'tab' + (currentId===s.id ? ' active':'');
+    t.textContent = s.short;
+    t.onclick = () => selectSite(s.id);
+    tabs.appendChild(t);
+  });
+}
+
+function selectSite(id){
+  currentId = id;
+  buildTabs();
+  if(id==='compare'){
+    renderCompare();
+    safeMap(renderCompareMap);
+  } else {
+    const s = SITES.find(x=>x.id===id);
+    renderSite(s);
+    safeMap(()=>renderSiteMap(s));
+  }
+  document.getElementById('content').scrollTop = 0;
+}
+
+function safeMap(fn){
+  if(!mapReady){ return; }
+  try { fn(); } catch(e){ console.error('Map render failed:', e); }
+}
+
+/* ---------------- Dossier render ---------------- */
+function renderSite(s){
+  const c = document.getElementById('content');
+  let h = `<div class="panel">`;
+  h += `<div class="site-head"><h2>${s.address}</h2><p class="addr2">${s.cityState}</p>
+        <span class="submkt">${s.submarket}</span>
+        <p class="coordnote${s.coordNote.indexOf('NOT reliably')>=0?' warn':''}">${s.coordNote}</p></div>`;
+  if(s.reconstructedNote){ h += `<div class="recon-note">${s.reconstructedNote}</div>`; }
+  h += `<div class="read"><strong>The read:</strong> ${s.read}</div>`;
+
+  h += `<h3 class="section">Fit against the Slumberland prototype</h3>`;
+  h += `<table class="fit"><tr><th>Metric</th><th>Benchmark</th><th>This site</th><th></th></tr>`;
+  s.fitRows.forEach(r=>{
+    h += `<tr><td>${r.metric}</td><td>${r.benchmark}</td><td>${r.site}</td><td><span class="badge ${verdictClass(r.verdict)}">${r.verdict}</span></td></tr>`;
+  });
+  h += `</table><p class="tanote">Benchmark source: ${BENCH.note}</p>`;
+
+  h += `<h3 class="section">Property</h3><table class="kv">`;
+  const p = s.property;
+  const rows = [["Building", p.building_sf], ["Lot", p.lot], ["Zoning", p.zoning], ["Assessor land use", p.landUse],
+                ["Parcel / APN", p.parcel], ["County", p.county], ["FEMA flood zone", p.flood],
+                ["Year built", p.yearBuilt], ["Tenancy", p.tenancy], ["Asking", p.askingRent]];
+  rows.forEach(([k,v])=>{ h += `<tr><td class="k">${k}</td><td class="v">${v}</td></tr>`; });
+  h += `</table>`;
+
+  h += `<h3 class="section">Trade area</h3>`;
+  h += `<table class="zips"><tr><th>ZIP</th><th>Area</th><th>Pop.</th><th>HHI</th><th>Owner-occ</th><th>Med. home</th><th>Med. age</th></tr>`;
+  s.tradeArea.zips.forEach(z=>{
+    h += `<tr><td>${z.zip}</td><td>${z.area}</td><td>${fmtNum(z.pop)}</td><td>${fmtMoney(z.hhi)}</td><td>${z.owner}%</td><td>${fmtMoney(z.home)}</td><td>${z.age??'—'}</td></tr>`;
+  });
+  if(s.tradeArea.blended && s.tradeArea.blended.pop){
+    const b = s.tradeArea.blended;
+    h += `<tr class="blend"><td colspan="2">Blended</td><td>${fmtNum(b.pop)}</td><td>${fmtMoney(b.hhi)}</td><td>${fmtPct(b.owner)}</td><td>${fmtMoney(b.home)}</td><td>${b.age??'—'}</td></tr>`;
+  }
+  h += `</table>`;
+  if(s.tradeArea.scenarios){
+    s.tradeArea.scenarios.forEach(sc=>{
+      h += `<table class="zips"><tr class="blend"><td colspan="2">${sc.label}</td><td>${fmtNum(sc.pop)}</td><td>${fmtMoney(sc.hhi)}</td><td>${fmtPct(sc.owner)}</td><td>${fmtMoney(sc.home)}</td><td>${sc.age}</td></tr></table>`;
+    });
+  }
+  h += `<p class="tanote">${s.tradeArea.note}</p>`;
+
+  h += `<h3 class="section">Competition</h3>`;
+  s.competition.forEach(cm=>{
+    h += `<div class="comp-row"><div><div class="nm">${cm.name}</div><div class="ad">${cm.addr}</div></div><div class="dist">${cm.distance}</div></div>`;
+  });
+
+  h += `<h3 class="section">Co-tenancy &amp; anchors</h3><p style="font-size:12.5px;line-height:1.55;">${s.coTenancy}</p>`;
+
+  h += `<h3 class="section">What's changing nearby</h3><ul class="plain">`;
+  s.whatsChanging.forEach(w=>{ h += `<li>${w}</li>`; });
+  h += `</ul>`;
+
+  h += `<h3 class="section">Access</h3><p style="font-size:12.5px;line-height:1.55;">${s.access}</p>`;
+
+  h += `<h3 class="section">Flags</h3><ul class="plain flags">`;
+  s.flags.forEach(f=>{ h += `<li>${f}</li>`; });
+  h += `</ul>`;
+
+  h += `<h3 class="section">Pull from CoStar</h3><ul class="plain gaps">`;
+  s.costarGaps.forEach(g=>{ h += `<li>${g}</li>`; });
+  h += `</ul>`;
+
+  h += `<h3 class="section">Sources</h3><div class="sources">`;
+  s.sources.forEach(src=>{ h += `<div><a href="${src.u}" target="_blank" rel="noopener">${src.t}</a></div>`; });
+  h += `</div>`;
+
+  h += `</div>`;
+  c.innerHTML = h;
+}
+
+/* ---------------- Compare render ---------------- */
+function fitBadgeForSF(sf){
+  // sf is a rough string metric; use fitRows[0] verdict already computed per-site instead
+}
+function renderCompare(){
+  const c = document.getElementById('content');
+  let h = `<div class="panel">`;
+  h += `<div class="read"><strong>How to read this table:</strong> click any row to open that site's full dossier. Badges reuse each site's own fit verdicts against Slumberland's published prototype (20,000–45,000 SF, ~$74.2K median trade-area HHI, ~6,705 median AADT — see each dossier for the full benchmark note). This view is meant to help narrow six candidates down toward the three Slumberland asked for.</div>`;
+  h += `<div class="cmp-wrap"><table class="compare">`;
+  h += `<tr><th>Site</th><th>Building</th><th>Size fit</th><th>Format</th><th>Trade-area pop.</th><th>Blended HHI</th><th>Nearest furniture comp.</th><th>Frontage AADT</th><th>Flood zone</th><th>Headline flag</th></tr>`;
+  SITES.forEach(s=>{
+    const sizeFit = s.fitRows[0];
+    const aadtRow = s.fitRows.find(r=>r.metric.indexOf('AADT')>=0);
+    const nearest = s.competition[0];
+    const ta = s.tradeArea.blended && s.tradeArea.blended.pop ? s.tradeArea.blended : null;
+    h += `<tr class="clickable" onclick="selectSite('${s.id}')">`;
+    h += `<td><strong>${s.short}</strong><br><span style="color:var(--muted);font-size:11px;">${s.cityState}</span></td>`;
+    h += `<td>${s.property.building_sf}</td>`;
+    h += `<td><span class="badge ${verdictClass(sizeFit.verdict)}">${sizeFit.verdict}</span></td>`;
+    h += `<td>${s.fitRows[1].site}</td>`;
+    h += `<td>${ta? fmtNum(ta.pop) : '<em>unresolved</em>'}</td>`;
+    h += `<td>${ta? fmtMoney(ta.hhi) : '<em>unresolved</em>'}</td>`;
+    h += `<td>${nearest.name}<br><span style="color:var(--muted);">${nearest.distance}</span></td>`;
+    h += `<td>${aadtRow ? aadtRow.site : '—'}</td>`;
+    h += `<td>${s.property.flood}</td>`;
+    h += `<td>${s.flags[0]}</td>`;
+    h += `</tr>`;
+  });
+  h += `</table></div>`;
+  h += `<p class="legend"><span class="badge pass">pass</span> clears the benchmark &nbsp; <span class="badge marginal">marginal</span> right at the edge &nbsp; <span class="badge gap">gap</span> data not available from the sources used, pull from CoStar &nbsp; <span class="badge fail">fail / mismatch</span> does not clear the benchmark as currently marketed</p>`;
+  h += `</div>`;
+  c.innerHTML = h;
+}
+
+/* ---------------- Map ---------------- */
+function initMap(){
+  try{
+    if(typeof L === 'undefined'){ throw new Error('Leaflet failed to load (no network / CDN blocked).'); }
+    map = L.map('map', {zoomControl:true}).setView([36.05, -86.65], 9);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+    mapReady = true;
+  } catch(e){
+    console.error('Map init failed:', e);
+    mapReady = false;
+    const ms = document.getElementById('mapside');
+    if(ms){
+      ms.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:40px;text-align:center;color:#5b6472;font-size:14px;background:#eef1f5;">Map tiles could not load (this preview has no internet access). Open this file in a normal browser with an internet connection to see the interactive map — all dossier data on the left still works.</div>';
+    }
+  }
+}
+
+function clearMap(){
+  Object.values(layerGroups).forEach(g=>map.removeLayer(g));
+  layerGroups = {};
+}
+
+function mkIcon(color){
+  return L.divIcon({
+    className: '', html: `<div style="width:16px;height:16px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>`,
+    iconSize:[16,16], iconAnchor:[8,16], popupAnchor:[0,-16]
+  });
+}
+const SUBJECT_COLOR = '#c9852f';
+const COMP_COLOR = '#b23b3b';
+const OTHER_SUBJECT_COLOR = '#5b8bbf';
+
+function renderCompareMap(){
+  document.getElementById('maptitle').innerHTML = `<b>All six candidates</b>Metro Nashville regional view — click a pin or a table row to open that site's dossier.`;
+  document.getElementById('layertoggles').innerHTML = '';
+  document.getElementById('maplegend').innerHTML = `
+    <div><span class="dot" style="background:${SUBJECT_COLOR}"></span> Candidate site</div>`;
+  clearMap();
+  const g = L.layerGroup().addTo(map);
+  const bounds = [];
+  SITES.forEach(s=>{
+    const m = L.marker(s.coords, {icon: mkIcon(SUBJECT_COLOR)});
+    m.bindPopup(`<b>${s.short}</b><br>${s.cityState}<br><a href="#" onclick="selectSite('${s.id}');return false;">Open dossier →</a>`);
+    m.on('click', ()=>selectSite(s.id));
+    g.addLayer(m);
+    bounds.push(s.coords);
+  });
+  layerGroups.subjects = g;
+  map.fitBounds(bounds, {padding:[40,40]});
+}
+
+function renderSiteMap(s){
+  document.getElementById('maptitle').innerHTML = `<b>${s.short}</b>${s.cityState}`;
+  clearMap();
+
+  const subj = L.layerGroup();
+  const subjMarker = L.marker(s.coords, {icon: mkIcon(SUBJECT_COLOR)});
+  subjMarker.bindPopup(`<b>${s.address}</b><br>${s.cityState}<br>${s.property.building_sf}`);
+  subj.addLayer(subjMarker);
+  // radius rings for visual trade-area reference (straight-line, not drive-time)
+  [1,3,5].forEach(mi=>{
+    subj.addLayer(L.circle(s.coords, {radius: mi*1609.34, color: SUBJECT_COLOR, weight:1, fill:false, dashArray:'4,5', opacity:.5}));
+  });
+
+  const comp = L.layerGroup();
+  const bounds = [s.coords];
+  s.competition.forEach(cm=>{
+    if(cm.coords){
+      const m = L.marker(cm.coords, {icon: mkIcon(COMP_COLOR)});
+      m.bindPopup(`<b>${cm.name}</b><br>${cm.addr}<br>${cm.distance}`);
+      comp.addLayer(m);
+      bounds.push(cm.coords);
+    }
+  });
+
+  subj.addTo(map); comp.addTo(map);
+  layerGroups.subject = subj;
+  layerGroups.competitors = comp;
+
+  document.getElementById('layertoggles').innerHTML = `
+    <label><input type="checkbox" checked onchange="toggleLayer('subject', this.checked)"> Subject site + rings</label>
+    <label><input type="checkbox" checked onchange="toggleLayer('competitors', this.checked)"> Furniture competitors</label>
+  `;
+  document.getElementById('maplegend').innerHTML = `
+    <div><span class="dot" style="background:${SUBJECT_COLOR}"></span> Subject site (dashed = 1/3/5 mi, straight-line)</div>
+    <div><span class="dot" style="background:${COMP_COLOR}"></span> Furniture competitor</div>`;
+
+  if(bounds.length>1){ map.fitBounds(bounds, {padding:[60,60]}); }
+  else { map.setView(s.coords, 13); }
+}
+
+function toggleLayer(key, on){
+  if(!layerGroups[key]) return;
+  if(on) layerGroups[key].addTo(map); else map.removeLayer(layerGroups[key]);
+}
+
+/* ---------------- Init ---------------- */
+buildTabs();
+initMap();
+selectSite('compare');
+</script>
