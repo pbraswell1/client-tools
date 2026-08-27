@@ -176,8 +176,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="controls">
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <div class="view-tabs">
-      <button class="view-tab active" onclick="setView('cards')" id="tabCards">&#9646;&#9646; Card View</button>
-      <button class="view-tab" onclick="setView('matrix')" id="tabMatrix">&#8801; Matrix View</button>
+      <button class="view-tab" onclick="setView('cards')" id="tabCards">&#9646;&#9646; Card View</button>
+      <button class="view-tab active" onclick="setView('matrix')" id="tabMatrix">&#8801; Matrix View</button>
       <button class="view-tab" onclick="setView('map')" id="tabMap">&#9679; Map View</button>
     </div>
     <span class="result-count" id="resultCount">Showing 6 of 6 options</span>
@@ -208,9 +208,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="main-content">
-  <div class="cards-grid active" id="cardsGrid"></div>
+  <div class="cards-grid" id="cardsGrid"></div>
 
-  <div class="matrix-view" id="matrixView">
+  <div class="matrix-view active" id="matrixView">
     <table class="matrix-table">
       <thead><tr>
         <th style="width:32px">#</th>
