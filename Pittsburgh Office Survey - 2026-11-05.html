@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pittsburgh Office Survey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-column survey sheet — masthead, criteria strip, tallies that double as filters, then the availability schedule (table on desktop, stacked cards on phones). */
+:root{
+  --bg:#f6f7f8; --surface:#ffffff; --ink:#1b2430; --muted:#5d6876; --line:#dde2e8; --accent:#2f5d7c;
+  --pass:#2e7d4f; --pass-bg:#e4f2ea; --maybe:#9a6a00; --maybe-bg:#fbf0d6; --fail:#a8433a; --fail-bg:#f8e3e0; --none-bg:#eceff3;
+  --display:"Newsreader", Georgia, "Times New Roman", serif;
+  --body:"Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --surface:#1a2129; --ink:#e4e9ef; --muted:#9aa6b4; --line:#2c3642; --accent:#8db8d6;
+  --pass:#7fd1a0; --pass-bg:#173326; --maybe:#e9c46a; --maybe-bg:#3a2f12; --fail:#f0998f; --fail-bg:#3d1f1c; --none-bg:#252e38; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --surface:#1a2129; --ink:#e4e9ef; --muted:#9aa6b4; --line:#2c3642; --accent:#8db8d6;
+  --pass:#7fd1a0; --pass-bg:#173326; --maybe:#e9c46a; --maybe-bg:#3a2f12; --fail:#f0998f; --fail-bg:#3d1f1c; --none-bg:#252e38; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:24px}
+header{display:grid;gap:6px}
+.eyebrow{font:500 12px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:600 clamp(28px,4vw,40px)/1.1 var(--display);margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:68ch}
+.criteria{display:flex;flex-wrap:wrap;gap:8px 20px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:6px;font-size:13.5px}
+.criteria b{font-weight:600}
+.criteria span{min-width:0}
+.eyebrow{overflow-wrap:anywhere}
+.tallies{display:flex;flex-wrap:wrap;gap:8px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;font:500 13.5px/1 var(--body);cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.chip .n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed="true"] .n{color:inherit;opacity:.75}
+.chip:focus-visible,.toggle input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.toolbar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted)}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:500 11.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:12px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.addr{font-weight:600}
+td.c-addr{min-width:190px}
+td.c-rent{font-family:var(--body);font-size:13.5px;white-space:normal;min-width:120px;max-width:200px}
+.bldg{color:var(--muted);font-size:13px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13.5px}
+.dash{color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:4px;padding:3px 8px;font:600 12.5px/1.3 var(--body);white-space:nowrap}
+.b-Pass{background:var(--pass-bg);color:var(--pass)}
+.b-Maybe{background:var(--maybe-bg);color:var(--maybe)}
+.b-Fail{background:var(--fail-bg);color:var(--fail)}
+.b-none{background:var(--none-bg);color:var(--muted);font-weight:500}
+.pct{font-family:var(--mono);font-weight:500}
+.stage{font-size:13px;color:var(--muted);white-space:nowrap}
+.note{color:var(--muted);font-size:13.5px;max-width:46ch}
+tr.out td{opacity:.62}
+.legend{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.legend p{margin:0;max-width:90ch}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+@media (max-width:760px){
+  .tablebox{background:transparent;border:0;overflow:visible}
+  table,tbody,tr,td{display:block;width:auto}
+  thead{display:none}
+  tr{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:10px;display:grid;grid-template-columns:minmax(0,1fr);gap:4px 12px}
+  td{min-width:0!important;max-width:none!important;white-space:normal!important}
+  td{border:0;padding:0}
+  td.c-addr{grid-column:1/-1}
+  td.c-suite,td.c-sf,td.c-rent,td.c-co,td.c-stage{font-size:13.5px}
+  td[data-l]::before{content:attr(data-l) " ";font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  td.c-fit{grid-column:1/-1;margin-top:6px}
+  td.c-note{grid-column:1/-1}
+  .note{max-width:none}
+}
+@media (prefers-reduced-motion:no-preference){.chip{transition:background .15s,color .15s}}
+
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Record Real Estate Partners · Snapshot as of November 5, 2026</div>
+    <h1>Pittsburgh Office Survey</h1>
+    <p class="sub">Second-generation office availabilities reviewed for an executive-suite requirement. Each space we received a floor plan for is scored on how much of it is already built out as enclosed private offices.</p>
+  </header>
+
+  <div class="criteria">
+    <span><b>Size</b> 10,000–30,000 SF (half to full floor, or combinable suites)</span>
+    <span><b>Condition</b> 2nd generation, in place</span>
+    <span><b>Target</b> ≥50% of usable area in private offices</span>
+  </div>
+
+  <div class="toolbar">
+    <div class="tallies" id="tallies" role="group" aria-label="Filter by fit"></div>
+    <label class="toggle" for="showOut"><input type="checkbox" id="showOut"> Show ruled-out spaces</label>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Property</th><th>Floor / suite</th><th>RSF</th><th>Asking rent</th><th>Listing company</th><th>Status</th><th>Private-office fit</th><th>Notes</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>No spaces match this filter.</div>
+  </div>
+
+  <div class="legend">
+    <p><b>Fit:</b> Pass = roughly 50%+ of usable area in existing private offices · Maybe = 35–49% or layout unclear · Fail = under 35%, mostly open, or shell. Percentages are estimates from marketing floor plans, excluding conference rooms, open areas, kitchens and core.</p>
+    <p><b>Rent:</b> FS = full service · NNN = triple net · +E / +ELEC = plus electric · MG = modified gross. Rates as quoted by listing brokers or CoStar; blank where not disclosed.</p>
+    <p><b>Status:</b> Under review = information received · Requested = awaiting listing broker · Ruled out = leased, shell, or the listing broker said it won’t fit (reason shown in Notes).</p>
+  </div>
+</div>
+
+<script>
+const DATA = [{"addr": "301 Bayer Rd", "bldg": "Settlers Corporate Campus Building One", "city": "Pittsburgh", "suite": "Entire Floor 1", "sf": "27,588", "rent": "$29.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "301 Bayer Rd", "bldg": "Settlers Corporate Campus Building One", "city": "Pittsburgh", "suite": "Entire Floor 2", "sf": "29,323", "rent": "$29.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "301 Bayer Rd", "bldg": "Settlers Corporate Campus Building One", "city": "Pittsburgh", "suite": "Entire Floor 3", "sf": "29,326", "rent": "$29.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "5313 Campbells Run Rd", "bldg": "Marquis Corporate Center 2", "city": "Pittsburgh", "suite": "Entire Floor 3", "sf": "12,782 - 25,565", "rent": "$25.00/SF FS", "co": "CBRE", "stage": "Ruled out", "ev": "Fail", "pct": "", "note": "Warm shell, restrooms only; not 2nd generation."}, {"addr": "1550 Coraopolis Heights Rd", "bldg": "Westpointe Corporate Center Building", "city": "Coraopolis", "suite": "Entire Floor 2", "sf": "25,455", "rent": "$28.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "1550 Coraopolis Heights Rd", "bldg": "Westpointe Corporate Center Building", "city": "Coraopolis", "suite": "Entire Floor 3", "sf": "26,154", "rent": "$28.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "1550 Coraopolis Heights Rd", "bldg": "Westpointe Corporate Center Building", "city": "Coraopolis", "suite": "Part of Floor 5", "sf": "22,518", "rent": "$28.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "125 Enterprise Dr", "bldg": "The ONS Building", "city": "Pittsburgh", "suite": "Part of Floor 2", "sf": "16,732", "rent": "$26.00 FS", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "3000 GSK Dr", "bldg": "Westpointe Corporate Center Four", "city": "Coraopolis", "suite": "Part of Floor 2", "sf": "12,757", "rent": "$28.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker offered only the 11,797 RSF suite on this floor (listed above)."}, {"addr": "3000 GSK Dr", "bldg": "Westpointe Corporate Center Four", "city": "Coraopolis", "suite": "Part of Floor 2", "sf": "11,797", "rent": "$28.00 +ELEC", "co": "CBRE", "stage": "Under review", "ev": "Fail", "pct": "15%", "note": "Furnished spec suite: 7 offices, 34 workstations, 6 conference rooms. Mostly open. Expandable to the full floor (24,554 RSF)."}, {"addr": "1000 Omega Dr", "bldg": "Building One", "city": "Pittsburgh", "suite": "Suite 1590", "sf": "19,500", "rent": "$25.00/SF FS", "co": "CBRE", "stage": "Under review", "ev": "Fail", "pct": "20%", "note": "Mostly one large open area with 10–12 small offices along the core. Ste 1550 (12,208 RSF) + 1560 (3,633 RSF) ≈ 15,841 SF."}, {"addr": "111 Parkwest Dr", "bldg": "Parkwest Corporate Center", "city": "Pittsburgh", "suite": "Part of Floor 1", "sf": "12,500", "rent": "$28.00 +ELEC", "co": "CBRE", "stage": "Under review", "ev": "Fail", "pct": "30%", "note": "About 20 perimeter offices around a large central cube field."}, {"addr": "111 Parkwest Dr", "bldg": "Parkwest Corporate Center", "city": "Pittsburgh", "suite": "Part of Floor 1", "sf": "4,800", "rent": "$28.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Below 10,000 SF; not offered by listing broker."}, {"addr": "111 Parkwest Dr", "bldg": "Parkwest Corporate Center", "city": "Pittsburgh", "suite": "Entire Floor 2", "sf": "28,750", "rent": "$28.50 +ELEC", "co": "CBRE", "stage": "Under review", "ev": "Fail", "pct": "30%", "note": "35–40 perimeter offices plus two interior office banks, but about half the floor is cubes."}, {"addr": "4 Penn Center West", "bldg": "Robinson Ridge at Penn Center West 4", "city": "Pittsburgh", "suite": "Suite 200", "sf": "10,457 - 23,736", "rent": "$26.00 FS", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker recommended Penn Center West 2, Ste 120 instead (listed above)."}, {"addr": "4 Penn Center West", "bldg": "Robinson Ridge at Penn Center West 4", "city": "Pittsburgh", "suite": "Suite 401", "sf": "3,226 - 14,234", "rent": "$26.00 FS", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker recommended Penn Center West 2, Ste 120 instead (listed above)."}, {"addr": "4900 Perry Hwy", "bldg": "Building II", "city": "Pittsburgh", "suite": "Suite 200", "sf": "7,763", "rent": "", "co": "CBRE", "stage": "Under review", "ev": "Maybe", "pct": "50%", "note": "Campus is being marketed for sale; sample plans are mostly enclosed offices, one floor largely open. Lease availability to be confirmed."}, {"addr": "4900 Perry Hwy", "bldg": "Building II", "city": "Pittsburgh", "suite": "Suite 110", "sf": "1,400", "rent": "$19.00 FS", "co": "CBRE", "stage": "Under review", "ev": "Maybe", "pct": "50%", "note": "See Suite 200. Small suite on its own."}, {"addr": "4900 Perry Hwy", "bldg": "Building II", "city": "Pittsburgh", "suite": "Suite 100", "sf": "800", "rent": "$19.00 FS", "co": "CBRE", "stage": "Under review", "ev": "Maybe", "pct": "50%", "note": "See Suite 200. Small suite on its own."}, {"addr": "4900 Perry Hwy", "bldg": "Building II", "city": "Pittsburgh", "suite": "Entire Floor 2", "sf": "10,000", "rent": "$20.00 FS", "co": "CBRE", "stage": "Under review", "ev": "Maybe", "pct": "50%", "note": "Campus is being marketed for sale; sample plans are mostly enclosed offices, one floor largely open. Lease availability to be confirmed."}, {"addr": "275 Technology Dr", "bldg": "Southpointe", "city": "Canonsburg", "suite": "Part of Floor 2", "sf": "17,632", "rent": "$25.00 +ELEC", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "1187 Thorn Run Rd", "bldg": "One Thorn Run Center", "city": "Coraopolis", "suite": "Part of Floor 5", "sf": "17,898", "rent": "$24.00 FS", "co": "CBRE", "stage": "Under review", "ev": "Fail", "pct": "10%", "note": "Furnished; almost entirely open workstations."}, {"addr": "133 Church Hill Rd", "bldg": "Robinson Medical Center", "city": "McKees Rocks", "suite": "Part of Floor 1", "sf": "3,000 - 10,895", "rent": "", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "133 Church Hill Rd", "bldg": "Robinson Medical Center", "city": "McKees Rocks", "suite": "Entire Floor 2", "sf": "3,000 - 10,895", "rent": "", "co": "CBRE", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker left it off his shortlist of best-fit options."}, {"addr": "1320 Cherrington Pky", "bldg": "Building 300, Cherrington Parkway", "city": "Coraopolis", "suite": "Part of Floor 1", "sf": "15,000 - 27,141", "rent": "$18.25 NNN", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "1000 Ericsson Dr", "bldg": "Building 1000", "city": "Warrendale", "suite": "Part of Floor 2", "sf": "15,000 - 42,251", "rent": "$26.00 +ELEC", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "2000 Ericsson Dr", "bldg": "Building 2000", "city": "Warrendale", "suite": "Entire Floor 1", "sf": "6,673 - 49,263", "rent": "$26.00 +ELEC", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "100 E Kensinger Dr", "bldg": "Bldg 120", "city": "Cranberry Township", "suite": "Part of Floor 1", "sf": "8,000 - 19,351", "rent": "$18.00 NNN", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "2000 Park Lane Dr", "bldg": "", "city": "Pittsburgh", "suite": "Part of Floor 1", "sf": "6,000 - 18,742", "rent": "$25.50 FS", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "2000 Park Lane Dr", "bldg": "", "city": "Pittsburgh", "suite": "Part of Floor 3", "sf": "10,000 - 47,245", "rent": "$25.50 FS", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "2000 Park Lane Dr", "bldg": "", "city": "Pittsburgh", "suite": "Entire Floor 6", "sf": "23,912", "rent": "$25.50 MG", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "2000 Park Lane Dr", "bldg": "", "city": "Pittsburgh", "suite": "Entire Floor 7", "sf": "22,790", "rent": "$25.50 FS", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "3120 Unionville Rd", "bldg": "Bldg 110", "city": "Cranberry Township", "suite": "Part of Floor 1", "sf": "14,000 - 22,550", "rent": "$18.00 NNN", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "1000 Mylan Blvd", "bldg": "Southpointe", "city": "Canonsburg", "suite": "Part of Floor 2", "sf": "19,745", "rent": "", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: no existing private offices."}, {"addr": "200-298 Airside Dr", "bldg": "Building 200", "city": "Coraopolis", "suite": "Part of Floor 2", "sf": "16,997", "rent": "$24.50 FS", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: mostly open, under 50% private offices."}, {"addr": "800 Cranberry Woods Dr", "bldg": "Building 800", "city": "Cranberry Township", "suite": "Suite 400", "sf": "15,000 - 30,577", "rent": "$25.50 +ELEC", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: mostly open; leasing on hold."}, {"addr": "600 Lindbergh Dr", "bldg": "Building 600", "city": "Coraopolis", "suite": "Suite 200", "sf": "27,799", "rent": "$23.50 +ELEC", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: mostly open, under 50% private offices."}, {"addr": "24 Summit Park Dr", "bldg": "Single Source Headquarters Bldg", "city": "Pittsburgh", "suite": "Entire Floor 1", "sf": "16,660", "rent": "", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: under 50% existing private offices."}, {"addr": "24 Summit Park Dr", "bldg": "Single Source Headquarters Bldg", "city": "Pittsburgh", "suite": "Entire Floor 2", "sf": "16,660", "rent": "", "co": "JLL", "stage": "Ruled out", "ev": "", "pct": "", "note": "Listing broker: under 50% existing private offices."}, {"addr": "3000 Park Lane Dr", "bldg": "Park Lane Office Park", "city": "Pittsburgh", "suite": "Entire Floor 1", "sf": "5,000 - 21,063", "rent": "$24.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Maybe", "pct": "", "note": "Center-core 21,063 SF plates. Layouts not yet reviewed in detail."}, {"addr": "3000 Park Lane Dr", "bldg": "Park Lane Office Park", "city": "Pittsburgh", "suite": "Entire Floor 2", "sf": "21,063", "rent": "$24.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Maybe", "pct": "", "note": "Center-core 21,063 SF plates. Layouts not yet reviewed in detail."}, {"addr": "3000 Park Lane Dr", "bldg": "Park Lane Office Park", "city": "Pittsburgh", "suite": "Entire Floor 3", "sf": "21,063", "rent": "$24.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Maybe", "pct": "", "note": "Center-core 21,063 SF plates. Layouts not yet reviewed in detail."}, {"addr": "3000 Park Lane Dr", "bldg": "Park Lane Office Park", "city": "Pittsburgh", "suite": "Entire Floor 4", "sf": "21,063", "rent": "$24.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Maybe", "pct": "", "note": "Center-core 21,063 SF plates. Layouts not yet reviewed in detail."}, {"addr": "3000 Park Lane Dr", "bldg": "Park Lane Office Park", "city": "Pittsburgh", "suite": "Entire Floor 5", "sf": "21,063", "rent": "$24.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Maybe", "pct": "", "note": "Center-core 21,063 SF plates. Layouts not yet reviewed in detail."}, {"addr": "121 Champion Way", "bldg": "Southpointe", "city": "Canonsburg", "suite": "Suite 300 & 310", "sf": "7,848 - 21,435", "rent": "$23.00/SF Full Service", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "", "pct": "", "note": "Broker reports 18 offices, 2 conference rooms, board room and training room across 21,345 SF (Ste 300 + 310). Flyer pending."}, {"addr": "1000 GSK Dr", "bldg": "Dakota Building", "city": "Coraopolis", "suite": "Suite 120", "sf": "17,930", "rent": "$25.00/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Fail", "pct": "10%", "note": "Suites 120/220 are subleases through 2030. Plan reviewed was alternative Ste 200 (10,171 SF, avail. 5/1/27): mostly open."}, {"addr": "1000 GSK Dr", "bldg": "Dakota Building", "city": "Coraopolis", "suite": "Suite 220", "sf": "19,905", "rent": "$25.00/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Fail", "pct": "10%", "note": "Suites 120/220 are subleases through 2030. Plan reviewed was alternative Ste 200 (10,171 SF, avail. 5/1/27): mostly open."}, {"addr": "501 Marketplace Ave", "bldg": "Diamond Ridge 1", "city": "Coraopolis", "suite": "Suite 301", "sf": "18,360", "rent": "$36.00/SF + electric", "co": "NAI Burns Scalo", "stage": "Ruled out", "ev": "Fail", "pct": "", "note": "First-generation shell."}, {"addr": "501 Technology Dr", "bldg": "Stealth II Technology Center", "city": "Canonsburg", "suite": "Suite 3000", "sf": "17,081", "rent": "$23.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Maybe", "pct": "40%", "note": "34 offices, 3–4 conference rooms and a training room in 17,081 SF. Combinable with Ste 3200 to 24,665 SF."}, {"addr": "501 Technology Dr", "bldg": "Stealth II Technology Center", "city": "Canonsburg", "suite": "Suite 3200", "sf": "7,584", "rent": "$23.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Fail", "pct": "20%", "note": "7 offices plus training and open areas. Under 10,000 SF alone; works only combined with Ste 3000."}, {"addr": "151 Roessler Rd", "bldg": "Cochran Commons - Office", "city": "Pittsburgh", "suite": "Part of Floor 4", "sf": "15,000", "rent": "$20.50 TBD", "co": "Newmark", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "701 Technology Dr", "bldg": "Southpointe", "city": "Canonsburg", "suite": "Part of Floor 2", "sf": "5,000 - 25,000", "rent": "$18.50 FS", "co": "Newmark", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "410 Rouser Rd", "bldg": "Airport Office Park I", "city": "Coraopolis", "suite": "Entire Floor 2", "sf": "10,926", "rent": "", "co": "Newmark", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "410 Rouser Rd", "bldg": "Airport Office Park I", "city": "Coraopolis", "suite": "Entire Floor 3", "sf": "10,926", "rent": "", "co": "Newmark", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "420 Rouser Rd", "bldg": "Airport Office Park III", "city": "Coraopolis", "suite": "Part of Floor 5", "sf": "10,864", "rent": "", "co": "Newmark", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "420 Rouser Rd", "bldg": "Airport Office Park III", "city": "Coraopolis", "suite": "Part of Floor 5", "sf": "10,864", "rent": "", "co": "Newmark", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "1225 Washington Pike", "bldg": "DDI Plaza I", "city": "Bridgeville", "suite": "Part of Floor 2", "sf": "18,333", "rent": "", "co": "Colliers", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "101 Hillpointe Dr", "bldg": "Hershey II Bldg", "city": "Canonsburg", "suite": "Entire Floor 2", "sf": "16,835", "rent": "", "co": "Colliers", "stage": "Under review", "ev": "", "pct": "", "note": "Awaiting floor plan from listing broker."}, {"addr": "146-150 E Main St", "bldg": "", "city": "Carnegie", "suite": "Entire Floor 3", "sf": "6,000", "rent": "", "co": "Colliers", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "146-150 E Main St", "bldg": "", "city": "Carnegie", "suite": "Entire Floor 4", "sf": "6,000", "rent": "", "co": "Colliers", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "146-150 E Main St", "bldg": "", "city": "Carnegie", "suite": "Entire Floor 5", "sf": "6,000", "rent": "", "co": "Colliers", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "5500 Corporate Dr", "bldg": "One Corporate Center", "city": "Pittsburgh", "suite": "Suite 500", "sf": "20,000", "rent": "$26.50 FS", "co": "Cushman & Wakefield", "stage": "Ruled out", "ev": "", "pct": "", "note": "Not a fit for this requirement per listing broker."}, {"addr": "4378 Craighead Rd", "bldg": "", "city": "Allison Park", "suite": "Entire Floor 1", "sf": "24,400", "rent": "$11/SF blended incl. warehouse (office-only rate TBD)", "co": "Berkshire Hathaway HomeServices Preferred Realty", "stage": "Under review", "ev": "", "pct": "", "note": "Office floor in a mixed office/warehouse building. Plans sent; office-only rate pending."}, {"addr": "100 Global View Dr", "bldg": "Global Tech Center", "city": "Warrendale", "suite": "Entire Floor 2", "sf": "20,000 - 40,000", "rent": "", "co": "The Buncher Company", "stage": "Requested", "ev": "", "pct": "", "note": "Awaiting reply from listing broker."}, {"addr": "107 Mount Nebo Pointe Dr", "bldg": "", "city": "Pittsburgh", "suite": "Entire Floor 2", "sf": "17,000", "rent": "$18/SF NNN", "co": "Baker Young Corporation", "stage": "Under review", "ev": "", "pct": "", "note": "Awaiting floor plan from listing broker."}, {"addr": "6000 Town Center Blvd", "bldg": "Embassy Park", "city": "Canonsburg", "suite": "Suite 300", "sf": "20,000", "rent": "", "co": "Horizon Properties Group, LLC", "stage": "Under review", "ev": "", "pct": "", "note": "Awaiting floor plan from listing broker."}, {"addr": "1603 Carmody Ct", "bldg": "Blaymore II", "city": "Sewickley", "suite": "Entire Floor 2", "sf": "2,654 - 17,692", "rent": "$25.50/RSF", "co": "Wann Properties, Inc.", "stage": "Under review", "ev": "Maybe", "pct": "35%", "note": "Right side of floor (9,066 RSF): 14–16 perimeter offices around central cubes. Whole floor has about 40 perimeter offices."}, {"addr": "3109 Green Garden Rd", "bldg": "", "city": "Aliquippa", "suite": "Suite 610", "sf": "14,332", "rent": "", "co": "Glimcher Group Inc", "stage": "Ruled out", "ev": "", "pct": "", "note": "Warehouse; office conversion not feasible."}, {"addr": "3109 Green Garden Rd", "bldg": "", "city": "Aliquippa", "suite": "Suite 620", "sf": "8,437", "rent": "", "co": "Glimcher Group Inc", "stage": "Ruled out", "ev": "", "pct": "", "note": "Warehouse; office conversion not feasible."}, {"addr": "400 Southpointe Blvd", "bldg": "Southpointe Plaza I", "city": "Canonsburg", "suite": "Suite 100", "sf": "3,228", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Maybe", "pct": "50%", "note": "Suites on floors 1–3 can be combined."}, {"addr": "400 Southpointe Blvd", "bldg": "Southpointe Plaza I", "city": "Canonsburg", "suite": "Suite 110", "sf": "2,812", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Maybe", "pct": "40%", "note": "Suites on floors 1–3 can be combined."}, {"addr": "400 Southpointe Blvd", "bldg": "Southpointe Plaza I", "city": "Canonsburg", "suite": "Suite 150", "sf": "1,992", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Fail", "pct": "10%", "note": "Mostly open."}, {"addr": "400 Southpointe Blvd", "bldg": "Southpointe Plaza I", "city": "Canonsburg", "suite": "Suite 200", "sf": "3,207", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Pass", "pct": "55%", "note": "Office-heavy layout. Suites on floors 1–3 can be combined."}, {"addr": "400 Southpointe Blvd", "bldg": "Southpointe Plaza I", "city": "Canonsburg", "suite": "Suite 250", "sf": "2,433", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Pass", "pct": "55%", "note": "Office-heavy layout. Suites on floors 1–3 can be combined."}, {"addr": "400 Southpointe Blvd", "bldg": "Southpointe Plaza I", "city": "Canonsburg", "suite": "Suite 210", "sf": "1,718", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Maybe", "pct": "45%", "note": "Suites on floors 1–3 can be combined."}, {"addr": "400 Southpointe Blvd", "bldg": "Southpointe Plaza I", "city": "Canonsburg", "suite": "Entire Floor 3", "sf": "16,010", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Fail", "pct": "15%", "note": "Mostly open floor."}, {"addr": "501 Corporate Dr", "bldg": "Southpointe Plaza", "city": "Canonsburg", "suite": "1st floor (Ste 100/105/115/120 combined)", "sf": "15,180", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Pass", "pct": "55%", "note": "Heavily built out, corridor-loaded with private offices on all sides. Four suites total ≈15,180 RSF."}, {"addr": "601 Technology Dr", "bldg": "Southpointe Plaza", "city": "Canonsburg", "suite": "Entire 3rd floor (Ste 300 + 310)", "sf": "14,070", "rent": "Low-mid $20s (depends on term/TI)", "co": "Newmark", "stage": "Under review", "ev": "Maybe", "pct": "40%", "note": "Full floor (Ste 300 7,466 + Ste 310 6,604): continuous ring of perimeter offices, open areas in each wing. Could reach 50% if open areas are framed."}, {"addr": "400 Industry Dr", "bldg": "The Concorde", "city": "Pittsburgh", "suite": "Suite 100", "sf": "30,496", "rent": "$23.50/SF + electric", "co": "NAI Burns Scalo", "stage": "Under review", "ev": "Fail", "pct": "15%", "note": "Furnished, move-in ready; described as open layout. Slightly over 30,000 SF."}, {"addr": "3000 Town Center Blvd", "bldg": "", "city": "Canonsburg", "suite": "2nd floor", "sf": "35,000", "rent": "$25/RSF full service", "co": "Horizon Properties Group, LLC", "stage": "Under review", "ev": "", "pct": "", "note": "Above 30,000 SF; landlord recapturing floors. Plan pending."}, {"addr": "1000 Horizon Vue Dr", "bldg": "", "city": "Canonsburg", "suite": "1st floor", "sf": "76,080", "rent": "$25/RSF full service", "co": "Horizon Properties Group, LLC", "stage": "Under review", "ev": "", "pct": "", "note": "Well above 30,000 SF. Plans pending."}, {"addr": "1000 Horizon Vue Dr", "bldg": "", "city": "Canonsburg", "suite": "3rd floor", "sf": "45,140", "rent": "$25/RSF full service", "co": "Horizon Properties Group, LLC", "stage": "Under review", "ev": "", "pct": "", "note": "Above 30,000 SF. Plan pending."}, {"addr": "130 N Bellefield Ave", "bldg": "", "city": "Pittsburgh", "suite": "Full floor", "sf": "10,000", "rent": "$32/SF gross", "co": "CBRE", "stage": "Under review", "ev": "", "pct": "", "note": "Awaiting floor plan from listing broker."}, {"addr": "Penn Center West 2", "bldg": "Robinson Ridge @ Penn Center West - Building 2", "city": "Pittsburgh", "suite": "Suite 120 (1st floor)", "sf": "11,500", "rent": "", "co": "CBRE", "stage": "Under review", "ev": "Pass", "pct": "45–50%", "note": "Perimeter offices on all sides plus interior office blocks, some open areas. Borderline."}];
+const ORDER = {Pass:0, Maybe:1, Fail:2, "":3};
+const STAGE = {"Under review":0, "Requested":1, "Ruled out":2};
+const FILTERS = [
+  {k:"all", label:"All active"},
+  {k:"Pass", label:"Pass", c:"var(--pass)"},
+  {k:"Maybe", label:"Maybe", c:"var(--maybe)"},
+  {k:"Fail", label:"Fail", c:"var(--fail)"},
+  {k:"pending", label:"Awaiting plans", c:"var(--muted)"},
+  {k:"out", label:"Ruled out", c:"var(--fail)"}
+];
+let filter = "all";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sfNum = s => parseInt(String(s).split("-").pop().replace(/[^0-9]/g,""),10) || 0;
+const showOut = document.getElementById("showOut");
+function match(d){
+  if (filter === "out") return d.stage === "Ruled out";
+  if (d.stage === "Ruled out" && !showOut.checked) return false;
+  if (filter === "all") return true;
+  if (filter === "pending") return !d.ev;
+  return d.ev === filter;
+}
+function tallies(){
+  const pool = DATA.filter(d => showOut.checked || d.stage !== "Ruled out");
+  const count = k => k==="all" ? pool.length : k==="pending" ? pool.filter(d=>!d.ev).length : k==="out" ? DATA.filter(d=>d.stage==="Ruled out").length : pool.filter(d=>d.ev===k).length;
+  document.getElementById("tallies").innerHTML = FILTERS.map(f =>
+    `<button type="button" class="chip" id="f-${f.k}" aria-pressed="${filter===f.k}" data-k="${f.k}">${f.c?`<span class="dot" style="background:${f.c}"></span>`:""}${f.k==="all"&&showOut.checked?"All spaces":f.label}<span class="n">${count(f.k)}</span></button>`).join("");
+}
+function render(){
+  tallies();
+  const list = DATA.filter(match).sort((a,b) =>
+    (STAGE[a.stage]-STAGE[b.stage]) || (ORDER[a.ev]-ORDER[b.ev]) || a.addr.localeCompare(b.addr, undefined, {numeric:true}) || sfNum(b.sf)-sfNum(a.sf));
+  document.getElementById("rows").innerHTML = list.map(d => {
+    const fit = (d.ev && d.stage!=="Ruled out")
+      ? `<span class="badge b-${d.ev}">${d.ev}${d.pct?` <span class="pct">${esc(d.pct.startsWith("~")||d.pct.includes("–")?d.pct:"~"+d.pct)}</span>`:""}</span>`
+      : d.stage==="Ruled out" ? `<span class="badge b-Fail">Ruled out</span>` : `<span class="badge b-none">Awaiting plans</span>`;
+    return `<tr class="${d.stage==="Ruled out"?"out":""}">
+      <td class="c-addr"><div class="addr">${esc(d.addr)}</div>${d.bldg?`<div class="bldg">${esc(d.bldg)}${d.city?" · "+esc(d.city):""}</div>`:d.city?`<div class="bldg">${esc(d.city)}</div>`:""}</td>
+      <td class="c-suite">${esc(d.suite)}</td>
+      <td class="c-sf num" data-l="RSF">${esc(d.sf)}</td>
+      <td class="c-rent" data-l="Rent">${d.rent?esc(d.rent):'<span class="dash">—</span>'}</td>
+      <td class="c-co">${esc(d.co)}</td>
+      <td class="c-stage stage">${esc(d.stage)}</td>
+      <td class="c-fit">${fit}</td>
+      <td class="c-note note">${esc(d.note)}</td>
+    </tr>`;}).join("");
+  document.getElementById("empty").hidden = list.length > 0;
+}
+document.getElementById("tallies").addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  filter = b.dataset.k; render();
+});
+showOut.addEventListener("change", render);
+render();
+</script>
+
+</body>
+</html>
